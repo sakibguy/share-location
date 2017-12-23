@@ -9,7 +9,6 @@
 
 
 
-
 ###############################
 ### Setting up a repository ###
 ###############################
@@ -63,7 +62,7 @@ echo
 ## Solved issues
 ## Default: Commit skipped|forgotten
 
-git commit -m "Init repo and release v1.0.0"
+git commit -m "Init repo, release v1.0"
 
 ############
 # Step: 05 #
