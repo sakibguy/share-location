@@ -62,7 +62,7 @@ echo
 ## Solved issues
 ## Default: Commit skipped|forgotten
 
-git commit -m "Init repo, release v1.0"
+git commit -m "Release v1.1"
 
 ############
 # Step: 05 #
