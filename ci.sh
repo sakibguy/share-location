@@ -62,7 +62,7 @@ echo
 ## Solved issues
 ## Default: Commit skipped|forgotten
 
-git commit -m "Release v1.2 | Userfriendly permission & Realtime location update BASE"
+git commit -m "Release v1.2.1"
 
 ############
 # Step: 05 #
