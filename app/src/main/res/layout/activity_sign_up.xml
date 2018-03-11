@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="playlagom.sharelocation.auth.SignUpActivity">
+
+    <TextView
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/etSignUpEmail"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="80dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User Registration"/>
+
+
+    <EditText
+        android:layout_margin="15dp"
+        android:layout_centerVertical="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:hint="Type email"
+        android:id="@+id/etSignUpEmail" />
+
+    <EditText
+        android:ems="10"
+        android:inputType="textPassword"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:id="@+id/etSignUpPassword"
+        android:hint="Type password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/etSignUpEmail"/>
+
+    <Button
+        android:id="@+id/btnSignUp"
+        android:layout_margin="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/etSignUpPassword"
+        android:text="Sign Up"/>
+
+    <TextView
+        android:id="@+id/tvSignIn"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/btnSignUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Already Registered?  Sign In"/>
+
+</RelativeLayout>

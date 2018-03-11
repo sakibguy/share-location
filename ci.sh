@@ -62,7 +62,9 @@ echo
 ## Solved issues
 ## Default: Commit skipped|forgotten
 
-git commit -m "Released v1.3.0"
+## Completion release 1.3.0
+
+git commit -m "Completion release 1.3.0"
 
 ############
 # Step: 05 #
