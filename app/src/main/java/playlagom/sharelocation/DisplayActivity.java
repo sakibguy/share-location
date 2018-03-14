@@ -1,5 +1,6 @@
 package playlagom.sharelocation;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -12,6 +13,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -26,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -46,7 +49,11 @@ import java.util.Map;
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
 
-public class DisplayActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
+public class DisplayActivity extends FragmentActivity
+        implements
+        GoogleMap.OnMyLocationButtonClickListener,
+//        GoogleMap.OnMyLocationClickListener,
+        OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
@@ -206,13 +213,40 @@ public class DisplayActivity extends FragmentActivity implements OnMapReadyCallb
         }
     }
 
+//    @SuppressLint("MissingPermission")
+//    @Override
+//    public void onMapReady(GoogleMap googleMap) {
+//        // Authenticate with Firebase when the Google map is loaded
+//        mMap = googleMap;
+//        mMap.setMyLocationEnabled(true); // blue dot
+//        mMap.setOnCameraMoveListener(this);
+////        mMap.setMaxZoomPreference(16);
+//        loginToFirebase();
+//    }
+
+    @SuppressLint("MissingPermission")
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        // Authenticate with Firebase when the Google map is loaded
-        mMap = googleMap;
-        mMap.setOnCameraMoveListener(this);
-//        mMap.setMaxZoomPreference(16);
-        loginToFirebase();
+    public void onMapReady(GoogleMap map) {
+        mMap = map;
+        // TODO: Before enabling the My Location layer, you must request
+        // location permission from the user. This sample does not include
+        // a request for location permission.
+        mMap.setMyLocationEnabled(true);
+        mMap.setOnMyLocationButtonClickListener(this);
+//        mMap.setOnMyLocationClickListener(this);
+    }
+
+//    @Override
+    public void onMyLocationClick(@NonNull Location location) {
+        Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        // Return false so that we don't consume the event and the default behavior still occurs
+        // (the camera animates to the user's current position).
+        return false;
     }
 
     private void loginToFirebase() {

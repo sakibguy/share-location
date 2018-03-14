@@ -64,7 +64,7 @@ echo
 
 ## Completion release 1.3.0
 
-git commit -m "Completion release 1.3.0"
+git commit -m "Change detected, upload."
 
 ############
 # Step: 05 #
