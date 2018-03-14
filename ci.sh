@@ -64,7 +64,7 @@ echo
 
 ## Completion release 1.3.0
 
-git commit -m "Change detected, upload."
+git commit -m "Add module todo"
 
 ############
 # Step: 05 #
