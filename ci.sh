@@ -64,7 +64,7 @@ echo
 
 ## Completion release 1.3.0
 
-git commit -m "Add module todo"
+git commit -m "Fix issue: v1.3.0"
 
 ############
 # Step: 05 #

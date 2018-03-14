@@ -333,7 +333,7 @@ public class DisplayActivity extends FragmentActivity
 
 
         if (!mMarkers.containsKey(key)) {
-            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + ": FriendName").position(location).snippet("dis, time, address, cell, msg")));
+            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
         } else {
             mMarkers.get(key).setPosition(location);
         }
@@ -365,7 +365,8 @@ public class DisplayActivity extends FragmentActivity
 
     private void setInactiveMarker() {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-        ref.child("1000").addValueEventListener(new ValueEventListener() {
+        String userId = getString(R.string.transport_id);
+        ref.child(userId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (!controllerBitClicked) {
