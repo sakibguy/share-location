@@ -1,4 +1,4 @@
-##################################################
+﻿##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
 ### Target : Tool dev			       ###
@@ -30,7 +30,7 @@ git config --global user.name "Sakib Rahman"
 ############
 # Step: 02 #
 ############
- 
+
 echo [ Done ]  Initializing a new Git repo for this project.
 echo
 git init
@@ -62,9 +62,9 @@ echo
 ## Solved issues
 ## Default: Commit skipped|forgotten
 
-## Completion release 1.3.0
+## 📗 Completion release 1.3.0
 
-git commit -m "Completion release 1.4.0"
+git commit -m "Add screenshoots (new module)"
 
 ############
 # Step: 05 #
