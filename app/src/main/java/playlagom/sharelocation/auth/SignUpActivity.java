@@ -2,10 +2,12 @@ package playlagom.sharelocation.auth;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.WindowManager;
@@ -28,6 +30,7 @@ import playlagom.sharelocation.R;
 
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private static final String TAG = "SignUpActivity";
     Button btnSignUp;
     EditText etSignUpEmail, etSignUpPassword;
     TextView tvSignIn;
@@ -43,6 +46,13 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_sign_up);
+
+        // check internet connection
+        if (!isInternetOn()) {
+            Toast.makeText(this, "Please ON your internet", Toast.LENGTH_LONG).show();
+            finish();
+        }
+        Log.d(TAG, "DEBUG: ----onCreate: " + isInternetOn());
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference().child("users");
@@ -67,6 +77,25 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
             finish();
         }
+    }
+    // Paste this on activity from where you need to check internet status
+    public boolean isInternetOn() {
+        // get Connectivity Manager object to check connection
+        ConnectivityManager connec =
+                (ConnectivityManager) getSystemService(getBaseContext().CONNECTIVITY_SERVICE);
+
+        // Check for network connections
+        if (connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.CONNECTED ||
+                connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.CONNECTING ||
+                connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.CONNECTING ||
+                connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.CONNECTED) {
+            return true;
+        } else if (
+                connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.DISCONNECTED ||
+                        connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.DISCONNECTED) {
+            return false;
+        }
+        return false;
     }
 
     private void registerUser() {
@@ -100,7 +129,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
         progressDialog.setMessage("Registering user...");
         progressDialog.show();
-        firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+        firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>(){
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {

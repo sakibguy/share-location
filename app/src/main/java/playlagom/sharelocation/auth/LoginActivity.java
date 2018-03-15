@@ -2,10 +2,12 @@ package playlagom.sharelocation.auth;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.WindowManager;
@@ -24,7 +26,7 @@ import playlagom.sharelocation.R;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
-
+    private static final String TAG = "LoginActivity";
     Button btnSignIn;
     EditText etLoginEmail, etLoginPassword;
     TextView tvSignUp;
@@ -41,6 +43,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         getSupportActionBar().hide();
         setContentView(R.layout.activity_login);
 
+        // check internet connection
+        if (!isInternetOn()) {
+            Toast.makeText(this, "Please ON your internet", Toast.LENGTH_LONG).show();
+            finish();
+        }
+        Log.d(TAG, "----onCreate: " + isInternetOn());
+
         firebaseAuth = FirebaseAuth.getInstance();
         if (firebaseAuth.getCurrentUser() != null) {
             startActivity(new Intent(this, DisplayActivity.class));
@@ -55,6 +64,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         btnSignIn.setOnClickListener(this);
         tvSignUp.setOnClickListener(this);
+    }
+
+    // Paste this on activity from where you need to check internet status
+    public boolean isInternetOn() {
+        // get Connectivity Manager object to check connection
+        ConnectivityManager connec =
+                (ConnectivityManager) getSystemService(getBaseContext().CONNECTIVITY_SERVICE);
+
+        // Check for network connections
+        if (connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.CONNECTED ||
+                connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.CONNECTING ||
+                connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.CONNECTING ||
+                connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.CONNECTED) {
+            return true;
+        } else if (
+                connec.getNetworkInfo(0).getState() == android.net.NetworkInfo.State.DISCONNECTED ||
+                        connec.getNetworkInfo(1).getState() == android.net.NetworkInfo.State.DISCONNECTED) {
+            return false;
+        }
+        return false;
     }
 
     @Override

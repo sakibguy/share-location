@@ -34,6 +34,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -49,10 +50,8 @@ import java.util.Map;
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
 
-public class DisplayActivity extends FragmentActivity
-        implements
+public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMyLocationButtonClickListener,
-//        GoogleMap.OnMyLocationClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
     private static final String TAG = DisplayActivity.class.getSimpleName();
@@ -65,6 +64,10 @@ public class DisplayActivity extends FragmentActivity
     private boolean insideShouldShow = false;
 
     private ImageView ivSelectedUser;
+    private boolean locationPermissionGranted = false;
+
+    // Firebase attributes
+    FirebaseAuth firebaseAuth;
 
     @Override
     protected void onRestart() {
@@ -75,6 +78,7 @@ public class DisplayActivity extends FragmentActivity
     }
 
     private ImageView ivMyCircle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,27 +111,20 @@ public class DisplayActivity extends FragmentActivity
         if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             Toast.makeText(this, "Please enable GPS location services", Toast.LENGTH_LONG).show();
             finish();
-            // Build the alert dialog
-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//            builder.setTitle("Location Services Not Active");
-//            builder.setMessage("Please enable Location Services and GPS");
-//            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                public void onClick(DialogInterface dialogInterface, int i) {
-//                    // Show location settings when the user acknowledges the alert dialog
-//                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//                    startActivity(intent);
-//                }
-//            });
-//            Dialog alertDialog = builder.create();
-//            alertDialog.setCanceledOnTouchOutside(false);
-//            alertDialog.show();
         }
+        checkLocationPermission();
 
+        // Init firebase dependency
+        firebaseAuth = FirebaseAuth.getInstance();
+    }
+
+    private void checkLocationPermission() {
         // Check location permission is granted - if it is, start
         // the service, otherwise request the permission
         int permission = ContextCompat.checkSelfPermission(this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION);
         if (permission == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted = true;
             startTrackerService();
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -149,13 +146,15 @@ public class DisplayActivity extends FragmentActivity
         startService(new Intent(this, TrackerService.class));
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[]
             grantResults) {
-
         if (requestCode == PERMISSIONS_REQUEST && grantResults.length == 1
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // Start the service when the permission is granted
+            mMap.setMyLocationEnabled(true);
+            mMap.setOnMyLocationButtonClickListener(this);
             startTrackerService();
             // when ALLOWED then no problem, but when DENY then there two cases for deny 1. Don't ask again 2. Just Deny
             // We will detect that using below code
@@ -231,19 +230,17 @@ public class DisplayActivity extends FragmentActivity
         // TODO: Before enabling the My Location layer, you must request
         // location permission from the user. This sample does not include
         // a request for location permission.
-        mMap.setMyLocationEnabled(true);
-        mMap.setOnMyLocationButtonClickListener(this);
-//        mMap.setOnMyLocationClickListener(this);
-    }
 
-//    @Override
-    public void onMyLocationClick(@NonNull Location location) {
-        Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
+        // blue dot
+        if (locationPermissionGranted) {
+            mMap.setMyLocationEnabled(true);
+            mMap.setOnMyLocationButtonClickListener(this);
+        }
     }
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "My location", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
@@ -331,7 +328,6 @@ public class DisplayActivity extends FragmentActivity
         double lng = Double.parseDouble(value.get("longitude").toString());
         LatLng location = new LatLng(lat, lng);
 
-
         if (!mMarkers.containsKey(key)) {
             mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
         } else {
@@ -364,8 +360,14 @@ public class DisplayActivity extends FragmentActivity
     }
 
     private void setInactiveMarker() {
+//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+//        String userId = getString(R.string.transport_id);
+
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-        String userId = getString(R.string.transport_id);
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String userId = currentUser.getUid();
+        Log.d(TAG, "----------setInactiveMarker: -----------" + userId);
+        // Use unique userID during registration time assigned
         ref.child(userId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {

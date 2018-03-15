@@ -6,6 +6,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -95,7 +96,13 @@ public class TrackerService extends Service {
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
 
-        final String path = getString(R.string.firebase_path) + "/" + getString(R.string.transport_id);
+        // Init firebase dependency
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        final String userId = currentUser.getUid();
+
+        final String path = getString(R.string.firebase_path) + "/" + userId;
+//        final String path = getString(R.string.firebase_path) + "/" + getString(R.string.transport_id);
 //        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
 
         int permission = ContextCompat.checkSelfPermission(this,
@@ -109,7 +116,7 @@ public class TrackerService extends Service {
                     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(path);
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
-                        Log.d(TAG, "location update " + location);
+                        Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
                         ref.setValue(location);
                     }
                 }

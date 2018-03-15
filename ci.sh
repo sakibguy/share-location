@@ -64,7 +64,7 @@ echo
 
 ## Completion release 1.3.0
 
-git commit -m "Fix issue: v1.3.0"
+git commit -m "Completion release 1.4.0"
 
 ############
 # Step: 05 #
