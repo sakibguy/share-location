@@ -64,7 +64,7 @@ echo
 
 ## 📗 Completion release 1.3.0
 
-git commit -m "Add screenshoots (new module)"
+git commit -m "Dependencies: multiple markers + firebase crud"
 
 ############
 # Step: 05 #

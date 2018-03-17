@@ -51,6 +51,7 @@ import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
 
 public class DisplayActivity extends FragmentActivity implements
+        GoogleMap.OnMarkerClickListener,
         GoogleMap.OnMyLocationButtonClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
@@ -284,10 +285,12 @@ public class DisplayActivity extends FragmentActivity implements
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
 //        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
 
+        Log.d(TAG, "------inside--- subscribeToUpdates();");
         ref.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
                 if (controllerBitClicked) {
+                    Log.d(TAG, "------inside--- onChildAdded");
                     setActiveMarker(dataSnapshot);
                 }
             }
@@ -295,6 +298,7 @@ public class DisplayActivity extends FragmentActivity implements
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
                 if (controllerBitClicked) {
+                    Log.d(TAG, "------inside--- onChildChanged");
                     setActiveMarker(dataSnapshot);
                 }
             }
@@ -320,6 +324,7 @@ public class DisplayActivity extends FragmentActivity implements
         // its value in mMarkers, which contains all the markers
         // for locations received, so that we can build the
         // boundaries required to show them all on the map at once
+        System.out.println("---------" + dataSnapshot.getValue());
 
 //        mMap.clear();
         String key = dataSnapshot.getKey();
@@ -345,14 +350,17 @@ public class DisplayActivity extends FragmentActivity implements
 
     private boolean controllerBitClicked = false;
     public void onClickMyCircle(View view) {
+        Log.d(TAG, "------onClickMyCircle------");
         if (controllerBitClicked) {
             // HIDE LIVE FRIENDS
             controllerBitClicked = false;
             ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
+            Log.d(TAG, "------controllerBitClicked = false;------ run setInactiveMarker();");
             setInactiveMarker();
         } else {
             // SHOW LIVE FRIENDS
             controllerBitClicked = true;
+            Log.d(TAG, "------controllerBitClicked = true;------ run subscribeToUpdates();");
             Toast.makeText(getApplicationContext(), "Live Friends", Toast.LENGTH_LONG).show();
             ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_black_24dp));
             subscribeToUpdates();
@@ -384,7 +392,6 @@ public class DisplayActivity extends FragmentActivity implements
 
     Marker myMarker;
     private void updateDisplay(DataSnapshot dataSnapshot) {
-
         HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
         double lat = Double.parseDouble(value.get("latitude").toString());
         double lng = Double.parseDouble(value.get("longitude").toString());
@@ -408,5 +415,25 @@ public class DisplayActivity extends FragmentActivity implements
 
     public void onClickNotification(View view) {
         Toast.makeText(getApplicationContext(), "Notification clicked", Toast.LENGTH_SHORT).show();
+    }
+
+    /** Called when the user clicks a marker. */
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        // Retrieve the data from the marker.
+        Integer clickCount = (Integer) marker.getTag();
+        System.out.println("---------Marker clicked---------");
+        System.out.println(clickCount + "-------------Retrieve the data from the marker.");
+
+        // Check if a click count was set, then display the click count.
+        if (clickCount != null) {
+            clickCount = clickCount + 1;
+            marker.setTag(clickCount);
+            Toast.makeText(this,
+                    marker.getTitle() +
+                            " has been clicked " + clickCount + " times.",
+                    Toast.LENGTH_SHORT).show();
+        }
+        return false;
     }
 }
