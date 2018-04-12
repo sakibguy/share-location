@@ -98,12 +98,12 @@
         android:textSize="16sp" />
 
     <TextView
+        android:layout_below="@+id/llMenu"
         android:background="@drawable/round_border"
         android:id="@+id/tvLogout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="5dp"
         android:padding="5dp"

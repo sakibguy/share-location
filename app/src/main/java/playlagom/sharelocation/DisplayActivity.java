@@ -7,13 +7,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -28,27 +25,23 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.w3c.dom.Text;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
+import playlagom.sharelocation.models.UserAndLocation;
 
 public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMarkerClickListener,
@@ -281,54 +274,165 @@ public class DisplayActivity extends FragmentActivity implements
 //        // Functionality coming next step
 //    }
 
+    int countOnDataChange = 1;
     private void subscribeToUpdates() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-//        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
+        // Sol: 1
+//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+////        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
+//
+//        Log.d(TAG, "------inside--- subscribeToUpdates();");
+//        ref.addChildEventListener(new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+//                if (controllerBitClicked) {
+//                    Log.d(TAG, "------inside--- onChildAdded");
+//                    setActiveMarker(dataSnapshot);
+//                }
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+//                if (controllerBitClicked) {
+//                    Log.d(TAG, "------inside--- onChildChanged");
+//                    setActiveMarker(dataSnapshot);
+//                }
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+//
+//            }
+//
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError error) {
+//                Log.d(TAG, "Failed to read value.", error.toException());
+//            }
+//        });
 
-        Log.d(TAG, "------inside--- subscribeToUpdates();");
-        ref.addChildEventListener(new ChildEventListener() {
+        // Sol: 2
+////        FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
+////        DatabaseReference databaseReference =  mFirebaseDatabase.getReference();
+//        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+//        databaseReference.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                int i = 1;
+//                for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
+//                    setActiveMarker(childDataSnapshot);
+//                    Log.d(TAG, "onDataChange: ............." + i++ + childDataSnapshot.getValue());
+//                    Log.v(TAG,".........KEY: "+ childDataSnapshot.getKey()); //displays the key for the node
+//                    Log.v(TAG,"............"+ childDataSnapshot.child("users").getValue());   //gives the value for given keyname
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+
+
+        // Sol 3: DONE (Analysis) RESULT: Need Join operation, see from next section
+        /*
+      FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
+      DatabaseReference databaseReference =  mFirebaseDatabase.getReference();
+//        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+        databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                if (controllerBitClicked) {
-                    Log.d(TAG, "------inside--- onChildAdded");
-                    setActiveMarker(dataSnapshot);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.d(TAG, countOnDataChange++ + " onDataChange:...");
+
+                for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
+                    setActiveMarker(childDataSnapshot);
+
+//                    Log.d(TAG, "onDataChange: ............." + i++ + childDataSnapshot.getValue());
+//                    Log.v(TAG,".........KEY: "+ childDataSnapshot.getKey() + "\n"); //displays the key for the node
+//                    Log.v(TAG,".........KEY:child: "+ childDataSnapshot.child(childDataSnapshot.getKey()).getValue()); //displays the key for the node
+//                    Log.v(TAG,"............"+ childDataSnapshot.child("users").getValue());   //gives the value for given keyname
                 }
             }
-
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                if (controllerBitClicked) {
-                    Log.d(TAG, "------inside--- onChildChanged");
-                    setActiveMarker(dataSnapshot);
-                }
-            }
+            public void onCancelled(DatabaseError databaseError) {
 
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.d(TAG, "Failed to read value.", error.toException());
             }
         });
-    }
+        */
 
+        // Sol: 4
+        // any way you managed to go the node that has the 'grp_key'
+        DatabaseReference MembersRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("locations")
+                .addValueEventListener(
+                        new ValueEventListener()
+                        {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot)
+                            {
+                                for (DataSnapshot child : dataSnapshot.getChildren())
+                                {
+
+//                                    Map<String, Object> valuesMap = (HashMap<String, Object>) dataSnapshot.getValue();
+
+                                    // Get push id value.
+                                    String key = child.getKey();
+
+
+                                    // HERE WHAT CORRESPONDS TO JOIN
+                                    DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
+                                            .child("users")
+                                            .orderByKey().equalTo(key)
+                                            .addValueEventListener(
+                                                    new ValueEventListener()
+                                                    {
+                                                        @Override
+                                                        public void onDataChange(DataSnapshot dataSnapshot)
+                                                        {
+                                                            // repeat!!
+
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(DatabaseError databaseError)
+                                                        {
+
+                                                        }
+                                                    }
+                                            )
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError)
+                            {
+
+                            }
+                        }
+                );
+    }
+    int i = 1;
     private void setActiveMarker(DataSnapshot dataSnapshot) {
         // When a location update is received, put or update
         // its value in mMarkers, which contains all the markers
         // for locations received, so that we can build the
         // boundaries required to show them all on the map at once
-        System.out.println("---------" + dataSnapshot.getValue());
-
+        Log.d(TAG, "DEBUG: "+ i++ + " KEY: " + dataSnapshot.getKey() + ", VALUE: " + dataSnapshot.getValue());
 //        mMap.clear();
         String key = dataSnapshot.getKey();
-        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
+
+
+        UserAndLocation userAndLocation = dataSnapshot.getValue(UserAndLocation.class);
+
+//      ArrayList<String> values = new ArrayList<>((HashMap<String, Object>) dataSnapshot.getValue()).values();
+//        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
+//        Map<String, Object> value = (Map<String, Object>) dataSnapshot.getValue();
+
+        /*
         double lat = Double.parseDouble(value.get("latitude").toString());
         double lng = Double.parseDouble(value.get("longitude").toString());
         LatLng location = new LatLng(lat, lng);
@@ -346,6 +450,7 @@ public class DisplayActivity extends FragmentActivity implements
             builder.include(marker.getPosition());
         }
         mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
+        */
     }
 
     private boolean controllerBitClicked = false;

@@ -1,4 +1,5 @@
-﻿##################################################
+﻿#!/usr/bin/env bash
+##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
 ### Target : Tool dev			       ###
@@ -63,8 +64,9 @@ echo
 ## Default: Commit skipped|forgotten
 
 ## 📗 Completion release 1.3.0
+## Dependencies: multiple markers + firebase crud
 
-git commit -m "Dependencies: multiple markers + firebase crud"
+git commit -m "FOLLOW UP: firebase CONTRIBUTING.md"
 
 ############
 # Step: 05 #
