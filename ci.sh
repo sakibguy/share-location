@@ -66,7 +66,7 @@ echo
 ## 📗 Completion release 1.3.0
 ## Dependencies: multiple markers + firebase crud
 
-git commit -m "FOLLOW UP: firebase CONTRIBUTING.md"
+git commit -m "UPLOAD db join logic"
 
 ############
 # Step: 05 #

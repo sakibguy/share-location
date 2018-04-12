@@ -26,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,11 +37,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
+import playlagom.sharelocation.models.User;
 import playlagom.sharelocation.models.UserAndLocation;
 
 public class DisplayActivity extends FragmentActivity implements
@@ -274,6 +278,8 @@ public class DisplayActivity extends FragmentActivity implements
 //        // Functionality coming next step
 //    }
 
+    List<User> userList = new ArrayList<>();
+
     int countOnDataChange = 1;
     private void subscribeToUpdates() {
         // Sol: 1
@@ -367,75 +373,90 @@ public class DisplayActivity extends FragmentActivity implements
         // any way you managed to go the node that has the 'grp_key'
         DatabaseReference MembersRef = FirebaseDatabase.getInstance()
                 .getReference()
-                .child("locations")
-                .addValueEventListener(
-                        new ValueEventListener()
-                        {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot)
-                            {
-                                for (DataSnapshot child : dataSnapshot.getChildren())
-                                {
+                .child("locations");
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+        MembersRef.addValueEventListener( new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            // Get push id value.
+                            String key = child.getKey();
 
-//                                    Map<String, Object> valuesMap = (HashMap<String, Object>) dataSnapshot.getValue();
+                            // HERE WHAT CORRESPONDS TO JOIN
+                            DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
+                                    .child("users").child(key);
+                            chatGroupRef.addValueEventListener(
+                                    new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot childDataSnapshot) {
+                                            // repeat!!
+                                            Log.d(TAG, "JOIN: ... " + i++ + childDataSnapshot.getValue());
+                                            User user = childDataSnapshot.getValue(User.class);
+                                            if (user != null) userList.add(user);
 
-                                    // Get push id value.
-                                    String key = child.getKey();
+                                            // TODO: DEBUGGER 4/12/2018
+//                                                    try{
+//                                                        Log.d(TAG, "setActiveMarker: ..... " + user.getEmail());
+//                                                    } catch (Exception e){
+//                                                        Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
+//                                                    }
+                                        }
 
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
 
-                                    // HERE WHAT CORRESPONDS TO JOIN
-                                    DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
-                                            .child("users")
-                                            .orderByKey().equalTo(key)
-                                            .addValueEventListener(
-                                                    new ValueEventListener()
-                                                    {
-                                                        @Override
-                                                        public void onDataChange(DataSnapshot dataSnapshot)
-                                                        {
-                                                            // repeat!!
-
-                                                        }
-
-                                                        @Override
-                                                        public void onCancelled(DatabaseError databaseError)
-                                                        {
-
-                                                        }
-                                                    }
-                                            )
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError)
-                            {
-
-                            }
+                                        }
+                                    }
+                            );
+                            setActiveMarker(child, userList);
+                            userList.clear();
                         }
-                );
+                        // TODO: DEBUGGER 4/12/2018
+//                        try{
+//                            for (int j = 0; j < userList.size(); j++) {
+//                                Log.d(TAG, "setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
+//                            }
+//                        } catch (Exception e){
+//                            Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
+//                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                }
+        );
     }
     int i = 1;
-    private void setActiveMarker(DataSnapshot dataSnapshot) {
+    private void setActiveMarker(DataSnapshot dataSnapshot, List<User> userList) {
         // When a location update is received, put or update
         // its value in mMarkers, which contains all the markers
         // for locations received, so that we can build the
         // boundaries required to show them all on the map at once
-        Log.d(TAG, "DEBUG: "+ i++ + " KEY: " + dataSnapshot.getKey() + ", VALUE: " + dataSnapshot.getValue());
+
 //        mMap.clear();
-        String key = dataSnapshot.getKey();
+//        String key = dataSnapshot.getKey();
+        String key = "";
+        try{
+            for (int j = 0; j < userList.size(); j++) {
+                Log.d(TAG, "INSIDE....setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
+                if (userList.get(j).getEmail() != null) key = userList.get(j).getEmail();
+            }
+        } catch (Exception e){
+            Log.d(TAG, "INSIDE....setActiveMarker: NULL pointer exception: ..... ");
+        }
 
+        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
 
-        UserAndLocation userAndLocation = dataSnapshot.getValue(UserAndLocation.class);
-
-//      ArrayList<String> values = new ArrayList<>((HashMap<String, Object>) dataSnapshot.getValue()).values();
-//        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
-//        Map<String, Object> value = (Map<String, Object>) dataSnapshot.getValue();
-
-        /*
-        double lat = Double.parseDouble(value.get("latitude").toString());
-        double lng = Double.parseDouble(value.get("longitude").toString());
-        LatLng location = new LatLng(lat, lng);
+        LatLng location = new LatLng(10, 20);;
+        try{
+            double lat = Double.parseDouble(value.get("latitude").toString());
+            double lng = Double.parseDouble(value.get("longitude").toString());
+            location = new LatLng(lat, lng);
+        } catch (Exception e){
+            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
+        }
 
         if (!mMarkers.containsKey(key)) {
             mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
@@ -449,8 +470,7 @@ public class DisplayActivity extends FragmentActivity implements
 
             builder.include(marker.getPosition());
         }
-        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
-        */
+//        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
     }
 
     private boolean controllerBitClicked = false;
