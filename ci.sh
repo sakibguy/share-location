@@ -66,7 +66,7 @@ echo
 ## 📗 Completion release 1.3.0
 ## Dependencies: multiple markers + firebase crud
 
-git commit -m "📗 UPLOAD cr1.5.0"
+git commit -m "UPLOAD Pre-launch report"
 
 ############
 # Step: 05 #
