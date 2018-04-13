@@ -31,6 +31,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -283,41 +284,42 @@ public class DisplayActivity extends FragmentActivity implements
     int countOnDataChange = 1;
     private void subscribeToUpdates() {
         // Sol: 1
-//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-////        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
-//
-//        Log.d(TAG, "------inside--- subscribeToUpdates();");
-//        ref.addChildEventListener(new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-//                if (controllerBitClicked) {
-//                    Log.d(TAG, "------inside--- onChildAdded");
-//                    setActiveMarker(dataSnapshot);
-//                }
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-//                if (controllerBitClicked) {
-//                    Log.d(TAG, "------inside--- onChildChanged");
-//                    setActiveMarker(dataSnapshot);
-//                }
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-//
-//            }
-//
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError error) {
-//                Log.d(TAG, "Failed to read value.", error.toException());
-//            }
-//        });
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+//        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
+
+        Log.d(TAG, "------inside--- subscribeToUpdates();");
+        ref.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                if (controllerBitClicked) {
+                    Log.d(TAG, "------inside--- onChildAdded");
+                    setActiveMarker(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+                if (controllerBitClicked) {
+                    Log.d(TAG, "------inside--- onChildChanged");
+                    setActiveMarker(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.d(TAG, "Failed to read value.", error.toException());
+            }
+        });
 
         // Sol: 2
 ////        FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
@@ -368,6 +370,8 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
         */
+
+        /*
 
         // Sol: 4
         // any way you managed to go the node that has the 'grp_key'
@@ -427,9 +431,14 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                 }
         );
+        */
     }
+    DataSnapshot dataSnapshotGlobal;
+    String keyGlobal;
     int i = 1;
-    private void setActiveMarker(DataSnapshot dataSnapshot, List<User> userList) {
+//    private void setActiveMarker(DataSnapshot dataSnapshot, List<User> userList) {
+    private void setActiveMarker(DataSnapshot dataSnapshot) {
+        dataSnapshotGlobal = dataSnapshot;
         // When a location update is received, put or update
         // its value in mMarkers, which contains all the markers
         // for locations received, so that we can build the
@@ -437,39 +446,104 @@ public class DisplayActivity extends FragmentActivity implements
 
 //        mMap.clear();
 //        String key = dataSnapshot.getKey();
-        String key = "";
-        try{
-            for (int j = 0; j < userList.size(); j++) {
-                Log.d(TAG, "INSIDE....setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
-                if (userList.get(j).getEmail() != null) key = userList.get(j).getEmail();
-            }
-        } catch (Exception e){
-            Log.d(TAG, "INSIDE....setActiveMarker: NULL pointer exception: ..... ");
-        }
+        keyGlobal = dataSnapshot.getKey();
+//        Log.d(TAG, "setActiveMarker: KEY: " + i + " " + key);
+        Log.d(TAG, "setActiveMarker: KEY: " + i + " " + keyGlobal);
+//        String key = "";
+//        try{
+//            for (int j = 0; j < userList.size(); j++) {
+//                Log.d(TAG, "INSIDE....setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
+//                if (userList.get(j).getEmail() != null) key = userList.get(j).getEmail();
+//            }
+//        } catch (Exception e){
+//            Log.d(TAG, "INSIDE....setActiveMarker: NULL pointer exception: ..... ");
+//        }
 
-        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
+        // HERE WHAT CORRESPONDS TO JOIN
+        DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
+                .child("users").child(keyGlobal);
+        chatGroupRef.addValueEventListener(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot childDataSnapshot) {
+                        // repeat!!
+                        Log.d(TAG, "JOIN: ... " + i++ + childDataSnapshot.getValue());
+                        User user = childDataSnapshot.getValue(User.class);
+                        if (user != null) {
+//                            userList.add(user);
+                            HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
+                            Log.d(TAG, i + " setActiveMarker, KEY: " + keyGlobal + ", VALUE: " + value.toString());
+                            i++;
+//        LatLng location = new LatLng(10, 20);;
+//        try{
+//            double lat = Double.parseDouble(value.get("latitude").toString());
+//            double lng = Double.parseDouble(value.get("longitude").toString());
+//            location = new LatLng(lat, lng);
+//        } catch (Exception e){
+//            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
+//        }
 
-        LatLng location = new LatLng(10, 20);;
-        try{
-            double lat = Double.parseDouble(value.get("latitude").toString());
-            double lng = Double.parseDouble(value.get("longitude").toString());
-            location = new LatLng(lat, lng);
-        } catch (Exception e){
-            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
-        }
+                            double lat = Double.parseDouble(value.get("latitude").toString());
+                            double lng = Double.parseDouble(value.get("longitude").toString());
+                            LatLng location = new LatLng(lat, lng);
 
-        if (!mMarkers.containsKey(key)) {
-            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
-        } else {
-            mMarkers.get(key).setPosition(location);
-        }
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                            // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
+                            if (!mMarkers.containsKey(keyGlobal)) {
+                                mMarkers.put(keyGlobal, mMap.addMarker(new MarkerOptions().title("" + user.getEmail() + "").position(location).snippet("dis, time, address, cell, msg")));
+                            } else {
+                                mMarkers.get(keyGlobal).setPosition(location);
+                            }
+                        }
 
-        for (Marker marker : mMarkers.values()) {
-//            mMap.addMarker(new MarkerOptions().title(key).position(location));
+                        // TODO: DEBUGGER 4/12/2018
+//                        try{
+//                            Log.d(TAG, "setActiveMarker: ..... " + user.getEmail());
+//                        } catch (Exception e){
+//                            Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
+//                        }
+                    }
 
-            builder.include(marker.getPosition());
-        }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                }
+        );
+
+
+//        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
+//        Log.d(TAG, i + " setActiveMarker, KEY: " + key + ", VALUE: " + value.toString());
+//        i++;
+////        LatLng location = new LatLng(10, 20);;
+////        try{
+////            double lat = Double.parseDouble(value.get("latitude").toString());
+////            double lng = Double.parseDouble(value.get("longitude").toString());
+////            location = new LatLng(lat, lng);
+////        } catch (Exception e){
+////            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
+////        }
+//
+//        double lat = Double.parseDouble(value.get("latitude").toString());
+//        double lng = Double.parseDouble(value.get("longitude").toString());
+//        LatLng location = new LatLng(lat, lng);
+//
+//         // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
+//        if (!mMarkers.containsKey(key)) {
+//            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
+//        } else {
+//            mMarkers.get(key).setPosition(location);
+//        }
+
+        // TODO: 4/13/2018 READ must the comment below
+        // Motivation from: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
+        // REMOVING code below brings me what exactly i want!!!
+        // Understanding API + framework is highly important.
+
+//        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+//        for (Marker marker : mMarkers.values()) {
+////            mMap.addMarker(new MarkerOptions().title(key).position(location));
+//            builder.include(marker.getPosition());
+//        }
 //        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
     }
 
