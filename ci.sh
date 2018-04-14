@@ -64,9 +64,10 @@ echo
 ## Default: Commit skipped|forgotten
 
 ## 📗 Completion release 1.3.0
+## 📗 UPLOAD cr1.5.0
 ## Dependencies: multiple markers + firebase crud
 
-git commit -m "REMOVED apks"
+git commit -m "📗 UPLOAD cr1.6.0"
 
 ############
 # Step: 05 #

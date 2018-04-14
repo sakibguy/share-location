@@ -18,9 +18,13 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -77,6 +81,10 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     private ImageView ivMyCircle;
+    private AdView mAdView;
+    View mapView;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +93,7 @@ public class DisplayActivity extends FragmentActivity implements
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        mapView = mapFragment.getView();
         mapFragment.getMapAsync(this);
         // wire xml components with java object
         // My Circle
@@ -112,6 +121,15 @@ public class DisplayActivity extends FragmentActivity implements
             finish();
         }
         checkLocationPermission();
+
+        // Init: AdMob app ID
+//        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
+        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+
+        // ADS: https://developers.google.com/admob/android/banner
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
 
         // Init firebase dependency
         firebaseAuth = FirebaseAuth.getInstance();
@@ -211,17 +229,6 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-//    @SuppressLint("MissingPermission")
-//    @Override
-//    public void onMapReady(GoogleMap googleMap) {
-//        // Authenticate with Firebase when the Google map is loaded
-//        mMap = googleMap;
-//        mMap.setMyLocationEnabled(true); // blue dot
-//        mMap.setOnCameraMoveListener(this);
-////        mMap.setMaxZoomPreference(16);
-//        loginToFirebase();
-//    }
-
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
@@ -229,6 +236,21 @@ public class DisplayActivity extends FragmentActivity implements
         // TODO: Before enabling the My Location layer, you must request
         // location permission from the user. This sample does not include
         // a request for location permission.
+
+        // Change my location button position at the bottom
+        // SUPPORTED by stackoverflow: https://stackoverflow.com/questions/36785542/how-to-change-the-position-of-my-location-button-in-google-maps-using-android-st/39179202
+        if (mapView != null &&
+                mapView.findViewById(Integer.parseInt("1")) != null) {
+            // Get the button view
+            View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+            // and next place it, on bottom right (as Google Maps app)
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
+                    locationButton.getLayoutParams();
+            // position on right bottom
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+            layoutParams.setMargins(0, 0, 30, 30);
+        }
 
         // blue dot
         if (locationPermissionGranted) {

@@ -4,17 +4,31 @@
     android:layout_height="match_parent"
     tools:context="playlagom.sharelocation.DisplayActivity">
 
+
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:map="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map"
-        android:layout_below="@+id/llMenu"
+        android:layout_above="@+id/llMenu"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="playlagom.sharelocation.DisplayActivity" />
 
+    <!-- ADS: https://developers.google.com/admob/android/banner -->
+    <!-- ADD real: ad unit ID: ca-app-pub-6882836186513794/5708564123 -->
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+    </com.google.android.gms.ads.AdView>
+
     <LinearLayout
+        android:layout_alignParentBottom="true"
         android:padding="10dp"
         android:id="@+id/llMenu"
         android:orientation="horizontal"
@@ -90,10 +104,10 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_marginLeft="65dp"
+        android:layout_above="@+id/llMenu"
         android:padding="7dp"
-        android:text="Share Location"
+        android:text=""
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textSize="16sp" />
 
