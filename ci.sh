@@ -72,7 +72,7 @@ echo
 ##
 
 
-git commit -m "📗 UPLOAD Debugger importance"
+git commit -m "📗 UPLOAD 7h later eureka!"
 
 ############
 # Step: 05 #

@@ -151,36 +151,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     Log.d(TAG, "BEFORE CALLING...DEBUGGER----- isNameProvided = " + isNameProvided);
                     isNameProvided(firebaseAuth.getCurrentUser().getUid());
                     Log.d(TAG, "AFTER CALLING...DEBUGGER----- isNameProvided = " + isNameProvided);
-
-                    // TODO: 4/15/2018      NO need THREAD
-//                    final Thread thread2 = new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            // TODO: 4/15/2018      WAITING when db async response event done
-//                            while (isNameProvided){
-//                                finish();
-//                                startActivity(new Intent(LoginActivity.this, DisplayActivity.class));
-//                                Toast.makeText(LoginActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
-//                                progressDialog.dismiss();
-//                                isNameProvided = false;
-//                                try {
-//                                    Log.d(TAG, "onComplete: DEBUGGER----- Waiting...");
-////                                Log.d("MainActivity", "=== try ====");
-//                                    Thread.sleep(100);
-//                                } catch (InterruptedException e) {
-//                                    e.printStackTrace();
-//                                } finally {
-////                                Log.d("MainActivity", "=== finally ====");
-////                                Intent intent = new Intent(LoginActivity.this, DisplayActivity.class);
-////                                startActivity(intent);
-////                                finish();
-//                                }
-//                            }
-//
-//
-//                        }
-//                    });
-//                    thread2.start();
                 } else {
                     progressDialog.dismiss();
                     if (counter > 3) {
@@ -197,16 +167,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             }
 
             // anonymous method: isNameProvided
+            // single event support: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
             private void isNameProvided(String currentUser) {
-
-                // TODO: 4/15/2018 WORKING
-//                try{
-//                    Log.d(TAG, "onDataChange: ------DEBUGGER------ USERID: " + currentUser);
-//                } catch (Exception e) {
-//                    Log.d(TAG, "onDataChange: DEBUGGER, EXCEPTION");
-//                }
-
-//                ref.child("users").child("" + currentUser).addListenerForSingleValueEvent(new ValueEventListener() {
                 ref.child("users").child("" + currentUser)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -214,30 +176,24 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         User user = dataSnapshot.getValue(User.class);
 
                         if (dataSnapshot.getChildrenCount() == 2) {
+                            progressDialog.dismiss();
+                            // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
+                            // Never give up! Just keep standing...!!!
+                            // Now, User will see map first but to interact with the map, user must have to input name
+                            // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
+
+                            // CODE is READY to CHANGE
+                            Toast.makeText(getApplicationContext(), "MOVE to display activity And TAKE name input from there", Toast.LENGTH_LONG).show();
+
+                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                        } else if (dataSnapshot.getChildrenCount() == 3) {
 
                             finish();
                             startActivity(new Intent(LoginActivity.this, DisplayActivity.class));
                             Toast.makeText(LoginActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
                             progressDialog.dismiss();
 
-                            isNameProvided = true;
-                            Log.d(TAG, "----------DEBUGGER-----isNameProvided = " + isNameProvided);
-//                            Toast.makeText(getApplicationContext(), "2 child", Toast.LENGTH_LONG).show();
-                            try {
-                                // TODO: 4/15/2018 DEBUGGER: 2
-                                Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                            } catch (Exception e) {
-                                Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided: childCount 2: EXCEPTION");
-                            }
-                        } else if (dataSnapshot.getChildrenCount() == 3) {
-                            isNameProvided = true;
-                            Log.d(TAG, "----------DEBUGGER-----isNameProvided = " + isNameProvided);
-                            try {
-                                // TODO: 4/15/2018 DEBUGGER: 1
-                                Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                            } catch (Exception e) {
-                                Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided: EXCEPTION");
-                            }
+                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
                         }
                     }
 
@@ -246,7 +202,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                     }
                 });
-                Log.d(TAG, "isNameProvided: DEBUGGER----- isNameProvided: " + isNameProvided);
             }
         });
     }
