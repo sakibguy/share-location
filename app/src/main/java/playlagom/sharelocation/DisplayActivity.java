@@ -17,7 +17,9 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,6 +73,7 @@ public class DisplayActivity extends FragmentActivity implements
 
     // Firebase attributes
     FirebaseAuth firebaseAuth;
+    DatabaseReference databaseReference;
 
     @Override
     protected void onRestart() {
@@ -119,7 +122,6 @@ public class DisplayActivity extends FragmentActivity implements
             Toast.makeText(this, "Please enable GPS location services", Toast.LENGTH_LONG).show();
             finish();
         }
-        checkLocationPermission();
 
         // Init: AdMob app ID
 //        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
@@ -132,6 +134,9 @@ public class DisplayActivity extends FragmentActivity implements
 
         // Init firebase dependency
         firebaseAuth = FirebaseAuth.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+
+        checkLocationPermission();
     }
 
     private void checkLocationPermission() {
@@ -142,6 +147,12 @@ public class DisplayActivity extends FragmentActivity implements
         if (permission == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
             startTrackerService();
+            // As location permission granted then set NAME input for <= v1.6.0 users through checking with the db.
+            // TODO: 4/16/2018 SET pop up window to take name for <= v1.6.0 version users not for >= 1.7.0 users. Upto v1.6.0 there was no NAME field at sign up form. To give better UX, at v1.7.0 here added NAME field at sign up form.
+
+            // TODO: 4/15/2018      CODE is ready to CHANGE
+            // CHECK isNameProvided. Basically popup will not show 1st time where will show during running app 2nd time.
+            isNameProvided(firebaseAuth.getCurrentUser().getUid());
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this,
@@ -292,22 +303,11 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-//    private void subscribeToUpdates() {
-//        // Functionality coming next step
-//    }
-//
-//    private void setMarker(DataSnapshot dataSnapshot) {
-//        // Functionality coming next step
-//    }
-
     List<User> userList = new ArrayList<>();
 
     int countOnDataChange = 1;
     private void subscribeToUpdates() {
-        // Sol: 1
-
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-//        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
 
         Log.d(TAG, "------inside--- subscribeToUpdates();");
         ref.addChildEventListener(new ChildEventListener() {
@@ -342,118 +342,6 @@ public class DisplayActivity extends FragmentActivity implements
                 Log.d(TAG, "Failed to read value.", error.toException());
             }
         });
-
-        // Sol: 2
-////        FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
-////        DatabaseReference databaseReference =  mFirebaseDatabase.getReference();
-//        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-//        databaseReference.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//
-//                int i = 1;
-//                for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
-//                    setActiveMarker(childDataSnapshot);
-//                    Log.d(TAG, "onDataChange: ............." + i++ + childDataSnapshot.getValue());
-//                    Log.v(TAG,".........KEY: "+ childDataSnapshot.getKey()); //displays the key for the node
-//                    Log.v(TAG,"............"+ childDataSnapshot.child("users").getValue());   //gives the value for given keyname
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//
-//            }
-//        });
-
-
-        // Sol 3: DONE (Analysis) RESULT: Need Join operation, see from next section
-        /*
-      FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
-      DatabaseReference databaseReference =  mFirebaseDatabase.getReference();
-//        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-        databaseReference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.d(TAG, countOnDataChange++ + " onDataChange:...");
-
-                for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
-                    setActiveMarker(childDataSnapshot);
-
-//                    Log.d(TAG, "onDataChange: ............." + i++ + childDataSnapshot.getValue());
-//                    Log.v(TAG,".........KEY: "+ childDataSnapshot.getKey() + "\n"); //displays the key for the node
-//                    Log.v(TAG,".........KEY:child: "+ childDataSnapshot.child(childDataSnapshot.getKey()).getValue()); //displays the key for the node
-//                    Log.v(TAG,"............"+ childDataSnapshot.child("users").getValue());   //gives the value for given keyname
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-        */
-
-        /*
-
-        // Sol: 4
-        // any way you managed to go the node that has the 'grp_key'
-        DatabaseReference MembersRef = FirebaseDatabase.getInstance()
-                .getReference()
-                .child("locations");
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-        MembersRef.addValueEventListener( new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                            // Get push id value.
-                            String key = child.getKey();
-
-                            // HERE WHAT CORRESPONDS TO JOIN
-                            DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
-                                    .child("users").child(key);
-                            chatGroupRef.addValueEventListener(
-                                    new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot childDataSnapshot) {
-                                            // repeat!!
-                                            Log.d(TAG, "JOIN: ... " + i++ + childDataSnapshot.getValue());
-                                            User user = childDataSnapshot.getValue(User.class);
-                                            if (user != null) userList.add(user);
-
-                                            // TODO: DEBUGGER 4/12/2018
-//                                                    try{
-//                                                        Log.d(TAG, "setActiveMarker: ..... " + user.getEmail());
-//                                                    } catch (Exception e){
-//                                                        Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
-//                                                    }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    }
-                            );
-                            setActiveMarker(child, userList);
-                            userList.clear();
-                        }
-                        // TODO: DEBUGGER 4/12/2018
-//                        try{
-//                            for (int j = 0; j < userList.size(); j++) {
-//                                Log.d(TAG, "setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
-//                            }
-//                        } catch (Exception e){
-//                            Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
-//                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                }
-        );
-        */
     }
 
     DataSnapshot dataSnapshotGlobal;
@@ -512,7 +400,7 @@ public class DisplayActivity extends FragmentActivity implements
 
                             // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
                             if (!mMarkers.containsKey(keyGlobal)) {
-                                mMarkers.put(keyGlobal, mMap.addMarker(new MarkerOptions().title("" + user.getEmail() + "").position(location).snippet("dis, time, address, cell, msg")));
+                                mMarkers.put(keyGlobal, mMap.addMarker(new MarkerOptions().title("" + user.getName() + "").position(location).snippet("dis, time, address, cell, msg")));
                             } else {
                                 mMarkers.get(keyGlobal).setPosition(location);
                             }
@@ -590,9 +478,6 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     private void setInactiveMarker() {
-//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-//        String userId = getString(R.string.transport_id);
-
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         String userId = currentUser.getUid();
@@ -656,5 +541,102 @@ public class DisplayActivity extends FragmentActivity implements
                     Toast.LENGTH_SHORT).show();
         }
         return false;
+    }
+
+
+    // anonymous method: isNameProvided
+    // single event support: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
+    private void isNameProvided(String currentUser) {
+        databaseReference.child("users").child("" + currentUser)
+        .addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+
+                if (dataSnapshot.getChildrenCount() == 2) {
+                    // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
+                    // Never give up! Just keep standing...!!!
+                    // Now, User will see map first but to interact with the map, user must have to input name
+                    // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
+
+                    // CODE is READY to CHANGE
+                    // User friendly Toast
+                    Toast.makeText(getApplicationContext(),
+                            "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
+                    // DEBUGGER
+                    Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
+                            + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+
+                    // Take Input through pop up window and save to db
+                    // step 1:  MAKE pop up window to take name input
+                    // call method
+                    popUpForName(dataSnapshot.getKey());
+                } else if (dataSnapshot.getChildrenCount() == 3) {
+                    Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
+                    Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    // SUPPORT from: https://stackoverflow.com/questions/10903754/input-text-dialog-android
+    private String name = "";
+    // SUPPORT from: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
+    private void popUpForName(final String key) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("You name?");
+
+        final EditText input = new EditText(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("SUBMIT", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // do something here on SUBMIT
+                name = input.getText().toString();
+                Toast.makeText(getApplicationContext(), "Thank you!  " + name, Toast.LENGTH_SHORT).show();
+                final String msg = "Congratulation! Your name saved";
+
+                // setp 2:  Store name into db
+                databaseReference.child("users").child(key).child("name").setValue(name);
+
+                // Make sure user
+                databaseReference.child("users").child(key)
+                .addListenerForSingleValueEvent( new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
+                        Log.d(TAG, "onDataChange: DEBUGGER----- name: " + user.getName());
+
+                        // ERROR: user.getName() == name
+                        if (user.getName().equals(name)) {
+                            Toast.makeText(getApplicationContext(), "" + msg, Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 }

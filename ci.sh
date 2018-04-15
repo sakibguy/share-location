@@ -67,12 +67,13 @@ echo
 ## 📗 UPLOAD cr1.5.0
 ## Dependencies: multiple markers + firebase crud
 
-# 2018.Apr14
+# 2018.Apr15
 ## 📗 UPLOAD cr1.6.0
-##
+## 📗 UPLOAD DEBUGGER Debugger importance
+## 📗 UPLOAD 7h later eureka!
+## 📗 UPLOAD cr2018.Apr15.1.7.0
 
-
-git commit -m "📗 UPLOAD 7h later eureka!"
+git commit -m "📗 UPLOAD cr2018.Apr15.1.7.0"
 
 ############
 # Step: 05 #

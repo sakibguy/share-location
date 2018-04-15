@@ -145,12 +145,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                     // Login successful and move to next page
-
-                    // TODO: 4/15/2018      CODE is ready to CHANGE
-                    // CHECK isNameProvided
-                    Log.d(TAG, "BEFORE CALLING...DEBUGGER----- isNameProvided = " + isNameProvided);
-                    isNameProvided(firebaseAuth.getCurrentUser().getUid());
-                    Log.d(TAG, "AFTER CALLING...DEBUGGER----- isNameProvided = " + isNameProvided);
+                    finish();
+                    startActivity(new Intent(LoginActivity.this, DisplayActivity.class));
+                    Toast.makeText(LoginActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
                 } else {
                     progressDialog.dismiss();
                     if (counter > 3) {
@@ -164,44 +162,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     }
                     counter++;
                 }
-            }
-
-            // anonymous method: isNameProvided
-            // single event support: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
-            private void isNameProvided(String currentUser) {
-                ref.child("users").child("" + currentUser)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
-
-                        if (dataSnapshot.getChildrenCount() == 2) {
-                            progressDialog.dismiss();
-                            // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
-                            // Never give up! Just keep standing...!!!
-                            // Now, User will see map first but to interact with the map, user must have to input name
-                            // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
-
-                            // CODE is READY to CHANGE
-                            Toast.makeText(getApplicationContext(), "MOVE to display activity And TAKE name input from there", Toast.LENGTH_LONG).show();
-
-                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                        } else if (dataSnapshot.getChildrenCount() == 3) {
-
-                            finish();
-                            startActivity(new Intent(LoginActivity.this, DisplayActivity.class));
-                            Toast.makeText(LoginActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
-                            progressDialog.dismiss();
-
-                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
             }
         });
     }
