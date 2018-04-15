@@ -84,8 +84,6 @@ public class DisplayActivity extends FragmentActivity implements
     private AdView mAdView;
     View mapView;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,12 +100,13 @@ public class DisplayActivity extends FragmentActivity implements
         ivSelectedUser = findViewById(R.id.ivSelectedUser);
         ivSelectedUser.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
 
-        TextView tvLogout = findViewById(R.id.tvLogout);
-        tvLogout.setOnTouchListener(new View.OnTouchListener() {
+        ImageView ivLogout = findViewById(R.id.ivLogout);
+        ivLogout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 FirebaseAuth.getInstance().signOut();
                 Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "onTouch: DEBUGGER-----Logout icon");
                 startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
                 finish();
                 return false;
@@ -315,7 +314,7 @@ public class DisplayActivity extends FragmentActivity implements
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
                 if (controllerBitClicked) {
-                    Log.d(TAG, "------inside--- onChildAdded");
+                    Log.d(TAG, "------subscribeToUpdates()--- onChildAdded");
                     setActiveMarker(dataSnapshot);
                 }
             }
@@ -323,7 +322,7 @@ public class DisplayActivity extends FragmentActivity implements
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
                 if (controllerBitClicked) {
-                    Log.d(TAG, "------inside--- onChildChanged");
+                    Log.d(TAG, "------subscribeToUpdates()--- onChildChanged");
                     setActiveMarker(dataSnapshot);
                 }
             }
@@ -335,6 +334,7 @@ public class DisplayActivity extends FragmentActivity implements
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
+
             }
 
             @Override
@@ -455,6 +455,7 @@ public class DisplayActivity extends FragmentActivity implements
         );
         */
     }
+
     DataSnapshot dataSnapshotGlobal;
     String keyGlobal;
     int i = 1;
@@ -556,7 +557,7 @@ public class DisplayActivity extends FragmentActivity implements
 //            mMarkers.get(key).setPosition(location);
 //        }
 
-        // TODO: 4/13/2018 READ must the comment below
+        // TODO: 4/13/2018      READ the comment below (mandatory)
         // Motivation from: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
         // REMOVING code below brings me what exactly i want!!!
         // Understanding API + framework is highly important.
@@ -571,7 +572,7 @@ public class DisplayActivity extends FragmentActivity implements
 
     private boolean controllerBitClicked = false;
     public void onClickMyCircle(View view) {
-        Log.d(TAG, "------onClickMyCircle------");
+        Log.d(TAG, "onClickMyCircle: ");
         if (controllerBitClicked) {
             // HIDE LIVE FRIENDS
             controllerBitClicked = false;
@@ -643,8 +644,7 @@ public class DisplayActivity extends FragmentActivity implements
     public boolean onMarkerClick(Marker marker) {
         // Retrieve the data from the marker.
         Integer clickCount = (Integer) marker.getTag();
-        System.out.println("---------Marker clicked---------");
-        System.out.println(clickCount + "-------------Retrieve the data from the marker.");
+        Log.d(TAG, "onMarkerClick: ");
 
         // Check if a click count was set, then display the click count.
         if (clickCount != null) {

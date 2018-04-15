@@ -32,7 +32,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private static final String TAG = "SignUpActivity";
     Button btnSignUp;
-    EditText etSignUpEmail, etSignUpPassword;
+    EditText etSignUpEmail, etSignUpPassword, etName;
     TextView tvSignIn;
 
     ProgressDialog progressDialog;
@@ -61,6 +61,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
         etSignUpEmail = findViewById(R.id.etSignUpEmail);
         etSignUpPassword = findViewById(R.id.etSignUpPassword);
+        etName = findViewById(R.id.etName);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvSignIn = findViewById(R.id.tvSignIn);
 
@@ -100,10 +101,17 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private void registerUser() {
         // Register User
+        final String name = etName.getText().toString().trim();
         final String email = etSignUpEmail.getText().toString().trim();
         final String password = etSignUpPassword.getText().toString().trim();
 
-        // Form validation part: Start
+        // START: form validation
+        if (TextUtils.isEmpty(name)) {
+            Toast.makeText(this, "Please enter your name", Toast.LENGTH_LONG).show();
+            etName.setError("Name is required");
+            etName.requestFocus();
+            return;
+        }
         if (TextUtils.isEmpty(email)) {
             Toast.makeText(this, "Please enter your email", Toast.LENGTH_LONG).show();
             etSignUpEmail.setError("Email is required");
@@ -125,7 +133,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             etSignUpPassword.setError("Minimum length of pass should be 6");
             etSignUpPassword.requestFocus();
             return;
-        } // Form validation part: End
+        } // END: form validation
 
         progressDialog.setMessage("Registering user...");
         progressDialog.show();
@@ -137,6 +145,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     Toast.makeText(SignUpActivity.this, "Registration Successful", Toast.LENGTH_LONG).show();
                     FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
+                    databaseReference.child(currentUser.getUid()).child("name").setValue(name);
                     databaseReference.child(currentUser.getUid()).child("email").setValue(email);
                     databaseReference.child(currentUser.getUid()).child("password").setValue(password);
 

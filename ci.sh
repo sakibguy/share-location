@@ -67,7 +67,12 @@ echo
 ## 📗 UPLOAD cr1.5.0
 ## Dependencies: multiple markers + firebase crud
 
-git commit -m "📗 UPLOAD cr1.6.0"
+# 2018.Apr14
+## 📗 UPLOAD cr1.6.0
+##
+
+
+git commit -m "📗 UPLOAD Debugger importance"
 
 ############
 # Step: 05 #
@@ -78,7 +83,6 @@ echo
 echo [ Done ]  checking remote origin.
 echo
 git remote -v
-
 
 ############
 # Step: 06 #

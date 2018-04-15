@@ -7,18 +7,32 @@
     tools:context="playlagom.sharelocation.auth.SignUpActivity">
 
     <TextView
+        android:id="@+id/tvUserRegistration"
         android:layout_centerHorizontal="true"
-        android:layout_above="@+id/etSignUpEmail"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginBottom="80dp"
+        android:layout_marginTop="50dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="60dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="User Registration"/>
 
+    <EditText
+        android:layout_below="@+id/tvUserRegistration"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:hint="Name"
+        android:id="@+id/etName" />
 
     <EditText
-        android:layout_margin="15dp"
+        android:layout_below="@+id/etName"
+
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
         android:layout_centerVertical="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
