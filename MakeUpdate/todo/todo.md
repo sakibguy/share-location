@@ -12,17 +12,13 @@ Follow Pattern
 
 Working Version
 ---------------
-> v1.7.0
-1. 2018.Apr15 **Done:** **Icon**
-   1. **ADD** logout icon at bottom
-1. 2018.Apr15 **DOING:** **SIGN UP**
-   1. **ADD** name field and **MAKE** functional 
-2. 2018.Apr15 **TODO:** **UPDATE Profile**
-   1. **EDIT** profile option
-   2. **ADD** image option
-3. 2018.Apr15 **TODO:** **Job**
-   1. **EDIT** key
-   2. **ADD** key
+> 2018.Apr15.1.7.0
+1. **Done:** **Icon**
+   1. **ADDED** functional logout icon at bottom
+1. **Done:** **SIGN UP**
+   1. **ADDED** name field and **MADE** functional 
+2. **Done:** **UPDATE** look and feel
+   1. **EDIT** Name showing
 
 Previous Versions
 -----------------

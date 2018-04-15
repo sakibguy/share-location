@@ -73,7 +73,7 @@ echo
 ## 📗 UPLOAD 7h later eureka!
 ## 📗 UPLOAD cr2018.Apr15.1.7.0
 
-git commit -m "📗 UPLOAD cr2018.Apr15.1.7.0"
+git commit -m "📗 UPLOAD changes for doc"
 
 ############
 # Step: 05 #
