@@ -6,8 +6,8 @@ android {
         applicationId "playlagom.sharelocation"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 170
-        versionName "1.7.0"
+        versionCode 180
+        versionName "1.8.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -32,5 +32,6 @@ dependencies {
     // ADS: https://developers.google.com/admob/android/banner
     compile 'com.google.android.gms:play-services-ads:11.2.0'
 }
+
 
 apply plugin: 'com.google.gms.google-services'

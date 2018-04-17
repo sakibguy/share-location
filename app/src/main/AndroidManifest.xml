@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -30,7 +30,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name="playlagom.sharelocation.MainActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,16 +38,17 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="playlagom.sharelocation.DisplayActivity"
+            android:name=".DisplayActivity"
             android:label="@string/title_activity_display" />
-        <activity android:name="playlagom.sharelocation.auth.SignUpActivity" />
-        <activity android:name="playlagom.sharelocation.auth.LoginActivity" />
+        <activity android:name=".auth.SignUpActivity" />
+        <activity android:name=".auth.LoginActivity" />
 
         <service
-            android:name="playlagom.sharelocation.TrackerService"
+            android:name=".TrackerService"
             android:enabled="true"
             android:exported="true" />
 
+        <activity android:name=".StreetViewPanoramaBasicDemoActivity"></activity>
     </application>
 
 </manifest>

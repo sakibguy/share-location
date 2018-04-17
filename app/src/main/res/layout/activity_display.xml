@@ -69,16 +69,5 @@
             android:src="@drawable/current_user"/>
 
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="65dp"
-        android:layout_above="@+id/llMenu"
-        android:padding="7dp"
-        android:text=""
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textSize="16sp" />
-
 </RelativeLayout>
 

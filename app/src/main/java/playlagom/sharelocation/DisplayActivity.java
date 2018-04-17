@@ -57,6 +57,7 @@ import playlagom.sharelocation.models.UserAndLocation;
 public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMarkerClickListener,
         GoogleMap.OnMyLocationButtonClickListener,
+        GoogleMap.OnInfoWindowClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
     private static final String TAG = DisplayActivity.class.getSimpleName();
@@ -267,6 +268,10 @@ public class DisplayActivity extends FragmentActivity implements
             mMap.setMyLocationEnabled(true);
             mMap.setOnMyLocationButtonClickListener(this);
         }
+
+        // Supported by: https://developers.google.com/maps/documentation/android-api/infowindows
+        // Set a listener for info window events.
+        mMap.setOnInfoWindowClickListener(this);
     }
 
     @Override
@@ -347,7 +352,7 @@ public class DisplayActivity extends FragmentActivity implements
     DataSnapshot dataSnapshotGlobal;
     String keyGlobal;
     int i = 1;
-//    private void setActiveMarker(DataSnapshot dataSnapshot, List<User> userList) {
+
     private void setActiveMarker(DataSnapshot dataSnapshot) {
         dataSnapshotGlobal = dataSnapshot;
         // When a location update is received, put or update
@@ -400,7 +405,9 @@ public class DisplayActivity extends FragmentActivity implements
 
                             // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
                             if (!mMarkers.containsKey(keyGlobal)) {
-                                mMarkers.put(keyGlobal, mMap.addMarker(new MarkerOptions().title("" + user.getName() + "").position(location).snippet("dis, time, address, cell, msg")));
+                                Marker marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "").position(location).snippet("dis, time, address, cell, msg"));
+                                mMarkers.put(keyGlobal, marker);
+                                marker.showInfoWindow();
                             } else {
                                 mMarkers.get(keyGlobal).setPosition(location);
                             }
@@ -638,5 +645,19 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
         builder.show();
+    }
+
+    public static double lat;
+    public static double lang;
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        // TODO SUPPORTED by: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
+        marker.hideInfoWindow();
+        lat = marker.getPosition().latitude;
+        lang =marker.getPosition().longitude;
+        String name = marker.getTitle();
+        Toast.makeText(getApplicationContext(), "" + name + "'s Current Location", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
     }
 }

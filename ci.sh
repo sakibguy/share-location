@@ -73,7 +73,11 @@ echo
 ## 📗 UPLOAD cr2018.Apr15.1.7.0
 ## 📗 UPLOAD changes for doc
 
-git commit -m "UPLOAD Alpha:marketing rule"
+# 2018.Apr18
+## UPLOAD Alpha:marketing rule
+## UPLOAD cr2018.Apr18.1.8.0
+
+git commit -m "UPLOAD cr2018.Apr18.1.8.0"
 
 ############
 # Step: 05 #
