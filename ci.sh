@@ -1,5 +1,4 @@
-﻿#!/usr/bin/env bash
-##################################################
+﻿##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
 ### Target : Tool dev			       ###
@@ -72,8 +71,9 @@ echo
 ## 📗 UPLOAD DEBUGGER Debugger importance
 ## 📗 UPLOAD 7h later eureka!
 ## 📗 UPLOAD cr2018.Apr15.1.7.0
+## 📗 UPLOAD changes for doc
 
-git commit -m "📗 UPLOAD changes for doc"
+git commit -m "UPLOAD Alpha:marketing rule"
 
 ############
 # Step: 05 #
