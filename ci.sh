@@ -76,8 +76,10 @@ echo
 # 2018.Apr18
 ## UPLOAD Alpha:marketing rule
 ## 💚 UPLOAD cr2018.Apr18.1.8.0
+## UPLOAD changes
+## UPLOAD screenshots, pre-launch report
 
-git commit -m "UPLOAD changes"
+git commit -m "UPLOAD screenshots, pre-launch report"
 
 ############
 # Step: 05 #
