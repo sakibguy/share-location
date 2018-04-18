@@ -79,7 +79,7 @@ echo
 ## UPLOAD changes
 ## UPLOAD screenshots, pre-launch report
 
-git commit -m "UPLOAD screenshots, pre-launch report"
+git commit -m "UPLOAD todo for 2018.Apr18.1.9.0"
 
 ############
 # Step: 05 #
