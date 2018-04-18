@@ -78,8 +78,9 @@ echo
 ## 💚 UPLOAD cr2018.Apr18.1.8.0
 ## UPLOAD changes
 ## UPLOAD screenshots, pre-launch report
+## UPLOAD todo for 2018.Apr18.1.9.0
 
-git commit -m "UPLOAD todo for 2018.Apr18.1.9.0"
+git commit -m "💚 UPLOAD cr2018.Apr18.1.9.0"
 
 ############
 # Step: 05 #

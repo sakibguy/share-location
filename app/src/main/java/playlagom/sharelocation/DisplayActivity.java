@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.location.LocationManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -70,6 +71,8 @@ public class DisplayActivity extends FragmentActivity implements
     private boolean insideShouldShow = false;
 
     private ImageView ivSelectedUser;
+    private ImageView ivMyCircle;
+    private ImageView ivDanger;
     private boolean locationPermissionGranted = false;
 
     // Firebase attributes
@@ -84,9 +87,11 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-    private ImageView ivMyCircle;
     private AdView mAdView;
     View mapView;
+
+    // Dander sound alert
+    private MediaPlayer dangerSound;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,8 +103,13 @@ public class DisplayActivity extends FragmentActivity implements
         mapView = mapFragment.getView();
         mapFragment.getMapAsync(this);
         // wire xml components with java object
-        // My Circle
+        // icons: live friends + danger
         ivMyCircle = findViewById(R.id.ivMyCircle);
+        ivDanger = findViewById(R.id.ivDanger);
+
+        // Sounds: SUPPORTED by: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
+        dangerSound = MediaPlayer.create(this, R.raw.siren_alert_1);
+
         // selected user
         ivSelectedUser = findViewById(R.id.ivSelectedUser);
         ivSelectedUser.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
@@ -659,5 +669,67 @@ public class DisplayActivity extends FragmentActivity implements
         String name = marker.getTitle();
         Toast.makeText(getApplicationContext(), "" + name + "'s Current Location", Toast.LENGTH_SHORT).show();
         startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+    }
+
+    public static boolean dangerStatus = false;
+    // SUPPORTED by: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
+    public void onClickDanger(View view) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("DANGER !!!");
+
+        // SET danger control: Logic
+        if (dangerStatus == false) {
+            builder.setMessage("Are you in Danger?");
+
+            builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dangerStatus = true;
+                    Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
+                    ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run));
+
+                    dangerSound.start();
+                    // TODO: 4/18/2018: UPDATE db
+
+                    dialog.dismiss();
+                }
+            });
+
+            builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
+                    // Do nothing
+                    dialog.dismiss();
+                }
+            });
+        } else if (dangerStatus){
+            builder.setMessage("Are you OUT OF Danger?");
+
+            builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dangerStatus = false;
+                    Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
+                    ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon));
+
+                    // TODO: 4/18/2018: UPDATE db
+
+
+                    dialog.dismiss();
+                }
+            });
+
+            builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
+                    // Do nothing
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 }

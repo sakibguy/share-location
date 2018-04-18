@@ -14,14 +14,17 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr18.1.9.0
-1. TODO: **ADD** danger icon 
+> 2018.Apr18.1.10.0
+4. TODO: **NOTIFY** live users
 2. TODO: **MAKE** marker animation
-3. TODO: **ADD** danger sound
-4. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+5. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 
 Previous Versions
 -----------------
+> 2018.Apr18.1.9.0
+1. **ADDED** danger icon and client functionality
+2. **ADDED** danger sound and client functionality
+
 > 2018.Apr15.1.8.0
 1. **ADDED** streetview for better UX 
 2. **AUTO SHOWING** users info at the marker 
