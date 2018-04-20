@@ -23,20 +23,25 @@ import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback;
 import com.google.android.gms.maps.StreetViewPanorama;
 import com.google.android.gms.maps.SupportStreetViewPanoramaFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.StreetViewPanoramaLocation;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import playlagom.sharelocation.R;
 
 /**
  * This shows how to create a simple activity with streetview
  */
-public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity {
+public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity{
+    private static final String TAG = "StreetViewPanoramaBasic";
     private AdView mAdView;
     // George St, Sydney
-    private static final LatLng SYDNEY = new LatLng(DisplayActivity.lat, DisplayActivity.lang);
+
+    LatLng location;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -44,6 +49,7 @@ public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_street_view_panorama_basic_demo);
+        location = new LatLng(DisplayActivity.lat, DisplayActivity.lang);
 
         SupportStreetViewPanoramaFragment streetViewPanoramaFragment =
                 (SupportStreetViewPanoramaFragment)
@@ -54,9 +60,22 @@ public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity {
                     public void onStreetViewPanoramaReady(StreetViewPanorama panorama) {
                         // Only set the panorama to SYDNEY on startup (when no panoramas have been
                         // loaded which is when the savedInstanceState is null).
+
                         if (savedInstanceState == null) {
-                            panorama.setPosition(SYDNEY);
+                            panorama.setPosition(location);
                         }
+                        // SUPPORT: https://stackoverflow.com/questions/23783819/android-streetview-check-if-there-is-any-view-for-given-location
+                        panorama.setOnStreetViewPanoramaChangeListener(new StreetViewPanorama.OnStreetViewPanoramaChangeListener() {
+                            @Override
+                            public void onStreetViewPanoramaChange(StreetViewPanoramaLocation streetViewPanoramaLocation) {
+                                if (streetViewPanoramaLocation != null && streetViewPanoramaLocation.links != null) {
+                                    // location is present
+                                } else {
+                                    // location not available
+                                    Toast.makeText(getApplicationContext(), "No Satellite Image Found", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
                     }
                 });
 
@@ -68,5 +87,7 @@ public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity {
         mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+
+        Log.d(TAG, "onCreate: DEBUGGER:------");
     }
 }

@@ -74,6 +74,7 @@ public class DisplayActivity extends FragmentActivity implements
     private ImageView ivSelectedUser;
     private ImageView ivMyCircle;
     private ImageView ivDanger;
+    private ImageView ivPicture;
     TextView tvPosition, tvPoint;
     private boolean locationPermissionGranted = false;
 
@@ -87,6 +88,7 @@ public class DisplayActivity extends FragmentActivity implements
         if (taskCompleted) {
             finish();
         }
+        Log.d(TAG, "onRestart: DEBUGGER:------");
     }
 
     private AdView mAdView;
@@ -109,9 +111,13 @@ public class DisplayActivity extends FragmentActivity implements
         // icons: live friends + danger
         ivMyCircle = findViewById(R.id.ivMyCircle);
         ivDanger = findViewById(R.id.ivDanger);
+        ivPicture = findViewById(R.id.ivPicture);
+
         // Camera position
         tvPosition = findViewById(R.id.tvPosition);
+        tvPosition.setVisibility(View.INVISIBLE);
         tvPoint = findViewById(R.id.tvPoint);
+        tvPoint.setVisibility(View.INVISIBLE);
 
         // Sounds: SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
         dangerSound = MediaPlayer.create(this, R.raw.siren_alert_1);
@@ -154,6 +160,7 @@ public class DisplayActivity extends FragmentActivity implements
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
         checkLocationPermission();
+        Log.d(TAG, "onCreate: DEBUGGER:------");
     }
 
     // SET Margin dynamically  for any view (generic way)
@@ -265,6 +272,7 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
+    LatLng latLng;
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
@@ -301,7 +309,7 @@ public class DisplayActivity extends FragmentActivity implements
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
-                LatLng latLng = mMap.getCameraPosition().target;
+                latLng = mMap.getCameraPosition().target;
 
                 // TODO: 4/20/2018 RENDERING: You cannot use the width/height/getMeasuredWidth/getMeasuredHeight on a View before the system renders it (typically from onCreate/onResume).
                 // SUPPORT 1: https://stackoverflow.com/questions/42257090/android-google-maps-api-calculate-width-and-height-in-pixel-of-the-full-map
@@ -316,7 +324,14 @@ public class DisplayActivity extends FragmentActivity implements
 
                 setMargins(tvPoint, width/2, height/2, 0, 0);
                 // DEBUGGER: tvPosition.setText(" " + height + ", " + width);
-                tvPosition.setText("" + latLng.latitude + ", " + latLng.longitude);
+                // tvPosition.setText("" + latLng.latitude + ", " + latLng.longitude);
+
+                lat = latLng.latitude;
+                lang = latLng.longitude;
+
+                if (pictureStatus) {
+                    startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+                }
             }
         });
     }
@@ -573,10 +588,6 @@ public class DisplayActivity extends FragmentActivity implements
         zoomValue = mMap.getCameraPosition().zoom;
     }
 
-    public void onClickNotification(View view) {
-        Toast.makeText(getApplicationContext(), "Notification clicked", Toast.LENGTH_SHORT).show();
-    }
-
     /** Called when the user clicks a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -697,7 +708,7 @@ public class DisplayActivity extends FragmentActivity implements
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        // TODO SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
+        // SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
         marker.hideInfoWindow();
         lat = marker.getPosition().latitude;
         lang =marker.getPosition().longitude;
@@ -766,5 +777,58 @@ public class DisplayActivity extends FragmentActivity implements
 
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    boolean pictureStatus = false;
+    public void onClickPicture(View view) {
+
+        if (!pictureStatus) {
+            pictureStatus = true;
+            // SUPPORT: https://stackoverflow.com/questions/5756136/how-to-hide-a-view-programmatically
+            tvPoint.setVisibility(View.VISIBLE);
+
+            Toast.makeText(getApplicationContext(), "Picture enable", Toast.LENGTH_SHORT).show();
+            ivPicture.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_photo_black_24dp)));
+
+        } else {
+            pictureStatus = false;
+            tvPoint.setVisibility(View.INVISIBLE);
+
+            Toast.makeText(getApplicationContext(), "Picture disable", Toast.LENGTH_SHORT).show();
+            ivPicture.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.image_2)));
+        }
+
+
+    }
+
+    // SUPPORT: https://stackoverflow.com/questions/19484493/activity-life-cycle-android
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart: DEBUGGER:------");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: DEBUGGER:------");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause: DEBUGGER:------");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop: DEBUGGER:------");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy: DEBUGGER:------");
     }
 }

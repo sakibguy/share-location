@@ -14,16 +14,21 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr20.1.10.0
-1. **ADDED** feature, camera focus point (black box)
-2. TODO: **ADD** feature: Send feedback
-3. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
-4. TODO: **NOTIFY** live users 
-5. TODO: **MAKE** marker animation
-6. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+> 2018.Apr22.1.11.0
+1. TODO: **ADD** feature: Send feedback
+2. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+3. TODO: **NOTIFY** live users 
+4. TODO: **MAKE** marker animation
+5. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 
 Previous Versions
 -----------------
+
+> 2018.Apr21.1.10.0
+1. **SOLVED** issue, different marker's same location image issue.
+2. **ADDED** feature, camera focus point (black box)
+3. **ADDED** feature, location picture icon with user-friendly functionality
+
 > 2018.Apr18.1.9.0
 1. **ADDED** danger icon and client functionality
 2. **ADDED** danger sound and client functionality
