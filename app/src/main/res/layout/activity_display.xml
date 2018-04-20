@@ -74,7 +74,22 @@
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:src="@drawable/ic_exit_to_app_black_24dp"/>
-
     </LinearLayout>
+
+    <TextView
+        android:background="#fff"
+        android:id="@+id/tvPosition"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Position"/>
+
+    <TextView
+        android:id="@+id/tvPoint"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="#000" />
+
 </RelativeLayout>
 

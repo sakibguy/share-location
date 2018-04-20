@@ -18,6 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -73,6 +74,7 @@ public class DisplayActivity extends FragmentActivity implements
     private ImageView ivSelectedUser;
     private ImageView ivMyCircle;
     private ImageView ivDanger;
+    TextView tvPosition, tvPoint;
     private boolean locationPermissionGranted = false;
 
     // Firebase attributes
@@ -90,8 +92,9 @@ public class DisplayActivity extends FragmentActivity implements
     private AdView mAdView;
     View mapView;
 
-    // Dander sound alert
+    // Danger sound
     private MediaPlayer dangerSound;
+    int width, height;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,8 +109,11 @@ public class DisplayActivity extends FragmentActivity implements
         // icons: live friends + danger
         ivMyCircle = findViewById(R.id.ivMyCircle);
         ivDanger = findViewById(R.id.ivDanger);
+        // Camera position
+        tvPosition = findViewById(R.id.tvPosition);
+        tvPoint = findViewById(R.id.tvPoint);
 
-        // Sounds: SUPPORTED by: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
+        // Sounds: SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
         dangerSound = MediaPlayer.create(this, R.raw.siren_alert_1);
 
         // selected user
@@ -150,6 +156,16 @@ public class DisplayActivity extends FragmentActivity implements
         checkLocationPermission();
     }
 
+    // SET Margin dynamically  for any view (generic way)
+    // SUPPORT: https://stackoverflow.com/questions/4472429/change-the-right-margin-of-a-view-programmatically
+    public static void setMargins (View v, int l, int t, int r, int b) {
+        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            p.setMargins(l, t, r, b);
+            v.requestLayout();
+        }
+    }
+
     private void checkLocationPermission() {
         // Check location permission is granted - if it is, start
         // the service, otherwise request the permission
@@ -179,7 +195,6 @@ public class DisplayActivity extends FragmentActivity implements
             }
         }
     }
-
     private void startTrackerService() {
         startService(new Intent(this, TrackerService.class));
     }
@@ -259,7 +274,7 @@ public class DisplayActivity extends FragmentActivity implements
         // a request for location permission.
 
         // Change my location button position at the bottom
-        // SUPPORTED by stackoverflow: https://stackoverflow.com/questions/36785542/how-to-change-the-position-of-my-location-button-in-google-maps-using-android-st/39179202
+        // SUPPORT: https://stackoverflow.com/questions/36785542/how-to-change-the-position-of-my-location-button-in-google-maps-using-android-st/39179202
         if (mapView != null &&
                 mapView.findViewById(Integer.parseInt("1")) != null) {
             // Get the button view
@@ -279,9 +294,31 @@ public class DisplayActivity extends FragmentActivity implements
             mMap.setOnMyLocationButtonClickListener(this);
         }
 
-        // Supported by: https://developers.google.com/maps/documentation/android-api/infowindows
-        // Set a listener for info window events.
+        // SET a listener for info window events.
+        // SUPPORT: https://developers.google.com/maps/documentation/android-api/infowindows
         mMap.setOnInfoWindowClickListener(this);
+        // Add a camera idle listener.
+        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                LatLng latLng = mMap.getCameraPosition().target;
+
+                // TODO: 4/20/2018 RENDERING: You cannot use the width/height/getMeasuredWidth/getMeasuredHeight on a View before the system renders it (typically from onCreate/onResume).
+                // SUPPORT 1: https://stackoverflow.com/questions/42257090/android-google-maps-api-calculate-width-and-height-in-pixel-of-the-full-map
+                // SUPPORT 2: https://stackoverflow.com/questions/6939002/if-i-call-getmeasuredwidth-or-getwidth-for-layout-in-onresume-they-return-0
+                mapView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        width = mapView.getMeasuredWidth();
+                        height = mapView.getMeasuredHeight();
+                    }
+                });
+
+                setMargins(tvPoint, width/2, height/2, 0, 0);
+                // DEBUGGER: tvPosition.setText(" " + height + ", " + width);
+                tvPosition.setText("" + latLng.latitude + ", " + latLng.longitude);
+            }
+        });
     }
 
     @Override
@@ -438,7 +475,6 @@ public class DisplayActivity extends FragmentActivity implements
                 }
         );
 
-
 //        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
 //        Log.d(TAG, i + " setActiveMarker, KEY: " + key + ", VALUE: " + value.toString());
 //        i++;
@@ -454,7 +490,7 @@ public class DisplayActivity extends FragmentActivity implements
 //        double lat = Double.parseDouble(value.get("latitude").toString());
 //        double lng = Double.parseDouble(value.get("longitude").toString());
 //        LatLng location = new LatLng(lat, lng);
-//
+
 //         // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
 //        if (!mMarkers.containsKey(key)) {
 //            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
@@ -524,7 +560,7 @@ public class DisplayActivity extends FragmentActivity implements
         if (myMarker != null) {
             myMarker.remove();
         }
-//        mMap.clear();
+
         myMarker = mMap.addMarker(new MarkerOptions().position(location).title("My Location").snippet("address, cell, msg"));
         myMarker.showInfoWindow();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomValue));
@@ -559,7 +595,6 @@ public class DisplayActivity extends FragmentActivity implements
         }
         return false;
     }
-
 
     // anonymous method: isNameProvided
     // single event support: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
@@ -601,9 +636,9 @@ public class DisplayActivity extends FragmentActivity implements
         });
     }
 
-    // SUPPORT from: https://stackoverflow.com/questions/10903754/input-text-dialog-android
+    // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
     private String name = "";
-    // SUPPORT from: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
+    // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
     private void popUpForName(final String key) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("You name?");
@@ -662,7 +697,7 @@ public class DisplayActivity extends FragmentActivity implements
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        // TODO SUPPORTED by: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
+        // TODO SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
         marker.hideInfoWindow();
         lat = marker.getPosition().latitude;
         lang =marker.getPosition().longitude;
@@ -671,8 +706,8 @@ public class DisplayActivity extends FragmentActivity implements
         startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
     }
 
+    // SUPPORT: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
     public static boolean dangerStatus = false;
-    // SUPPORTED by: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
     public void onClickDanger(View view) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

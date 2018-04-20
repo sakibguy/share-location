@@ -14,10 +14,13 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr18.1.10.0
-4. TODO: **NOTIFY** live users
-2. TODO: **MAKE** marker animation
-5. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+> 2018.Apr20.1.10.0
+1. **ADDED** feature, camera focus point (black box)
+2. TODO: **ADD** feature: Send feedback
+3. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+4. TODO: **NOTIFY** live users 
+5. TODO: **MAKE** marker animation
+6. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 
 Previous Versions
 -----------------

@@ -79,8 +79,13 @@ echo
 ## UPLOAD changes
 ## UPLOAD screenshots, pre-launch report
 ## UPLOAD todo for 2018.Apr18.1.9.0
+## 💚 UPLOAD cr2018.Apr18.1.9.0
 
-git commit -m "💚 UPLOAD cr2018.Apr18.1.9.0"
+# 2018.Apr20
+## ADDED feature, camera focus point (black box)
+
+git commit -m "ADDED feature, camera focus point (black box)"
+
 
 ############
 # Step: 05 #
