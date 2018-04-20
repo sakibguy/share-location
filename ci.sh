@@ -84,8 +84,9 @@ echo
 # 2018.Apr21
 ## ADDED feature, camera focus point (black box)
 ## 💚 UPLOAD cr2018.Apr21.1.10.0
+## UPLOAD pre-launch report
 
-git commit -m "💚 UPLOAD cr2018.Apr21.1.10.0"
+git commit -m "UPLOAD pre-launch report"
 
 ############
 # Step: 05 #
