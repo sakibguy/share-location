@@ -47,12 +47,23 @@
         android:layout_below="@+id/etLoginPassword"
         android:text="Sign In"/>
 
-    <TextView
-        android:id="@+id/tvSignUp"
+    <RelativeLayout
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/btnSignIn"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Don't have an account? Sign Up"/>
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/tvQuestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don't have an account? "/>
 
+        <TextView
+            android:layout_toRightOf="@+id/tvQuestion"
+            android:id="@+id/tvSignUp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="Sign Up"/>
+    </RelativeLayout>
 </RelativeLayout>

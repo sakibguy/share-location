@@ -20,17 +20,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import playlagom.sharelocation.DisplayActivity;
-import playlagom.sharelocation.MainActivity;
 import playlagom.sharelocation.R;
-import playlagom.sharelocation.models.User;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -115,7 +109,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         String email = etLoginEmail.getText().toString().trim();
         String password = etLoginPassword.getText().toString().trim();
 
-        // Form validation part: Start
+        // START: form validation
         if (TextUtils.isEmpty(email)) {
             Toast.makeText(this, "Please enter your email", Toast.LENGTH_LONG).show();
             etLoginEmail.setError("Email is required");
@@ -136,7 +130,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (password.length() < 6) {
             Toast.makeText(this, "Invalid password", Toast.LENGTH_LONG).show();
             return;
-        } // Form validation part: End
+        } // END: form validation
 
         progressDialog.setMessage("Login...");
         progressDialog.show();

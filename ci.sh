@@ -86,7 +86,9 @@ echo
 ## 💚 UPLOAD cr2018.Apr21.1.10.0
 ## UPLOAD pre-launch report
 
-git commit -m "UPLOAD pre-launch report"
+# 2018.Apr22
+## 💚 UPLOAD cr2018.Apr21.1.10.1
+git commit -m "💚 UPLOAD cr2018.Apr21.1.10.1"
 
 ############
 # Step: 05 #

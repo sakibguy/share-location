@@ -30,7 +30,6 @@
 
     <EditText
         android:layout_below="@+id/etName"
-
         android:layout_marginLeft="15dp"
         android:layout_marginRight="15dp"
         android:layout_centerVertical="true"
@@ -59,12 +58,25 @@
         android:layout_below="@+id/etSignUpPassword"
         android:text="Sign Up"/>
 
-    <TextView
-        android:id="@+id/tvSignIn"
+    <RelativeLayout
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/btnSignUp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Already Registered?  Sign In"/>
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvQuestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already Registered? "/>
+
+        <TextView
+            android:textStyle="bold"
+            android:layout_toRightOf="@+id/tvQuestion"
+            android:id="@+id/tvSignIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign In"/>
+    </RelativeLayout>
 
 </RelativeLayout>

@@ -18,7 +18,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -34,11 +33,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -46,15 +43,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
+import playlagom.sharelocation.libs.GoogleMapOperations;
 import playlagom.sharelocation.models.User;
-import playlagom.sharelocation.models.UserAndLocation;
 
 public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMarkerClickListener,
@@ -65,37 +59,25 @@ public class DisplayActivity extends FragmentActivity implements
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
     private HashMap<String, Marker> mMarkers = new HashMap<>();
-    private GoogleMap mMap;
+    GoogleMap mMap;
 
     private static final int PERMISSIONS_REQUEST = 1;
     static boolean taskCompleted = false;
     private boolean insideShouldShow = false;
 
-    private ImageView ivSelectedUser;
-    private ImageView ivMyCircle;
-    private ImageView ivDanger;
-    private ImageView ivPicture;
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivPicture;
     TextView tvPosition, tvPoint;
-    private boolean locationPermissionGranted = false;
+    boolean locationPermissionGranted = false;
 
     // Firebase attributes
     FirebaseAuth firebaseAuth;
     DatabaseReference databaseReference;
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        if (taskCompleted) {
-            finish();
-        }
-        Log.d(TAG, "onRestart: DEBUGGER:------");
-    }
-
-    private AdView mAdView;
+    AdView mAdView;
     View mapView;
 
     // Danger sound
-    private MediaPlayer dangerSound;
+    MediaPlayer dangerSound;
     int width, height;
 
     @Override
@@ -105,26 +87,28 @@ public class DisplayActivity extends FragmentActivity implements
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapView = mapFragment.getView();
         mapFragment.getMapAsync(this);
+        mapView = mapFragment.getView();
+
         // wire xml components with java object
         // icons: live friends + danger
         ivMyCircle = findViewById(R.id.ivMyCircle);
         ivDanger = findViewById(R.id.ivDanger);
         ivPicture = findViewById(R.id.ivPicture);
+        ivUserImage = findViewById(R.id.ivUserImage);
 
-        // Camera position
+        // WIRE widgets
         tvPosition = findViewById(R.id.tvPosition);
         tvPosition.setVisibility(View.INVISIBLE);
         tvPoint = findViewById(R.id.tvPoint);
         tvPoint.setVisibility(View.INVISIBLE);
 
-        // Sounds: SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
+        // INIT danger sound
+        // SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
         dangerSound = MediaPlayer.create(this, R.raw.siren_alert_1);
 
-        // selected user
-        ivSelectedUser = findViewById(R.id.ivSelectedUser);
-        ivSelectedUser.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
+        // MAKE round user image
+        ivUserImage.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
 
         ImageView ivLogout = findViewById(R.id.ivLogout);
         ivLogout.setOnTouchListener(new View.OnTouchListener() {
@@ -139,15 +123,14 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
 
-        // Check GPS is enabled
+        // CHECK GPS is status
         LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             Toast.makeText(this, "Please enable GPS location services", Toast.LENGTH_LONG).show();
             finish();
         }
 
-        // Init: AdMob app ID
-//        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
+        // INIT AdMob app ID
         MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
 
         // ADS: https://developers.google.com/admob/android/banner
@@ -155,22 +138,12 @@ public class DisplayActivity extends FragmentActivity implements
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
-        // Init firebase dependency
+        // INIT firebase dependency
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
         checkLocationPermission();
         Log.d(TAG, "onCreate: DEBUGGER:------");
-    }
-
-    // SET Margin dynamically  for any view (generic way)
-    // SUPPORT: https://stackoverflow.com/questions/4472429/change-the-right-margin-of-a-view-programmatically
-    public static void setMargins (View v, int l, int t, int r, int b) {
-        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            p.setMargins(l, t, r, b);
-            v.requestLayout();
-        }
     }
 
     private void checkLocationPermission() {
@@ -181,10 +154,11 @@ public class DisplayActivity extends FragmentActivity implements
         if (permission == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
             startTrackerService();
+            subscribeToUpdates();
             // As location permission granted then set NAME input for <= v1.6.0 users through checking with the db.
-            // TODO: 4/16/2018 SET pop up window to take name for <= v1.6.0 version users not for >= 1.7.0 users. Upto v1.6.0 there was no NAME field at sign up form. To give better UX, at v1.7.0 here added NAME field at sign up form.
+            // SET pop up window to take name for <= v1.6.0 version users not for >= 1.7.0 users. Upto v1.6.0 there was no NAME field at sign up form. To give better UX, at v1.7.0 here added NAME field at sign up form.
 
-            // TODO: 4/15/2018      CODE is ready to CHANGE
+            // CODE is ready to CHANGE
             // CHECK isNameProvided. Basically popup will not show 1st time where will show during running app 2nd time.
             isNameProvided(firebaseAuth.getCurrentUser().getUid());
         } else {
@@ -216,6 +190,7 @@ public class DisplayActivity extends FragmentActivity implements
             mMap.setMyLocationEnabled(true);
             mMap.setOnMyLocationButtonClickListener(this);
             startTrackerService();
+            subscribeToUpdates();
             // when ALLOWED then no problem, but when DENY then there two cases for deny 1. Don't ask again 2. Just Deny
             // We will detect that using below code
         } else {
@@ -296,22 +271,23 @@ public class DisplayActivity extends FragmentActivity implements
             layoutParams.setMargins(0, 0, 30, 30);
         }
 
-        // blue dot
+        // SET blue dot
         if (locationPermissionGranted) {
             mMap.setMyLocationEnabled(true);
             mMap.setOnMyLocationButtonClickListener(this);
+            subscribeToUpdates();
         }
 
         // SET a listener for info window events.
         // SUPPORT: https://developers.google.com/maps/documentation/android-api/infowindows
         mMap.setOnInfoWindowClickListener(this);
-        // Add a camera idle listener.
+        // ADD a camera idle listener.
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
                 latLng = mMap.getCameraPosition().target;
 
-                // TODO: 4/20/2018 RENDERING: You cannot use the width/height/getMeasuredWidth/getMeasuredHeight on a View before the system renders it (typically from onCreate/onResume).
+                // RENDER: You cannot use the width/height/getMeasuredWidth/getMeasuredHeight on a View before the system renders it (typically from onCreate/onResume).
                 // SUPPORT 1: https://stackoverflow.com/questions/42257090/android-google-maps-api-calculate-width-and-height-in-pixel-of-the-full-map
                 // SUPPORT 2: https://stackoverflow.com/questions/6939002/if-i-call-getmeasuredwidth-or-getwidth-for-layout-in-onresume-they-return-0
                 mapView.post(new Runnable() {
@@ -322,7 +298,7 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                 });
 
-                setMargins(tvPoint, width/2, height/2, 0, 0);
+                GoogleMapOperations.setMargins(tvPoint, width/2, height/2, 0, 0);
                 // DEBUGGER: tvPosition.setText(" " + height + ", " + width);
                 // tvPosition.setText("" + latLng.latitude + ", " + latLng.longitude);
 
@@ -338,60 +314,38 @@ public class DisplayActivity extends FragmentActivity implements
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "My location", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "My Location", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
     }
 
-    private void loginToFirebase() {
-//        String email = getString(R.string.firebase_email);
-//        String password = getString(R.string.firebase_password);
-//        // Authenticate with Firebase and subscribe to updates
-//        FirebaseAuth.getInstance().signInWithEmailAndPassword(
-//                email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-//            @Override
-//            public void onComplete(Task<AuthResult> task) {
-//                if (task.isSuccessful()) {
-//                    subscribeToUpdates();
-//                    Log.d(TAG, "firebase auth success");
-//                } else {
-//                    Log.d(TAG, "firebase auth failed");
-//                }
-//            }
-//        });
+    // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
+    // We've also got two empty methods - subscribeToUpdates() and setMarker()
+    // which are responsible for
+    
+    // subscribing to updates in Firebase and
+    // setting the marker on the map
 
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            Log.d(TAG, "firebase auth success");
-//            subscribeToUpdates();
-            setInactiveMarker();
-        } else {
-            Log.d(TAG, "firebase auth failed");
-        }
-    }
-
-    List<User> userList = new ArrayList<>();
-
-    int countOnDataChange = 1;
+    // when an update occurs.
+    static boolean showAllLiveUser = true;
+    // The subscribeToUpdates() method calls setMarker()
+    // whenever it receives a new or updated location for a tracked device.
     private void subscribeToUpdates() {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
 
-        Log.d(TAG, "------inside--- subscribeToUpdates();");
+        Log.d(TAG, "subscribeToUpdates: DEBUGGER:--------");
         ref.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                if (controllerBitClicked) {
-                    Log.d(TAG, "------subscribeToUpdates()--- onChildAdded");
-                    setActiveMarker(dataSnapshot);
-                }
+                Log.d(TAG, "subscribeToUpdates().onChildAdded: DEBUGGER:--------");
+                setActiveMarker(dataSnapshot);
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                if (controllerBitClicked) {
-                    Log.d(TAG, "------subscribeToUpdates()--- onChildChanged");
-                    setActiveMarker(dataSnapshot);
-                }
+                Log.d(TAG, "subscribeToUpdates().onChildChanged: DEBUGGER:--------");
+                setActiveMarker(dataSnapshot);
             }
 
             @Override
@@ -411,22 +365,15 @@ public class DisplayActivity extends FragmentActivity implements
         });
     }
 
+    // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
     DataSnapshot dataSnapshotGlobal;
-    String keyGlobal;
+    String uid;
     int i = 1;
-
+    // setMarker() accepts the location data from Firebase,
+    // which contains the latitude and longitude, as well as the key for the device.
     private void setActiveMarker(DataSnapshot dataSnapshot) {
         dataSnapshotGlobal = dataSnapshot;
-        // When a location update is received, put or update
-        // its value in mMarkers, which contains all the markers
-        // for locations received, so that we can build the
-        // boundaries required to show them all on the map at once
-
-//        mMap.clear();
-//        String key = dataSnapshot.getKey();
-        keyGlobal = dataSnapshot.getKey();
-//        Log.d(TAG, "setActiveMarker: KEY: " + i + " " + key);
-        Log.d(TAG, "setActiveMarker: KEY: " + i + " " + keyGlobal);
+        uid = dataSnapshot.getKey();
 //        String key = "";
 //        try{
 //            for (int j = 0; j < userList.size(); j++) {
@@ -437,134 +384,90 @@ public class DisplayActivity extends FragmentActivity implements
 //            Log.d(TAG, "INSIDE....setActiveMarker: NULL pointer exception: ..... ");
 //        }
 
-        // HERE WHAT CORRESPONDS TO JOIN
-        DatabaseReference chatGroupRef = FirebaseDatabase.getInstance().getReference()
-                .child("users").child(keyGlobal);
-        chatGroupRef.addValueEventListener(
-                new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot childDataSnapshot) {
-                        // repeat!!
-                        Log.d(TAG, "JOIN: ... " + i++ + childDataSnapshot.getValue());
-                        User user = childDataSnapshot.getValue(User.class);
-                        if (user != null) {
-//                            userList.add(user);
-                            HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
-                            Log.d(TAG, i + " setActiveMarker, KEY: " + keyGlobal + ", VALUE: " + value.toString());
-                            i++;
-//        LatLng location = new LatLng(10, 20);;
-//        try{
-//            double lat = Double.parseDouble(value.get("latitude").toString());
-//            double lng = Double.parseDouble(value.get("longitude").toString());
-//            location = new LatLng(lat, lng);
-//        } catch (Exception e){
-//            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
-//        }
+            // HERE WHAT CORRESPONDS TO JOIN
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+                .child("users").child(uid);
+        userRef.addValueEventListener(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot childDataSnapshot) {
+                    User user = childDataSnapshot.getValue(User.class);
+                    try{
+                        Log.d(TAG, "setActiveMarker().onDataChange():" +
+                                " DEBUGGER:--------" + user.getName());
+                        Log.d(TAG, "JOIN: setActiveMarker().onDataChange():" +
+                                " DEBUGGER:-------- " + i++ + childDataSnapshot.getValue());
+                    } catch (Exception e){
+                        Log.d(TAG, "NULL pointer exception: setActiveMarker().onDataChange():" +
+                                " DEBUGGER:--------");
+                    }
 
-                            double lat = Double.parseDouble(value.get("latitude").toString());
-                            double lng = Double.parseDouble(value.get("longitude").toString());
-                            LatLng location = new LatLng(lat, lng);
+                    if (user != null) {
+                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
+                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
+                                " DEBUGGER:-------- ");
 
-                            // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
-                            if (!mMarkers.containsKey(keyGlobal)) {
-                                Marker marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "").position(location).snippet("dis, time, address, cell, msg"));
-                                mMarkers.put(keyGlobal, marker);
+                        double lat = Double.parseDouble(value.get("latitude").toString());
+                        double lng = Double.parseDouble(value.get("longitude").toString());
+                        LatLng location = new LatLng(lat, lng);
+
+                        // SHOW live all
+                        if (showAllLiveUser) {
+                            Log.d(TAG, "setActiveMarker: KEY: " + i + " " + uid + "," +
+                                    " DEBUGGER:-------- ");
+                            // It is notified each time one of the device's location is updated.
+                            // When this happens, it will either create a new marker at the device's location,
+                            // or move the marker for a device if it exists already.
+                            if (!mMarkers.containsKey(uid)) {
+                                Marker marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "")
+                                        .position(location).snippet("cell, msg, fnd req"));
+                                mMarkers.put(uid, marker);
                                 marker.showInfoWindow();
                             } else {
-                                mMarkers.get(keyGlobal).setPosition(location);
+                                mMarkers.get(uid).setPosition(location);
                             }
                         }
 
-                        // TODO: DEBUGGER 4/12/2018
-//                        try{
-//                            Log.d(TAG, "setActiveMarker: ..... " + user.getEmail());
-//                        } catch (Exception e){
-//                            Log.d(TAG, "EMAIL: NULL pointer exception: ..... ");
-//                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
+                        // SHOW live friends
+                        if (friendsOnlyIconClicked) {
+                            for (Marker marker : mMarkers.values()) {
+                                // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
+                                marker.remove();
+                            }
+                            mMarkers.clear();
+                        }
                     }
                 }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            }
         );
-
-//        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
-//        Log.d(TAG, i + " setActiveMarker, KEY: " + key + ", VALUE: " + value.toString());
-//        i++;
-////        LatLng location = new LatLng(10, 20);;
-////        try{
-////            double lat = Double.parseDouble(value.get("latitude").toString());
-////            double lng = Double.parseDouble(value.get("longitude").toString());
-////            location = new LatLng(lat, lng);
-////        } catch (Exception e){
-////            Log.d(TAG, "LatLang.... NULL pointer exception ..... ");
-////        }
-//
-//        double lat = Double.parseDouble(value.get("latitude").toString());
-//        double lng = Double.parseDouble(value.get("longitude").toString());
-//        LatLng location = new LatLng(lat, lng);
-
-//         // It is notified each time one of the device's location is updated. When this happens, it will either create a new marker at the device's location, or move the marker for a device if it exists already.
-//        if (!mMarkers.containsKey(key)) {
-//            mMarkers.put(key, mMap.addMarker(new MarkerOptions().title("" + key + "").position(location).snippet("dis, time, address, cell, msg")));
-//        } else {
-//            mMarkers.get(key).setPosition(location);
-//        }
-
-        // TODO: 4/13/2018      READ the comment below (mandatory)
-        // Motivation from: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
-        // REMOVING code below brings me what exactly i want!!!
-        // Understanding API + framework is highly important.
-
-//        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-//        for (Marker marker : mMarkers.values()) {
-////            mMap.addMarker(new MarkerOptions().title(key).position(location));
-//            builder.include(marker.getPosition());
-//        }
-//        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
     }
 
-    private boolean controllerBitClicked = false;
-    public void onClickMyCircle(View view) {
-        Log.d(TAG, "onClickMyCircle: ");
-        if (controllerBitClicked) {
-            // HIDE LIVE FRIENDS
-            controllerBitClicked = false;
-            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
-            Log.d(TAG, "------controllerBitClicked = false;------ run setInactiveMarker();");
-            setInactiveMarker();
-        } else {
-            // SHOW LIVE FRIENDS
-            controllerBitClicked = true;
-            Log.d(TAG, "------controllerBitClicked = true;------ run subscribeToUpdates();");
-            Toast.makeText(getApplicationContext(), "Live Friends", Toast.LENGTH_LONG).show();
+    static boolean friendsOnlyIconClicked = false;
+    public void onClickFriendsOnly(View view) {
+        Log.d(TAG, "onClickLiveUsers: DEBUGGER:--------");
+        // RE-DESIGN & WRITE code for live feature
+
+        // TODO: 4/21/2018 HANDLE Showing friends only
+        if (!friendsOnlyIconClicked){
+            showAllLiveUser = false;
+            friendsOnlyIconClicked = true;
             ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_black_24dp));
-            subscribeToUpdates();
+            Toast.makeText(getApplicationContext(), "IMPLEMENT live friends functionality",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            showAllLiveUser = true;
+            friendsOnlyIconClicked = false;
+            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
+            Toast.makeText(getApplicationContext(), "Live all", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void setInactiveMarker() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        String userId = currentUser.getUid();
-        Log.d(TAG, "----------setInactiveMarker: -----------" + userId);
-        // Use unique userID during registration time assigned
-        ref.child(userId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (!controllerBitClicked) {
-                    updateDisplay(snapshot);
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.d(LOG_TAG, "onCancelled");
-            }
-        });
-    }
-
+    // TODO: 4/23/2018 ANALYZE the below code for SHOWING LIVE FRIENDS
     Marker myMarker;
     private void updateDisplay(DataSnapshot dataSnapshot) {
         HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
@@ -588,7 +491,7 @@ public class DisplayActivity extends FragmentActivity implements
         zoomValue = mMap.getCameraPosition().zoom;
     }
 
-    /** Called when the user clicks a marker. */
+    /** Called when the user clicks on a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
         // Retrieve the data from the marker.
@@ -607,44 +510,43 @@ public class DisplayActivity extends FragmentActivity implements
         return false;
     }
 
-    // anonymous method: isNameProvided
-    // single event support: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
+    // SUPPORT: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
     private void isNameProvided(String currentUser) {
         databaseReference.child("users").child("" + currentUser)
-        .addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
 
-                if (dataSnapshot.getChildrenCount() == 2) {
-                    // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
-                    // Never give up! Just keep standing...!!!
-                    // Now, User will see map first but to interact with the map, user must have to input name
-                    // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
+                        if (dataSnapshot.getChildrenCount() == 2) {
+                            // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
+                            // Never give up! Just keep standing...!!!
+                            // Now, User will see map first but to interact with the map, user must have to input name
+                            // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
 
-                    // CODE is READY to CHANGE
-                    // User friendly Toast
-                    Toast.makeText(getApplicationContext(),
-                            "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
-                    // DEBUGGER
-                    Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
-                            + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                            // CODE is READY to CHANGE
+                            // User friendly Toast
+                            Toast.makeText(getApplicationContext(),
+                                    "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
+                            // DEBUGGER
+                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
+                                    + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
 
-                    // Take Input through pop up window and save to db
-                    // step 1:  MAKE pop up window to take name input
-                    // call method
-                    popUpForName(dataSnapshot.getKey());
-                } else if (dataSnapshot.getChildrenCount() == 3) {
-                    Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
-                    Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                }
-            }
+                            // Take Input through pop up window and save to db
+                            // step 1:  MAKE pop up window to take name input
+                            // call method
+                            popUpForName(dataSnapshot.getKey());
+                        } else if (dataSnapshot.getChildrenCount() == 3) {
+                            Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
+                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                        }
+                    }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
+                    }
+                });
     }
 
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
@@ -705,7 +607,6 @@ public class DisplayActivity extends FragmentActivity implements
 
     public static double lat;
     public static double lang;
-
     @Override
     public void onInfoWindowClick(Marker marker) {
         // SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
@@ -780,7 +681,7 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     boolean pictureStatus = false;
-    public void onClickPicture(View view) {
+    public void onClickLocationPicture(View view) {
 
         if (!pictureStatus) {
             pictureStatus = true;
@@ -805,30 +706,34 @@ public class DisplayActivity extends FragmentActivity implements
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart: DEBUGGER:------");
+        Log.d(TAG, "onStart: DEBUGGER:--------");
     }
-
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume: DEBUGGER:------");
+        Log.d(TAG, "onResume: DEBUGGER:--------");
     }
-
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause: DEBUGGER:------");
+        Log.d(TAG, "onPause: DEBUGGER:--------");
     }
-
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(TAG, "onStop: DEBUGGER:------");
+        Log.d(TAG, "onStop: DEBUGGER:--------");
     }
-
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (taskCompleted) {
+            finish();
+        }
+        Log.d(TAG, "onRestart: DEBUGGER:--------");
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy: DEBUGGER:------");
+        Log.d(TAG, "onDestroy: DEBUGGER:--------");
     }
 }

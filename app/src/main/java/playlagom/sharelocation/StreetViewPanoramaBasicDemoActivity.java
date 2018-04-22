@@ -31,8 +31,6 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import playlagom.sharelocation.R;
-
 /**
  * This shows how to create a simple activity with streetview
  */

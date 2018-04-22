@@ -24,6 +24,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import playlagom.sharelocation.models.Position;
+
 public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
@@ -35,7 +37,13 @@ public class TrackerService extends Service {
     public void onCreate() {
         super.onCreate();
         buildNotification();
-        loginToFirebase();
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Log.d(TAG, "firebase auth success");
+            requestLocationUpdates();
+        } else {
+            Log.d(TAG, "firebase auth failed");
+        }
     }
 
     private void buildNotification() {
@@ -63,65 +71,44 @@ public class TrackerService extends Service {
         }
     };
 
-    private void loginToFirebase() {
-        // Authenticate with Firebase, and request location updates
-//        String email = getString(R.string.firebase_email);
-//        String password = getString(R.string.firebase_password);
-//        FirebaseAuth.getInstance().signInWithEmailAndPassword(
-//                email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>(){
-//            @Override
-//            public void onComplete(Task<AuthResult> task) {
-//                if (task.isSuccessful()) {
-//                    Log.d(TAG, "firebase auth success");
-//                    requestLocationUpdates();
-//                    Toast.makeText(getApplicationContext(), "Successfully Login", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    Log.d(TAG, "firebase auth failed");
-//                }
-//            }
-//        });
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            Log.d(TAG, "firebase auth success");
-            requestLocationUpdates();
-        } else {
-            Log.d(TAG, "firebase auth failed");
-        }
-    }
-
     private void requestLocationUpdates() {
         LocationRequest request = new LocationRequest();
         request.setInterval(3000);
         request.setFastestInterval(3000);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
-
-        // Init firebase dependency
+        // INIT firebase dependency
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         final String userId = currentUser.getUid();
-
         final String path = getString(R.string.firebase_path) + "/" + userId;
-//        final String path = getString(R.string.firebase_path) + "/" + getString(R.string.transport_id);
-//        final String path = getString(R.string.firebase_path) + "/" + DisplayActivity.currentUser.getUid() + "/location";
-
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
         if (permission == PackageManager.PERMISSION_GRANTED) {
-            // Request location updates and when an update is
+            // REQUEST location updates and when an update is
             // received, store the location in Firebase
             client.requestLocationUpdates(request, new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
                     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(path);
                     Location location = locationResult.getLastLocation();
+
                     if (location != null) {
+                        // present code
+                        // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+
+                        Position position = new Position(latitude, longitude);
+                        ref.setValue(position);
                         Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
-                        ref.setValue(location);
+
+                        // previous code
+//                        ref.setValue(location);
+//                        Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
                     }
                 }
             }, null);
         }
     }
-
 }

@@ -34,6 +34,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- PASTE on drawable NOT on drawable-v24 -->
+        <!-- SUPPORT: https://stackoverflow.com/questions/47526417/binary-xml-file-line-0-error-inflating-class-imageview -->
         <ImageView
             android:alpha="0.7"
             android:onClick="onClickDanger"
@@ -42,10 +44,12 @@
             android:layout_width="25dp"
             android:layout_height="25dp"/>
 
+        <!-- PASTE on drawable NOT on drawable-v24 -->
         <ImageView
+            android:layout_marginTop="2dp"
             android:id="@+id/ivPicture"
             android:alpha="0.7"
-            android:onClick="onClickPicture"
+            android:onClick="onClickLocationPicture"
             android:src="@drawable/image_2"
             android:layout_weight="1"
             android:layout_width="20dp"
@@ -53,17 +57,16 @@
 
         <ImageView
             android:alpha="0.7"
-            android:onClick="onClickMyCircle"
+            android:onClick="onClickFriendsOnly"
             android:id="@+id/ivMyCircle"
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_people_outline_black_24dp"
-            android:text="live friends"/>
+            android:src="@drawable/ic_people_outline_black_24dp"/>
 
         <ImageView
             android:layout_weight="1"
-            android:id="@+id/ivSelectedUser"
+            android:id="@+id/ivUserImage"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:src="@drawable/current_user"/>
@@ -84,7 +87,7 @@
         android:layout_below="@id/adView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Position"/>
+        android:text="DEBUGGER"/>
 
     <TextView
         android:id="@+id/tvPoint"
