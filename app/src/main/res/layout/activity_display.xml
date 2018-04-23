@@ -40,7 +40,6 @@
             android:alpha="0.7"
             android:onClick="onClickDanger"
             android:id="@+id/ivDanger"
-            android:src="@drawable/danger_icon"
             android:layout_width="25dp"
             android:layout_height="25dp"/>
 

@@ -14,17 +14,20 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr22.1.?
-
+> 2018.Apr24.1.?
 1. TODO: **MAKE** Live friends functional
 2. TODO: **ADD** feature: Send feedback
 3. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
 4. TODO: **NOTIFY** live users 
-5. TODO: **MAKE** marker animation
-6. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+5. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 
 Previous Versions
 -----------------
+> 2018.Apr23.1.11.0
+1. **CHANGED** marker color: green=live users, red = danger
+2. **PLAYED** siren sound to others when anyone pressed on the danger button.
+3. **MADE** animated marker at danger
+4. **SEEN** by every live users who is at danger now
 
 > 2018.Apr22.1.10.1
 1. **SHOWING** live all

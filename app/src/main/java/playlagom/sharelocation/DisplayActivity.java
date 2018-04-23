@@ -32,6 +32,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -79,6 +81,7 @@ public class DisplayActivity extends FragmentActivity implements
     // Danger sound
     MediaPlayer dangerSound;
     int width, height;
+    private static boolean makeDangerSound = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,14 +93,14 @@ public class DisplayActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
         mapView = mapFragment.getView();
 
-        // wire xml components with java object
+        // wire xml imageview components with java object
         // icons: live friends + danger
         ivMyCircle = findViewById(R.id.ivMyCircle);
         ivDanger = findViewById(R.id.ivDanger);
         ivPicture = findViewById(R.id.ivPicture);
         ivUserImage = findViewById(R.id.ivUserImage);
 
-        // WIRE widgets
+        // WIRE textview widgets
         tvPosition = findViewById(R.id.tvPosition);
         tvPosition.setVisibility(View.INVISIBLE);
         tvPoint = findViewById(R.id.tvPoint);
@@ -141,6 +144,41 @@ public class DisplayActivity extends FragmentActivity implements
         // INIT firebase dependency
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference();
+
+        // DECIDE danger image icon
+        databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.getChildrenCount() == 3) {
+                            // SET danger = 0
+                            databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid())
+                                    .child("danger").setValue("0");
+                            // SET default danger icon
+                            ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                            dangerStatus = false;
+                        } else if (dataSnapshot.getChildrenCount() == 4) {
+                            User user = dataSnapshot.getValue(User.class);
+                            if (user.getDanger().equals("0")){
+                                // SET default danger icon
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                                dangerStatus = false;
+                            }
+                            if (user.getDanger().equals("1")){
+                                // SET run danger icon
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
+                                Toast.makeText(getApplicationContext(), "Your status in DANGER",
+                                        Toast.LENGTH_LONG).show();
+                                dangerStatus = true;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
 
         checkLocationPermission();
         Log.d(TAG, "onCreate: DEBUGGER:------");
@@ -310,6 +348,10 @@ public class DisplayActivity extends FragmentActivity implements
                 }
             }
         });
+
+        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+        // zoom control: plus | minus button by default android sdk
+//        mMap.getUiSettings().setZoomControlsEnabled(true);
     }
 
     @Override
@@ -369,30 +411,23 @@ public class DisplayActivity extends FragmentActivity implements
     DataSnapshot dataSnapshotGlobal;
     String uid;
     int i = 1;
+    User user = new User();
+    Marker marker = null;
     // setMarker() accepts the location data from Firebase,
     // which contains the latitude and longitude, as well as the key for the device.
     private void setActiveMarker(DataSnapshot dataSnapshot) {
         dataSnapshotGlobal = dataSnapshot;
         uid = dataSnapshot.getKey();
-//        String key = "";
-//        try{
-//            for (int j = 0; j < userList.size(); j++) {
-//                Log.d(TAG, "INSIDE....setActiveMarker: ..... " + j +", " + userList.get(j).getEmail());
-//                if (userList.get(j).getEmail() != null) key = userList.get(j).getEmail();
-//            }
-//        } catch (Exception e){
-//            Log.d(TAG, "INSIDE....setActiveMarker: NULL pointer exception: ..... ");
-//        }
 
-            // HERE WHAT CORRESPONDS TO JOIN
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+        // HERE WHAT CORRESPONDS TO JOIN
+        final DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
                 .child("users").child(uid);
         userRef.addValueEventListener(
             new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot childDataSnapshot) {
-                    User user = childDataSnapshot.getValue(User.class);
                     try{
+                        user = childDataSnapshot.getValue(User.class);
                         Log.d(TAG, "setActiveMarker().onDataChange():" +
                                 " DEBUGGER:--------" + user.getName());
                         Log.d(TAG, "JOIN: setActiveMarker().onDataChange():" +
@@ -413,30 +448,78 @@ public class DisplayActivity extends FragmentActivity implements
 
                         // SHOW live all
                         if (showAllLiveUser) {
+                            // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
+                            for (Circle myCircle : GoogleMapOperations.circleList) {
+                                myCircle.remove();
+                            }
+                            GoogleMapOperations.circleList.clear();
+
                             Log.d(TAG, "setActiveMarker: KEY: " + i + " " + uid + "," +
                                     " DEBUGGER:-------- ");
                             // It is notified each time one of the device's location is updated.
                             // When this happens, it will either create a new marker at the device's location,
                             // or move the marker for a device if it exists already.
                             if (!mMarkers.containsKey(uid)) {
-                                Marker marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "")
-                                        .position(location).snippet("cell, msg, fnd req"));
+                                marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "")
+                                    .position(location)
+                                    .snippet("cell, msg, fnd req")
+                                    .icon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
+                                    )));
                                 mMarkers.put(uid, marker);
                                 marker.showInfoWindow();
+
+                                // READY to CHANGE CODE
+                                // SET animated marker at danger
+                                if (user.getDanger() != null) {
+                                    String danger = user.getDanger();
+                                    if (danger.equals("1")) {
+                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+                                        GoogleMapOperations.addingCircleView(mMap, location);
+                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+                                        ));
+                                    }
+                                }
                             } else {
+                                // READY to CHANGE CODE
+                                // SET animated marker at danger
+                                if (user.getDanger() != null) {
+                                    String danger = user.getDanger();
+                                    if (danger.equals("1")) {
+                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+                                        GoogleMapOperations.addingCircleView(mMap, location);
+                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+                                        ));
+
+                                        // START danger sound
+                                        if (makeDangerSound) {
+                                            makeDangerSound = false;
+                                            dangerSound.start();
+                                            Toast.makeText(getApplicationContext(), "NEED help!\n" + user.getName()
+                                                    + " is at DANGER now", Toast.LENGTH_LONG).show();
+                                        }
+                                    } else if (danger.equals("0")) {
+                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
+                                        ));
+                                    }
+                                }
                                 mMarkers.get(uid).setPosition(location);
                             }
                         }
 
                         // SHOW live friends
                         if (friendsOnlyIconClicked) {
-                            for (Marker marker : mMarkers.values()) {
+                            for (Marker CurrMarker : mMarkers.values()) {
                                 // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
-                                marker.remove();
+                                CurrMarker.remove();
                             }
                             mMarkers.clear();
                         }
                     }
+//                    user = null;
                 }
 
                 @Override
@@ -513,40 +596,40 @@ public class DisplayActivity extends FragmentActivity implements
     // SUPPORT: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
     private void isNameProvided(String currentUser) {
         databaseReference.child("users").child("" + currentUser)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    User user = dataSnapshot.getValue(User.class);
 
-                        if (dataSnapshot.getChildrenCount() == 2) {
-                            // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
-                            // Never give up! Just keep standing...!!!
-                            // Now, User will see map first but to interact with the map, user must have to input name
-                            // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
+                    if (dataSnapshot.getChildrenCount() == 2) {
+                        // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
+                        // Never give up! Just keep standing...!!!
+                        // Now, User will see map first but to interact with the map, user must have to input name
+                        // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
 
-                            // CODE is READY to CHANGE
-                            // User friendly Toast
-                            Toast.makeText(getApplicationContext(),
-                                    "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
-                            // DEBUGGER
-                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
-                                    + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                        // CODE is READY to CHANGE
+                        // User friendly Toast
+                        Toast.makeText(getApplicationContext(),
+                                "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
+                        // DEBUGGER
+                        Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
+                                + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
 
-                            // Take Input through pop up window and save to db
-                            // step 1:  MAKE pop up window to take name input
-                            // call method
-                            popUpForName(dataSnapshot.getKey());
-                        } else if (dataSnapshot.getChildrenCount() == 3) {
-                            Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
-                            Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
-                        }
+                        // Take Input through pop up window and save to db
+                        // step 1:  MAKE pop up window to take name input
+                        // call method
+                        popUpForName(dataSnapshot.getKey());
+                    } else if (dataSnapshot.getChildrenCount() == 3) {
+                        Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
+                        Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
                     }
+                }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-                    }
-                });
+                }
+            });
     }
 
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
@@ -631,14 +714,14 @@ public class DisplayActivity extends FragmentActivity implements
 
             builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    dangerStatus = true;
-                    Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
-                    ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run));
+                dangerStatus = true;
+                Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
+                ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run));
 
-                    dangerSound.start();
-                    // TODO: 4/18/2018: UPDATE db
-
-                    dialog.dismiss();
+                // TODO: 4/18/2018: UPDATE db: danger = 1
+                databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("1");
+                // TODO: 4/23/2018 MAKE animated marker
+                dialog.dismiss();
                 }
             });
 
@@ -659,8 +742,8 @@ public class DisplayActivity extends FragmentActivity implements
                     Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
                     ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon));
 
-                    // TODO: 4/18/2018: UPDATE db
-
+                    // TODO: 4/18/2018: UPDATE db: danger = 0
+                    databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("0");
 
                     dialog.dismiss();
                 }
