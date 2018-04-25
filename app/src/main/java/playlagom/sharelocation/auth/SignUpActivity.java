@@ -55,7 +55,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         Log.d(TAG, "DEBUG: ----onCreate: " + isInternetOn());
 
         firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseReference = firebaseDatabase.getReference().child("users");
+        databaseReference = firebaseDatabase.getReference().child(getString(R.string.sharelocation_users));
         firebaseAuth = FirebaseAuth.getInstance();
         progressDialog = new ProgressDialog(this);
 

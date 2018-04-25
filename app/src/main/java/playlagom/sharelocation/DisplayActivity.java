@@ -35,6 +35,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -61,6 +62,7 @@ public class DisplayActivity extends FragmentActivity implements
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
     private HashMap<String, Marker> mMarkers = new HashMap<>();
+    private HashMap<String, Marker> blueMarkers = new HashMap<>();
     GoogleMap mMap;
 
     private static final int PERMISSIONS_REQUEST = 1;
@@ -74,6 +76,9 @@ public class DisplayActivity extends FragmentActivity implements
     // Firebase attributes
     FirebaseAuth firebaseAuth;
     DatabaseReference databaseReference;
+    DatabaseReference locationRef;
+    DatabaseReference userRef;
+    DatabaseReference allMarkerRef;
 
     AdView mAdView;
     View mapView;
@@ -82,6 +87,11 @@ public class DisplayActivity extends FragmentActivity implements
     MediaPlayer dangerSound;
     int width, height;
     private static boolean makeDangerSound = true;
+    private int userCounter = 1;
+    private int counter = 1;
+    private User tempUser = new User();
+    private String markerTitle = null;
+    private LatLng location = new LatLng(0, 0);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,30 +151,147 @@ public class DisplayActivity extends FragmentActivity implements
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
-        // INIT firebase dependency
+        // INIT: firebase dependency
         firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+        allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
 
-        // DECIDE danger image icon
-        databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid())
+        // SET: danger icon, set value = 0 or read danger status and select icon
+        showDangerIcon();
+
+        // SET: blue markers for all registered users by default.
+        showAllRegisteredUsers();
+
+        // COPY v1.11.0 pointed db data to new structure db
+        copyLoggedInUserInfoToNewStructure();
+
+//        // SUPPORT: https://www.101apps.co.za/index.php/item/182-firebase-realtime-database-tutorial.html
+//        // 1: https://github.com/firebase/FirebaseUI-Android/issues/1040
+//        // 2: https://stackoverflow.com/questions/26700924/query-based-on-multiple-where-clauses-in-firebase
+//        // todo 3: https://github.com/firebase/geofire-java
+//
+//        // look for the matching item
+//        locationRef.orderByChild("locations").equalTo(uniqueID)
+//                .addListenerForSingleValueEvent(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(DataSnapshot dataSnapshotInner) {
+//                        try{
+////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
+//
+//                            // SUPPORT handle idea raised by myself first then suggested
+//                            // from: https://www.youtube.com/watch?v=Idu9EJPSxiY
+//                            // AS unique id is just the last value of the dataSnapshot.getChildren() then
+//                            // store keys + value on a hasmap/arraylist to handle/loop through later.
+//                            Log.d(TAG, counter ++ +" DEBUGGER: --- id: " + tempSnapShot.getKey());
+//                        } catch (Exception e){
+//                            Log.d(TAG, "NULL pointer exception: DEBUGGER: ---");
+//                        }
+//
+////                                    if (tempSnapShot != null) {
+////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
+//
+////                                        double lat = Double.parseDouble(value.get("latitude").toString());
+////                                        double lng = Double.parseDouble(value.get("longitude").toString());
+////                                        location = new LatLng(lat, lng);
+//
+////                                        // SHOW all users by default through black marker
+////
+////                                        // create a new marker at the device's location
+////                                        // move the marker for a device if it exists already.
+////
+////                                        if (dataSnapshotInner != null) {
+////                                            Log.d(TAG, "--- --- DEBUGGER: --- " + tempUser.getEmail());
+////                                            if (!mMarkers.containsKey(dataSnapshotInner.getKey())) {
+////                                                if (tempSnapShot.getChildrenCount() == 2) {
+////                                                    markerTitle = tempUser.getEmail();
+////                                                } else if (tempSnapShot.getChildrenCount() == 3) {
+////                                                    markerTitle = tempUser.getName();
+////                                                } else {
+////                                                    markerTitle = tempUser.getName();
+////                                                }
+////                                                marker = mMap.addMarker(new MarkerOptions().title("" + markerTitle + "")
+////                                                        .position(location)
+////                                                        .snippet("cell, msg, fnd req")
+////                                                        .icon(BitmapDescriptorFactory.defaultMarker(
+////                                                                BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
+////                                                        )));
+////                                                mMarkers.put(uid, marker);
+////                                                marker.showInfoWindow();
+////
+////                                                tempSnapShot = null;
+////                                                tempUser = null;
+////                                            }
+////                                        }
+////                                    }
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError databaseError) {
+//
+//                    }
+//                });
+
+        checkLocationPermission();
+        Log.d(TAG, "[ OK ] ---- onCreate: ----");
+    }
+
+    // COPY v1.11.0 pointed db data to new structure db
+    private void copyLoggedInUserInfoToNewStructure() {
+        Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure: ");
+        DatabaseReference copyFromRef = FirebaseDatabase.getInstance().getReference("users");
+        copyFromRef.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure(): LOGGED IN USER INFO: " + dataSnapshot.toString());
+                    User copyUser;
+                    try{
+                        copyUser = dataSnapshot.getValue(User.class);
+                        Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure(): " +
+                                "name: " + copyUser.getName() + ", " +
+                                "email: " + copyUser.getEmail() + ", " +
+                                "pass: " + copyUser.getPassword() + ", " +
+                                "danger: " + copyUser.getDanger());
+                        if (dataSnapshot.getChildrenCount() == 2) {
+                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
+                            databaseReference.child(dataSnapshot.getKey()).child("danger").setValue("0");
+                        } else if (dataSnapshot.getChildrenCount() == 3) {
+                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
+                            databaseReference.child(dataSnapshot.getKey()).child("danger").setValue("0");
+                        } else if (dataSnapshot.getChildrenCount() == 4) {
+                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
+                        }
+                    } catch (Exception e){
+                        Log.e(TAG, "[ ERROR ] -------- copyLoggedInUserInfoToNewStructure: " + e.getMessage());
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+    }
+    private void showDangerIcon() {
+        databaseReference.child(firebaseAuth.getCurrentUser().getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.getChildrenCount() == 3) {
+                        if (dataSnapshot.getChildrenCount() == 3 || dataSnapshot.getChildrenCount() == 4) {
                             // SET danger = 0
-                            databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid())
+                            databaseReference.child(firebaseAuth.getCurrentUser().getUid())
                                     .child("danger").setValue("0");
                             // SET default danger icon
                             ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
                             dangerStatus = false;
-                        } else if (dataSnapshot.getChildrenCount() == 4) {
-                            User user = dataSnapshot.getValue(User.class);
-                            if (user.getDanger().equals("0")){
+                        } else if (dataSnapshot.getChildrenCount() == 5) {
+                            User dangerUser = dataSnapshot.getValue(User.class);
+                            if (dangerUser.getDanger().equals("0")){
                                 // SET default danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
                                 dangerStatus = false;
                             }
-                            if (user.getDanger().equals("1")){
+                            if (dangerUser.getDanger().equals("1")){
                                 // SET run danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
                                 Toast.makeText(getApplicationContext(), "Your status in DANGER",
@@ -179,9 +306,63 @@ public class DisplayActivity extends FragmentActivity implements
 
                     }
                 });
+    }
+    Marker tempBlueMarker = null;
+    private void showAllRegisteredUsers() {
+        // SHOW all users black/blue marker icon
+        allMarkerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.d(TAG, "[ OK ] ---- TOTAL REGISTERED USER: " +
+                        "" + dataSnapshot.getChildrenCount() +
+                        ", showAllRegisteredUsers().onDataChange: " +
+                        "" + dataSnapshot.toString());
+                User temporaryUser;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    temporaryUser = snapshot.getValue(User.class);
+                    String uniqueID = snapshot.getKey();
 
-        checkLocationPermission();
-        Log.d(TAG, "onCreate: DEBUGGER:------");
+                    try {
+                        if (temporaryUser != null) {
+                            double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
+                            double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
+                            location = new LatLng(lat, lang);
+                            Log.d(TAG, "[ OK ] ---- showAllRegisteredUsers() .. " + userCounter ++ +
+                                    " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
+
+                            if (!blueMarkers.containsKey(uniqueID)) {
+                                tempBlueMarker = mMap.addMarker(new MarkerOptions().title("" + temporaryUser.getName() + "")
+                                        .position(location)
+                                        .snippet("cell, msg, fnd req")
+                                        .icon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
+                                        )));
+                                blueMarkers.put(uniqueID, tempBlueMarker);
+                                tempBlueMarker.showInfoWindow();
+                            } else {
+                                blueMarkers.get(uniqueID).setPosition(location);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "[ ERROR ] ---- showAllRegisteredUsers().onDataChange: " + e.getMessage());
+                    }
+                }
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (Marker tempMarker : blueMarkers.values()) {
+                    builder.include(tempMarker.getPosition());
+                }
+                final LatLngBounds bounds = builder.build();
+                mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                    @Override
+                    public void onMapLoaded() {
+//                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 300));
+                    }
+                });
+//                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
     }
 
     private void checkLocationPermission() {
@@ -374,35 +555,36 @@ public class DisplayActivity extends FragmentActivity implements
     // The subscribeToUpdates() method calls setMarker()
     // whenever it receives a new or updated location for a tracked device.
     private void subscribeToUpdates() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.firebase_path));
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
 
-        Log.d(TAG, "subscribeToUpdates: DEBUGGER:--------");
+        // logcat color SUPPORT: https://medium.com/@gun0912/android-studio-how-to-change-logcat-color-3c17a10beef8
+        Log.d(TAG, "[ OK ] -- subscribeToUpdates:");
         ref.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                Log.d(TAG, "subscribeToUpdates().onChildAdded: DEBUGGER:--------");
+                Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildAdded:");
                 setActiveMarker(dataSnapshot);
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                Log.d(TAG, "subscribeToUpdates().onChildChanged: DEBUGGER:--------");
+                Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildChanged:");
                 setActiveMarker(dataSnapshot);
             }
 
             @Override
             public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-
+                Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildMoved:");
             }
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
-
+                Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildRemoved:");
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Log.d(TAG, "Failed to read value.", error.toException());
+                Log.e(TAG, "[ ERROR ] -- Failed to read value. subscribeToUpdates():", error.toException());
             }
         });
     }
@@ -411,40 +593,75 @@ public class DisplayActivity extends FragmentActivity implements
     DataSnapshot dataSnapshotGlobal;
     String uid;
     int i = 1;
-    User user = new User();
-    Marker marker = null;
+    User greenMarkerUser = new User();
+    private Marker tempGreenMarker;
     // setMarker() accepts the location data from Firebase,
     // which contains the latitude and longitude, as well as the key for the device.
     private void setActiveMarker(DataSnapshot dataSnapshot) {
-        dataSnapshotGlobal = dataSnapshot;
+        Log.d(TAG, "[ OK ] -- setActiveMarker: obj: " + dataSnapshot.toString());
+
+        try{
+            greenMarkerUser = dataSnapshot.getValue(User.class);
+            Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + greenMarkerUser.getName());
+        } catch (Exception e){
+            Log.e(TAG, "[ ERROR ] -- setActiveMarker(): " + e.getMessage());
+        }
         uid = dataSnapshot.getKey();
 
-        // HERE WHAT CORRESPONDS TO JOIN
-        final DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
-                .child("users").child(uid);
-        userRef.addValueEventListener(
-            new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot childDataSnapshot) {
-                    try{
-                        user = childDataSnapshot.getValue(User.class);
-                        Log.d(TAG, "setActiveMarker().onDataChange():" +
-                                " DEBUGGER:--------" + user.getName());
-                        Log.d(TAG, "JOIN: setActiveMarker().onDataChange():" +
-                                " DEBUGGER:-------- " + i++ + childDataSnapshot.getValue());
-                    } catch (Exception e){
-                        Log.d(TAG, "NULL pointer exception: setActiveMarker().onDataChange():" +
-                                " DEBUGGER:--------");
-                    }
+        try {
+            if (greenMarkerUser != null) {
+                Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + greenMarkerUser.getName());
+                double lat  = Double.parseDouble(greenMarkerUser.getPosition().getLatitude());
+                double lang = Double.parseDouble(greenMarkerUser.getPosition().getLongitude());
+                LatLng location = new LatLng(lat, lang);
+                Log.d(TAG, "[ OK ] -- setActiveMarker: latlang: " + location.toString());
+
+                // It is notified each time one of the device's location is updated.
+                // When this happens, it will either create a new marker at the device's location,
+                // or move the marker for a device if it exists already.
+                if (!mMarkers.containsKey(uid)) {
+                    tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
+                            .position(location)
+                            .snippet("cell, msg, fnd req")
+                            .icon(BitmapDescriptorFactory.defaultMarker(
+                                    BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
+                            )));
+                    mMarkers.put(uid, tempGreenMarker);
+                    tempGreenMarker.showInfoWindow();
+                } else {
+                    mMarkers.get(uid).setPosition(location);
+                }
+            }
+        }catch (Exception e) {
+            Log.d(TAG, "[ ERROR ] setActiveMarker: " + e.getMessage());
+        }
+
+
+//        // HERE WHAT CORRESPONDS TO JOIN
+//        databaseReference.child(uid)
+//        .addValueEventListener(
+//            new ValueEventListener() {
+//                @Override
+//                public void onDataChange(DataSnapshot childDataSnapshot) {
+//                    try{
+//                        value = (HashMap<String, Object>) childDataSnapshot.getValue();
+////                        user = childDataSnapshot.getValue(User.class);
+//                        Log.d(TAG, "[ OK ] -- setActiveMarker.onDataChange: " + value.get("latitude").toString() +", " + i++ + childDataSnapshot.getValue());
+//                    } catch (Exception e){
+//                        Log.e(TAG, "[ ERROR ] -- setActiveMarker().onDataChange(): " + e.getMessage());
+//                    }
+
+                    /*
 
                     if (user != null) {
-                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
-                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
-                                " DEBUGGER:-------- ");
-
-                        double lat = Double.parseDouble(value.get("latitude").toString());
-                        double lng = Double.parseDouble(value.get("longitude").toString());
-                        LatLng location = new LatLng(lat, lng);
+//                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
+//                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
+//                                " DEBUGGER:-------- ");
+//
+//                        double lat = Double.parseDouble(value.get("latitude").toString());
+//                        double lng = Double.parseDouble(value.get("longitude").toString());
+//
+                        LatLng location = new LatLng(user.position.getLatitude(), user.position.getLongitude());
 
                         // SHOW live all
                         if (showAllLiveUser) {
@@ -519,15 +736,16 @@ public class DisplayActivity extends FragmentActivity implements
                             mMarkers.clear();
                         }
                     }
+                    */
 //                    user = null;
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            }
-        );
+//                }
+//
+//                @Override
+//                public void onCancelled(DatabaseError databaseError) {
+//                    Log.e(TAG, "[ ERROR ] -- setActiveMarker().onCancelled():");
+//                }
+//            }
+//        );
     }
 
     static boolean friendsOnlyIconClicked = false;
@@ -593,13 +811,22 @@ public class DisplayActivity extends FragmentActivity implements
         return false;
     }
 
+    // Auto pop up feature for <= v1.6.0 users of Share Location
+    DatabaseReference refUsers;
     // SUPPORT: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
     private void isNameProvided(String currentUser) {
-        databaseReference.child("users").child("" + currentUser)
+        Log.d(TAG, "[ OK ] isNameProvided: ");
+        refUsers = FirebaseDatabase.getInstance().getReference();
+        refUsers.child("users").child("" + currentUser)
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    User user = dataSnapshot.getValue(User.class);
+                    User isNameUser = null;
+                    try {
+                        isNameUser = dataSnapshot.getValue(User.class);
+                    } catch (Exception e) {
+                        Log.d(TAG, "[ ERROR ] isNameProvided().onDataChange: " + e.getMessage());
+                    }
 
                     if (dataSnapshot.getChildrenCount() == 2) {
                         // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
@@ -610,18 +837,22 @@ public class DisplayActivity extends FragmentActivity implements
                         // CODE is READY to CHANGE
                         // User friendly Toast
                         Toast.makeText(getApplicationContext(),
-                                "Please input your name, to get better UX. As you are <= v1.6.0 users", Toast.LENGTH_LONG).show();
+                                "Please input your name, to get better UX. As you are <= v1.6.0 users of Share Location", Toast.LENGTH_LONG).show();
                         // DEBUGGER
-                        Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided = " + false + " ------KEY: "
-                                + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                        try {
+                            Log.d(TAG, "[ OK ] isNameProvided().onDataChange: isNameProvided = " + false + " ------KEY: "
+                                    + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + isNameUser.getName());
+                        } catch (Exception e){
+                            Log.d(TAG, "[ ERROR ] isNameProvided().onDataChange: " + e.getMessage());
+                        }
 
                         // Take Input through pop up window and save to db
                         // step 1:  MAKE pop up window to take name input
                         // call method
                         popUpForName(dataSnapshot.getKey());
                     } else if (dataSnapshot.getChildrenCount() == 3) {
-                        Log.d(TAG, "onDataChange: DEBUGGER----- >= v1.7.0 users. So, Name already provide during sign up");
-                        Log.d(TAG, "onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + user.getName());
+                        Log.d(TAG, "[ OK ] onDataChange: DEBUGGER----- >= v1.7.0 users of Share Location. So, Name already provide during sign up");
+                        Log.d(TAG, "[ OK ] onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + isNameUser.getName());
                     }
                 }
 
@@ -631,13 +862,12 @@ public class DisplayActivity extends FragmentActivity implements
                 }
             });
     }
-
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
     private String name = "";
     // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
     private void popUpForName(final String key) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("You name?");
+        builder.setTitle("Give your name");
 
         final EditText input = new EditText(this);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -656,10 +886,10 @@ public class DisplayActivity extends FragmentActivity implements
                 final String msg = "Congratulation! Your name saved";
 
                 // setp 2:  Store name into db
-                databaseReference.child("users").child(key).child("name").setValue(name);
+                refUsers.child("users").child(key).child("name").setValue(name);
 
                 // Make sure user
-                databaseReference.child("users").child(key)
+                refUsers.child("users").child(key)
                 .addListenerForSingleValueEvent( new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -785,26 +1015,27 @@ public class DisplayActivity extends FragmentActivity implements
 
     }
 
+    // Android SDK Lifecycle
     // SUPPORT: https://stackoverflow.com/questions/19484493/activity-life-cycle-android
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onStart: ----");
     }
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onResume: ----");
     }
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onPause: ----");
     }
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(TAG, "onStop: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onStop: ----");
     }
     @Override
     protected void onRestart() {
@@ -812,11 +1043,11 @@ public class DisplayActivity extends FragmentActivity implements
         if (taskCompleted) {
             finish();
         }
-        Log.d(TAG, "onRestart: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onRestart: ----");
     }
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy: DEBUGGER:--------");
+        Log.d(TAG, "[ OK ] ---- onDestroy: ----");
     }
 }

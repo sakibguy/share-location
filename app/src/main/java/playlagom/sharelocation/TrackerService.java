@@ -24,7 +24,9 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import playlagom.sharelocation.models.Position;
+import java.util.HashMap;
+
+import playlagom.sharelocation.models.User;
 
 public class TrackerService extends Service {
 
@@ -81,7 +83,7 @@ public class TrackerService extends Service {
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         final String userId = currentUser.getUid();
-        final String path = getString(R.string.firebase_path) + "/" + userId;
+        final String path = getString(R.string.sharelocation_users) + "/" + userId;
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
         if (permission == PackageManager.PERMISSION_GRANTED) {
@@ -99,13 +101,13 @@ public class TrackerService extends Service {
                         double latitude = location.getLatitude();
                         double longitude = location.getLongitude();
 
-                        Position position = new Position(latitude, longitude);
-                        ref.setValue(position);
-                        Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
+                        HashMap<String, String> dataMap = new HashMap<>();
+                        dataMap.put("latitude", String.valueOf(latitude));
+                        dataMap.put("longitude", String.valueOf(longitude));
 
-                        // previous code
-//                        ref.setValue(location);
-//                        Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
+                        ref.child("position").setValue(dataMap);
+                        // TODO: 4/25/2018 CHECK data stored successfully or not
+                        Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
                     }
                 }
             }, null);

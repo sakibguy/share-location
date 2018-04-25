@@ -92,7 +92,10 @@ echo
 # 2018.Apr23
 ## 💚 UPLOAD cr2018.Apr23.1.11.0
 
-git commit -m "💚 UPLOAD cr2018.Apr23.1.11.0"
+# 2018.Apr25
+## 🔴 UPLOAD changes: unstable  2018.Apr25.1.12.0
+
+git commit -m "🔴 UPLOAD changes: unstable  2018.Apr25.1.12.0"
 
 ############
 # Step: 05 #
@@ -120,7 +123,6 @@ git remote set-url origin https://github.com/Sakib-Rahman-Bangladesh/share-locat
 echo [ Done ]  Verifying remote URL.
 echo
 git remote -v
-
 
 ############
 # Step: 08 #

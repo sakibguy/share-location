@@ -2,10 +2,6 @@
     <string name="app_name">Share Location</string>
     <string name="title_activity_display">Live Users</string>
     <string name="notification_text">Sharing Location, tap to cancel</string>
-    <string name="transport_id" translatable="false">Me</string>
-    <string name="firebase_path" translatable="false">locations</string>
+    <string name="sharelocation_users" translatable="false">sharelocation-users</string>
     <string name="title_activity_maps">Map</string>
-
-    <string name="firebase_users" translatable="false">users</string>
-
 </resources>

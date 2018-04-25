@@ -10,16 +10,32 @@ Follow Pattern
    1. **Cmd** key
    2. **Cmd** key
 
+> 2018.Apr25.1.13.0
+1. **TODO:** NO copyLoggedInUserInfoToNewStructure (**REMOVE method for less operational code**)
+
 Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr24.1.?
-1. TODO: **MAKE** Live friends functional
-2. TODO: **ADD** feature: Send feedback
-3. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
-4. TODO: **NOTIFY** live users 
-5. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+> 2018.Apr25.1.12.0
+1. **SET** developer friendly debugger at every function (**USE debugger must**)
+2. **CHANGED** db structure<br>
+-users<br>
+--name<br>
+--email<br>
+--danger<br>
+--postion<br>
+---latitude<br>
+---longitude<br>
+3. **HANDLED** name isNameProvided() for <= 1.6.0 users of Share Location and **STORE** name at v1.6.0 pointed db.
+4. **COPIED** data to new structure db from v1.11.0 pointed db. **RUN app 2 times** 
+5. DOING: **SHOW** all registered users by default at map then give marker colors. (green=live users, red=at danger user, black = not live). **Blue markers for all registered users by default.**
+
+3. TOOD: **MAKE** Live friends functional
+4. TODO: **ADD** feature: Send feedback
+5. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+6. TODO: **NOTIFY** live users 
+7. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 
 Previous Versions
 -----------------
@@ -32,7 +48,6 @@ Previous Versions
 > 2018.Apr22.1.10.1
 1. **SHOWING** live all
 2. **FIXED** crash issues
-
 
 > 2018.Apr21.1.10.0
 1. **SOLVED** issue, different marker's same location image issue.
