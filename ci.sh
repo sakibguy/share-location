@@ -95,7 +95,10 @@ echo
 # 2018.Apr25
 ## 🔴 UPLOAD changes: unstable  2018.Apr25.1.12.0
 
-git commit -m "🔴 UPLOAD changes: unstable  2018.Apr25.1.12.0"
+# 2018.Apr27
+## 💚 UPLOAD research: rendering, realtime sys, marketing
+
+git commit -m "💚 UPLOAD research: rendering, realtime sys, marketing"
 
 ############
 # Step: 05 #
