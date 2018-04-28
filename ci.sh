@@ -97,8 +97,9 @@ echo
 
 # 2018.Apr27
 ## 💚 UPLOAD research: rendering, realtime sys, marketing
+## CREATE look-and-feel dir with contents
 
-git commit -m "💚 UPLOAD research: rendering, realtime sys, marketing"
+git commit -m "CREATE look-and-feel dir with contents"
 
 ############
 # Step: 05 #
