@@ -62,7 +62,7 @@ public class DisplayActivity extends FragmentActivity implements
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
     private HashMap<String, Marker> mMarkers = new HashMap<>();
-    private HashMap<String, Marker> blueMarkers = new HashMap<>();
+    private HashMap<String, Marker> blueMarkers;
     GoogleMap mMap;
 
     private static final int PERMISSIONS_REQUEST = 1;
@@ -97,10 +97,12 @@ public class DisplayActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display);
+        Log.d(TAG, "[ OK ] ---- onCreate: ----");
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        Log.d(TAG, "[ OK ] ---- async map request done. Waiting... for onMapReady interface/callback listener execution");
         mapView = mapFragment.getView();
 
         // wire xml imageview components with java object
@@ -156,11 +158,11 @@ public class DisplayActivity extends FragmentActivity implements
         databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
         allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
 
+        // Local cache for markers
+        blueMarkers = new HashMap<>();
+
         // SET: danger icon, set value = 0 or read danger status and select icon
         showDangerIcon();
-
-        // SET: blue markers for all registered users by default.
-        showAllRegisteredUsers();
 
         // COPY v1.11.0 pointed db data to new structure db
         copyLoggedInUserInfoToNewStructure();
@@ -169,7 +171,7 @@ public class DisplayActivity extends FragmentActivity implements
 //        // 1: https://github.com/firebase/FirebaseUI-Android/issues/1040
 //        // 2: https://stackoverflow.com/questions/26700924/query-based-on-multiple-where-clauses-in-firebase
 //        // todo 3: https://github.com/firebase/geofire-java
-//
+
 //        // look for the matching item
 //        locationRef.orderByChild("locations").equalTo(uniqueID)
 //                .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -230,14 +232,12 @@ public class DisplayActivity extends FragmentActivity implements
 //
 //                    }
 //                });
-
         checkLocationPermission();
-        Log.d(TAG, "[ OK ] ---- onCreate: ----");
     }
 
     // COPY v1.11.0 pointed db data to new structure db
     private void copyLoggedInUserInfoToNewStructure() {
-        Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure: ");
+        Log.d(TAG, "[ OK ] -------- COPIED: copyLoggedInUserInfoToNewStructure: ");
         DatabaseReference copyFromRef = FirebaseDatabase.getInstance().getReference("users");
         copyFromRef.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -298,6 +298,20 @@ public class DisplayActivity extends FragmentActivity implements
                                         Toast.LENGTH_LONG).show();
                                 dangerStatus = true;
                             }
+                        } else if (dataSnapshot.getChildrenCount() == 6) {
+                            User dangerUser = dataSnapshot.getValue(User.class);
+                            if (dangerUser.getDanger().equals("0")){
+                                // SET default danger icon
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                                dangerStatus = false;
+                            }
+                            if (dangerUser.getDanger().equals("1")){
+                                // SET run danger icon
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
+                                Toast.makeText(getApplicationContext(), "Your status in DANGER",
+                                        Toast.LENGTH_LONG).show();
+                                dangerStatus = true;
+                            }
                         }
                     }
 
@@ -327,7 +341,7 @@ public class DisplayActivity extends FragmentActivity implements
                             double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
                             double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
                             location = new LatLng(lat, lang);
-                            Log.d(TAG, "[ OK ] ---- showAllRegisteredUsers() .. " + userCounter ++ +
+                            Log.d(TAG, "[ OK ] ---- LOOP: showAllRegisteredUsers() .. " + userCounter ++ +
                                     " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
 
                             if (!blueMarkers.containsKey(uniqueID)) {
@@ -347,22 +361,23 @@ public class DisplayActivity extends FragmentActivity implements
                         Log.e(TAG, "[ ERROR ] ---- showAllRegisteredUsers().onDataChange: " + e.getMessage());
                     }
                 }
-                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                for (Marker tempMarker : blueMarkers.values()) {
-                    builder.include(tempMarker.getPosition());
-                }
-                final LatLngBounds bounds = builder.build();
-                mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-                    @Override
-                    public void onMapLoaded() {
-//                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 300));
-                    }
-                });
-//                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 300));
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
+
+        // SET boundary: for auto focus area at dev time
+//        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+//            @Override
+//            public void onMapLoaded() {
+//                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+//                for (Marker tempMarker : blueMarkers.values()) {
+//                    builder.include(tempMarker.getPosition());
+//                }
+//                final LatLngBounds bounds = builder.build();
+//                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 300));
+//            }
+//        });
     }
 
     private void checkLocationPermission() {
@@ -470,7 +485,16 @@ public class DisplayActivity extends FragmentActivity implements
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
+        Log.d(TAG, "[ OK ] ---- onMapReady executing...");
         mMap = map;
+
+        if (mMap != null) {
+            // SET: blue markers for all registered users by default.
+            showAllRegisteredUsers();
+        } else {
+            Log.e(TAG, "[ ERROR ] ---- onMapReady: null");
+        }
+
         // TODO: Before enabling the My Location layer, you must request
         // location permission from the user. This sample does not include
         // a request for location permission.
@@ -563,7 +587,7 @@ public class DisplayActivity extends FragmentActivity implements
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
                 Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildAdded:");
-                setActiveMarker(dataSnapshot);
+//                setActiveMarker(dataSnapshot);
             }
 
             @Override
@@ -600,41 +624,66 @@ public class DisplayActivity extends FragmentActivity implements
     private void setActiveMarker(DataSnapshot dataSnapshot) {
         Log.d(TAG, "[ OK ] -- setActiveMarker: obj: " + dataSnapshot.toString());
 
-        try{
-            greenMarkerUser = dataSnapshot.getValue(User.class);
-            Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + greenMarkerUser.getName());
-        } catch (Exception e){
-            Log.e(TAG, "[ ERROR ] -- setActiveMarker(): " + e.getMessage());
-        }
-        uid = dataSnapshot.getKey();
-
-        try {
-            if (greenMarkerUser != null) {
+            try{
+                greenMarkerUser = dataSnapshot.getValue(User.class);
                 Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + greenMarkerUser.getName());
-                double lat  = Double.parseDouble(greenMarkerUser.getPosition().getLatitude());
-                double lang = Double.parseDouble(greenMarkerUser.getPosition().getLongitude());
-                LatLng location = new LatLng(lat, lang);
-                Log.d(TAG, "[ OK ] -- setActiveMarker: latlang: " + location.toString());
+                uid = dataSnapshot.getKey();
 
-                // It is notified each time one of the device's location is updated.
-                // When this happens, it will either create a new marker at the device's location,
-                // or move the marker for a device if it exists already.
-                if (!mMarkers.containsKey(uid)) {
-                    tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
-                            .position(location)
-                            .snippet("cell, msg, fnd req")
-                            .icon(BitmapDescriptorFactory.defaultMarker(
-                                    BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
-                            )));
-                    mMarkers.put(uid, tempGreenMarker);
-                    tempGreenMarker.showInfoWindow();
+                if (greenMarkerUser.getOnline().equals("1")) {
+                    Log.d(TAG, "[ OK ] -- online = 1");
+                    try {
+                        if (greenMarkerUser != null) {
+                            double lat  = Double.parseDouble(greenMarkerUser.getPosition().getLatitude());
+                            double lang = Double.parseDouble(greenMarkerUser.getPosition().getLongitude());
+                            location = new LatLng(lat, lang);
+                            Log.d(TAG, "[ OK ] -- setActiveMarker: latlang: " + location.toString());
+
+                            // It is notified each time one of the device's location is updated.
+                            // When this happens, it will either create a new marker at the device's location,
+                            // or move the marker for a device if it exists already.
+                            if (!blueMarkers.containsKey(uid)) {
+                                Log.d(TAG, "[ OK ] -- NEW USER: ADD & SET marker color green. -- setActiveMarker:");
+                                tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
+                                        .position(location)
+                                        .snippet("cell, msg, fnd req")
+                                        .icon(BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_BLUE       // ADD & SET newly registered live users marker green
+                                        )));
+                                blueMarkers.put(uid, tempGreenMarker);
+                                tempGreenMarker.showInfoWindow();
+                            } else if (blueMarkers.containsKey(uid)){
+                                Log.d(TAG, "[ OK ] -- CHANGE color as Old USER / user already exits at map -- setActiveMarker:");
+
+                                blueMarkers.get(uid).setTitle(greenMarkerUser.getName());
+                                blueMarkers.get(uid).setSnippet("cell, msg, fnd req");
+                                blueMarkers.get(uid).setIcon(
+                                        BitmapDescriptorFactory.defaultMarker(
+                                                BitmapDescriptorFactory.HUE_GREEN       // SET live user marker green
+                                        )
+                                );
+                                blueMarkers.get(uid).setPosition(location);
+                                blueMarkers.get(uid).showInfoWindow();
+                            }
+                        }
+                    }catch (Exception e) {
+                        Log.d(TAG, "[ ERROR ] online-check-block: setActiveMarker: " + e.getMessage());
+                    }
                 } else {
-                    mMarkers.get(uid).setPosition(location);
+                    Log.d(TAG, "[ OK ] -- online = 0");
+                    Log.d(TAG, "[ OK ] -- DISCONNECTING USER... setActiveMarker: ");
+                    blueMarkers.get(uid).setTitle(greenMarkerUser.getName());
+                    blueMarkers.get(uid).setSnippet("cell, msg, fnd req");
+                    blueMarkers.get(uid).setIcon(
+                            BitmapDescriptorFactory.defaultMarker(
+                                    BitmapDescriptorFactory.HUE_BLUE       // SET live user marker green
+                            )
+                    );
+                    blueMarkers.get(uid).setPosition(location);
+                    blueMarkers.get(uid).showInfoWindow();
                 }
+            } catch (Exception e){
+                Log.e(TAG, "[ ERROR ] -- setActiveMarker(): " + e.getMessage());
             }
-        }catch (Exception e) {
-            Log.d(TAG, "[ ERROR ] setActiveMarker: " + e.getMessage());
-        }
 
 
 //        // HERE WHAT CORRESPONDS TO JOIN
@@ -1049,5 +1098,6 @@ public class DisplayActivity extends FragmentActivity implements
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "[ OK ] ---- onDestroy: ----");
+        databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
     }
 }

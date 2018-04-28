@@ -35,10 +35,22 @@ public class TrackerService extends Service {
     @Override
     public IBinder onBind(Intent intent) {return null;}
 
+    DatabaseReference databaseReferenceOnDisconnect;
+    FirebaseAuth firebaseAuthForOnDisconnect;
+    FirebaseUser currentUserOnDisconnect;
+    String userIdOnDisconnect;
+    String pathOnDisconnect;
+
     @Override
     public void onCreate() {
         super.onCreate();
         buildNotification();
+
+        firebaseAuthForOnDisconnect = FirebaseAuth.getInstance();
+        currentUserOnDisconnect = firebaseAuthForOnDisconnect.getCurrentUser();
+        userIdOnDisconnect = currentUserOnDisconnect.getUid();
+        pathOnDisconnect = getString(R.string.sharelocation_users) + "/" + userIdOnDisconnect;
+        databaseReferenceOnDisconnect = FirebaseDatabase.getInstance().getReference(pathOnDisconnect);
 
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             Log.d(TAG, "firebase auth success");
@@ -66,8 +78,9 @@ public class TrackerService extends Service {
     protected BroadcastReceiver stopReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "received stop broadcast");
+            Log.d(TAG, "[ OK ] ---- received stop broadcast");
             // Stop the service when the notification is tapped
+            databaseReferenceOnDisconnect.child("online").onDisconnect().setValue("0");
             unregisterReceiver(stopReceiver);
             stopSelf();
         }
@@ -106,6 +119,7 @@ public class TrackerService extends Service {
                         dataMap.put("longitude", String.valueOf(longitude));
 
                         ref.child("position").setValue(dataMap);
+                        ref.child("online").setValue("1");
                         // TODO: 4/25/2018 CHECK data stored successfully or not
                         Log.d(TAG, "---- USER ---- " + userId + " ---- location ---- " + location);
                     }

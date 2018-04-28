@@ -17,28 +17,36 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr25.1.12.0
-1. **SET** developer friendly debugger at every function (**USE debugger must**)
+> 2018.Apr29.1.?
+1. TODO: **ADD** cluster marker
+2. TODO: **SHOW** user last online status
+3. TODO: **FIX** all issues
+4. TODO: **ADD** search option and **DISPLAY** search based realtime result
+5. TOOD: **MAKE** Live friends functional + location based friends search feature
+6. TODO: **MAKE** cluster markers
+7. TODO: **ADD** feature: Send feedback
+8. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+9. TODO: **NOTIFY** live users 
+10. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+
+Previous Versions
+-----------------
+> 2018.Apr28.1.12.0
+1. **USED** developer friendly debugger at every function
 2. **CHANGED** db structure<br>
 -users<br>
 --name<br>
 --email<br>
 --danger<br>
---postion<br>
+--position<br>
+--online<br>
 ---latitude<br>
 ---longitude<br>
 3. **HANDLED** name isNameProvided() for <= 1.6.0 users of Share Location and **STORE** name at v1.6.0 pointed db.
 4. **COPIED** data to new structure db from v1.11.0 pointed db. **RUN app 2 times** 
-5. DOING: **SHOW** all registered users by default at map then give marker colors. (green=live users, red=at danger user, black = not live). **Blue markers for all registered users by default.**
+5. **SHOWING** all registered users by default at map. **Blue markers** for all registered users by default.
+6. **ENSURED** user online/offline status by onDisconnect and given marker colors (green=live users, red=at danger user, blue = not live).
 
-3. TOOD: **MAKE** Live friends functional
-4. TODO: **ADD** feature: Send feedback
-5. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
-6. TODO: **NOTIFY** live users 
-7. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
-
-Previous Versions
------------------
 > 2018.Apr23.1.11.0
 1. **CHANGED** marker color: green=live users, red = danger
 2. **PLAYED** siren sound to others when anyone pressed on the danger button.

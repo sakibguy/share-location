@@ -1,4 +1,5 @@
-﻿##################################################
+﻿#!/usr/bin/env bash
+##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
 ### Target : Tool dev			       ###
@@ -99,7 +100,10 @@ echo
 ## 💚 UPLOAD research: rendering, realtime sys, marketing
 ## CREATE look-and-feel dir with contents
 
-git commit -m "CREATE look-and-feel dir with contents"
+# 2018.Apr28
+## 💚 UPLOAD cr2018.Apr28.1.12.0
+
+git commit -m "💚 UPLOAD cr2018.Apr28.1.12.0"
 
 ############
 # Step: 05 #

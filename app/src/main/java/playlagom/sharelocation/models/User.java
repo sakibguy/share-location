@@ -14,6 +14,7 @@ public class User {
     private String password;
     private String danger;
     private Position position;
+    private String online;
 
     //default constructor
     public User() {
@@ -72,6 +73,13 @@ public class User {
         this.position = position;
     }
 
+    public String getOnline() {
+        return online;
+    }
+
+    public void setOnline(String online) {
+        this.online = online;
+    }
 
     // ERROR: Position is missing a constructor with no arguments
     // SOUTION:  sub class must be static or in a separate file
