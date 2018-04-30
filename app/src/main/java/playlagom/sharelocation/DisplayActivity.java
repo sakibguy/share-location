@@ -61,7 +61,6 @@ public class DisplayActivity extends FragmentActivity implements
 
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
-    private HashMap<String, Marker> mMarkers = new HashMap<>();
     private HashMap<String, Marker> blueMarkers;
     GoogleMap mMap;
 
@@ -76,8 +75,6 @@ public class DisplayActivity extends FragmentActivity implements
     // Firebase attributes
     FirebaseAuth firebaseAuth;
     DatabaseReference databaseReference;
-    DatabaseReference locationRef;
-    DatabaseReference userRef;
     DatabaseReference allMarkerRef;
 
     AdView mAdView;
@@ -88,9 +85,6 @@ public class DisplayActivity extends FragmentActivity implements
     int width, height;
     private static boolean makeDangerSound = true;
     private int userCounter = 1;
-    private int counter = 1;
-    private User tempUser = new User();
-    private String markerTitle = null;
     private LatLng location = new LatLng(0, 0);
 
     @Override
@@ -166,72 +160,7 @@ public class DisplayActivity extends FragmentActivity implements
 
         // COPY v1.11.0 pointed db data to new structure db
         copyLoggedInUserInfoToNewStructure();
-
-//        // SUPPORT: https://www.101apps.co.za/index.php/item/182-firebase-realtime-database-tutorial.html
-//        // 1: https://github.com/firebase/FirebaseUI-Android/issues/1040
-//        // 2: https://stackoverflow.com/questions/26700924/query-based-on-multiple-where-clauses-in-firebase
-//        // todo 3: https://github.com/firebase/geofire-java
-
-//        // look for the matching item
-//        locationRef.orderByChild("locations").equalTo(uniqueID)
-//                .addListenerForSingleValueEvent(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(DataSnapshot dataSnapshotInner) {
-//                        try{
-////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
-//
-//                            // SUPPORT handle idea raised by myself first then suggested
-//                            // from: https://www.youtube.com/watch?v=Idu9EJPSxiY
-//                            // AS unique id is just the last value of the dataSnapshot.getChildren() then
-//                            // store keys + value on a hasmap/arraylist to handle/loop through later.
-//                            Log.d(TAG, counter ++ +" DEBUGGER: --- id: " + tempSnapShot.getKey());
-//                        } catch (Exception e){
-//                            Log.d(TAG, "NULL pointer exception: DEBUGGER: ---");
-//                        }
-//
-////                                    if (tempSnapShot != null) {
-////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
-//
-////                                        double lat = Double.parseDouble(value.get("latitude").toString());
-////                                        double lng = Double.parseDouble(value.get("longitude").toString());
-////                                        location = new LatLng(lat, lng);
-//
-////                                        // SHOW all users by default through black marker
-////
-////                                        // create a new marker at the device's location
-////                                        // move the marker for a device if it exists already.
-////
-////                                        if (dataSnapshotInner != null) {
-////                                            Log.d(TAG, "--- --- DEBUGGER: --- " + tempUser.getEmail());
-////                                            if (!mMarkers.containsKey(dataSnapshotInner.getKey())) {
-////                                                if (tempSnapShot.getChildrenCount() == 2) {
-////                                                    markerTitle = tempUser.getEmail();
-////                                                } else if (tempSnapShot.getChildrenCount() == 3) {
-////                                                    markerTitle = tempUser.getName();
-////                                                } else {
-////                                                    markerTitle = tempUser.getName();
-////                                                }
-////                                                marker = mMap.addMarker(new MarkerOptions().title("" + markerTitle + "")
-////                                                        .position(location)
-////                                                        .snippet("cell, msg, fnd req")
-////                                                        .icon(BitmapDescriptorFactory.defaultMarker(
-////                                                                BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
-////                                                        )));
-////                                                mMarkers.put(uid, marker);
-////                                                marker.showInfoWindow();
-////
-////                                                tempSnapShot = null;
-////                                                tempUser = null;
-////                                            }
-////                                        }
-////                                    }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError databaseError) {
-//
-//                    }
-//                });
+        backupGeoFire();
         checkLocationPermission();
     }
 
@@ -272,6 +201,7 @@ public class DisplayActivity extends FragmentActivity implements
                 }
             });
     }
+
     private void showDangerIcon() {
         databaseReference.child(firebaseAuth.getCurrentUser().getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -321,6 +251,7 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                 });
     }
+
     Marker tempBlueMarker = null;
     private void showAllRegisteredUsers() {
         // SHOW all users black/blue marker icon
@@ -379,7 +310,6 @@ public class DisplayActivity extends FragmentActivity implements
 //            }
 //        });
     }
-
     private void checkLocationPermission() {
         // Check location permission is granted - if it is, start
         // the service, otherwise request the permission
@@ -410,10 +340,10 @@ public class DisplayActivity extends FragmentActivity implements
             }
         }
     }
+
     private void startTrackerService() {
         startService(new Intent(this, TrackerService.class));
     }
-
     @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[]
@@ -482,6 +412,7 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     LatLng latLng;
+
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
@@ -558,7 +489,6 @@ public class DisplayActivity extends FragmentActivity implements
         // zoom control: plus | minus button by default android sdk
 //        mMap.getUiSettings().setZoomControlsEnabled(true);
     }
-
     @Override
     public boolean onMyLocationButtonClick() {
         Toast.makeText(this, "My Location", Toast.LENGTH_SHORT).show();
@@ -568,14 +498,12 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
-    // We've also got two empty methods - subscribeToUpdates() and setMarker()
-    // which are responsible for
-    
+
     // subscribing to updates in Firebase and
-    // setting the marker on the map
 
     // when an update occurs.
     static boolean showAllLiveUser = true;
+
     // The subscribeToUpdates() method calls setMarker()
     // whenever it receives a new or updated location for a tracked device.
     private void subscribeToUpdates() {
@@ -587,13 +515,12 @@ public class DisplayActivity extends FragmentActivity implements
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
                 Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildAdded:");
-//                setActiveMarker(dataSnapshot);
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
                 Log.d(TAG, "[ OK ] -- subscribeToUpdates.onChildChanged:");
-                setActiveMarker(dataSnapshot);
+                showMarker(dataSnapshot);
             }
 
             @Override
@@ -612,192 +539,152 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
     }
-
     // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
-    DataSnapshot dataSnapshotGlobal;
-    String uid;
-    int i = 1;
-    User greenMarkerUser = new User();
-    private Marker tempGreenMarker;
-    // setMarker() accepts the location data from Firebase,
-    // which contains the latitude and longitude, as well as the key for the device.
-    private void setActiveMarker(DataSnapshot dataSnapshot) {
+    private void showMarker(DataSnapshot dataSnapshot) {
         Log.d(TAG, "[ OK ] -- setActiveMarker: obj: " + dataSnapshot.toString());
+        String showMarkerTempUID = null;
 
+        if (showAllLiveUser) {          // SHOW all (live + not live)
+            // CASE 1: RECEIVE data through try catch
             try{
-                greenMarkerUser = dataSnapshot.getValue(User.class);
-                Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + greenMarkerUser.getName());
-                uid = dataSnapshot.getKey();
+                User showMarkerTempUser = dataSnapshot.getValue(User.class);
+                Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + showMarkerTempUser.getName());
+                showMarkerTempUID = dataSnapshot.getKey();
 
-                if (greenMarkerUser.getOnline().equals("1")) {
-                    Log.d(TAG, "[ OK ] -- online = 1");
-                    try {
-                        if (greenMarkerUser != null) {
-                            double lat  = Double.parseDouble(greenMarkerUser.getPosition().getLatitude());
-                            double lang = Double.parseDouble(greenMarkerUser.getPosition().getLongitude());
-                            location = new LatLng(lat, lang);
-                            Log.d(TAG, "[ OK ] -- setActiveMarker: latlang: " + location.toString());
+                // CASE 2: CHECK data
+                if (showMarkerTempUser != null) {
+                    // CASE 3: CHECK and SET marker green/blue as user online/offline
+                    showOnlineOfflineStatus(showMarkerTempUser, showMarkerTempUID);
 
-                            // It is notified each time one of the device's location is updated.
-                            // When this happens, it will either create a new marker at the device's location,
-                            // or move the marker for a device if it exists already.
-                            if (!blueMarkers.containsKey(uid)) {
-                                Log.d(TAG, "[ OK ] -- NEW USER: ADD & SET marker color green. -- setActiveMarker:");
-                                tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
-                                        .position(location)
-                                        .snippet("cell, msg, fnd req")
-                                        .icon(BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_BLUE       // ADD & SET newly registered live users marker green
-                                        )));
-                                blueMarkers.put(uid, tempGreenMarker);
-                                tempGreenMarker.showInfoWindow();
-                            } else if (blueMarkers.containsKey(uid)){
-                                Log.d(TAG, "[ OK ] -- CHANGE color as Old USER / user already exits at map -- setActiveMarker:");
-
-                                blueMarkers.get(uid).setTitle(greenMarkerUser.getName());
-                                blueMarkers.get(uid).setSnippet("cell, msg, fnd req");
-                                blueMarkers.get(uid).setIcon(
-                                        BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_GREEN       // SET live user marker green
-                                        )
-                                );
-                                blueMarkers.get(uid).setPosition(location);
-                                blueMarkers.get(uid).showInfoWindow();
-                            }
-                        }
-                    }catch (Exception e) {
-                        Log.d(TAG, "[ ERROR ] online-check-block: setActiveMarker: " + e.getMessage());
-                    }
+                    // CASE 4: CHECK and SET animated marker as user at danger
+                    showAnimatedMarkerAtDanger(showMarkerTempUser, showMarkerTempUID);
                 } else {
-                    Log.d(TAG, "[ OK ] -- online = 0");
-                    Log.d(TAG, "[ OK ] -- DISCONNECTING USER... setActiveMarker: ");
-                    blueMarkers.get(uid).setTitle(greenMarkerUser.getName());
-                    blueMarkers.get(uid).setSnippet("cell, msg, fnd req");
-                    blueMarkers.get(uid).setIcon(
-                            BitmapDescriptorFactory.defaultMarker(
-                                    BitmapDescriptorFactory.HUE_BLUE       // SET live user marker green
-                            )
-                    );
-                    blueMarkers.get(uid).setPosition(location);
-                    blueMarkers.get(uid).showInfoWindow();
+                    Log.e(TAG, "[ ERROR ] -- NULL USER, showMarker()");
                 }
             } catch (Exception e){
-                Log.e(TAG, "[ ERROR ] -- setActiveMarker(): " + e.getMessage());
+                Log.e(TAG, "[ ERROR ] -- showMarker(): " + e.getMessage());
             }
+        } else {                            // SHOW friends (live + not live)
+            if (friendsOnlyIconClicked) {
+                for (Marker CurrMarker : blueMarkers.values()) {
+                    // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
+                    CurrMarker.remove();
+                }
+                blueMarkers.clear();
+            }
+        }
+        backup();
+    }
 
-
-//        // HERE WHAT CORRESPONDS TO JOIN
-//        databaseReference.child(uid)
-//        .addValueEventListener(
-//            new ValueEventListener() {
-//                @Override
-//                public void onDataChange(DataSnapshot childDataSnapshot) {
-//                    try{
-//                        value = (HashMap<String, Object>) childDataSnapshot.getValue();
-////                        user = childDataSnapshot.getValue(User.class);
-//                        Log.d(TAG, "[ OK ] -- setActiveMarker.onDataChange: " + value.get("latitude").toString() +", " + i++ + childDataSnapshot.getValue());
-//                    } catch (Exception e){
-//                        Log.e(TAG, "[ ERROR ] -- setActiveMarker().onDataChange(): " + e.getMessage());
-//                    }
-
-                    /*
-
-                    if (user != null) {
-//                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
-//                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
-//                                " DEBUGGER:-------- ");
-//
-//                        double lat = Double.parseDouble(value.get("latitude").toString());
-//                        double lng = Double.parseDouble(value.get("longitude").toString());
-//
-                        LatLng location = new LatLng(user.position.getLatitude(), user.position.getLongitude());
-
-                        // SHOW live all
-                        if (showAllLiveUser) {
-                            // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
-                            for (Circle myCircle : GoogleMapOperations.circleList) {
-                                myCircle.remove();
-                            }
-                            GoogleMapOperations.circleList.clear();
-
-                            Log.d(TAG, "setActiveMarker: KEY: " + i + " " + uid + "," +
-                                    " DEBUGGER:-------- ");
-                            // It is notified each time one of the device's location is updated.
-                            // When this happens, it will either create a new marker at the device's location,
-                            // or move the marker for a device if it exists already.
-                            if (!mMarkers.containsKey(uid)) {
-                                marker = mMap.addMarker(new MarkerOptions().title("" + user.getName() + "")
-                                    .position(location)
-                                    .snippet("cell, msg, fnd req")
-                                    .icon(BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
-                                    )));
-                                mMarkers.put(uid, marker);
-                                marker.showInfoWindow();
-
-                                // READY to CHANGE CODE
-                                // SET animated marker at danger
-                                if (user.getDanger() != null) {
-                                    String danger = user.getDanger();
-                                    if (danger.equals("1")) {
-                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
-                                        GoogleMapOperations.addingCircleView(mMap, location);
-                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-                                        ));
-                                    }
-                                }
-                            } else {
-                                // READY to CHANGE CODE
-                                // SET animated marker at danger
-                                if (user.getDanger() != null) {
-                                    String danger = user.getDanger();
-                                    if (danger.equals("1")) {
-                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
-                                        GoogleMapOperations.addingCircleView(mMap, location);
-                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-                                        ));
-
-                                        // START danger sound
-                                        if (makeDangerSound) {
-                                            makeDangerSound = false;
-                                            dangerSound.start();
-                                            Toast.makeText(getApplicationContext(), "NEED help!\n" + user.getName()
-                                                    + " is at DANGER now", Toast.LENGTH_LONG).show();
-                                        }
-                                    } else if (danger.equals("0")) {
-                                        marker.setIcon(BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
-                                        ));
-                                    }
-                                }
-                                mMarkers.get(uid).setPosition(location);
-                            }
-                        }
-
-                        // SHOW live friends
-                        if (friendsOnlyIconClicked) {
-                            for (Marker CurrMarker : mMarkers.values()) {
-                                // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
-                                CurrMarker.remove();
-                            }
-                            mMarkers.clear();
-                        }
+    private void showAnimatedMarkerAtDanger(User showMarkerTempUser, String showMarkerTempUID) {
+        if (showMarkerTempUser.getDanger() != null) {
+            String danger = showMarkerTempUser.getDanger();
+            if (danger.equals("1")) {
+                try {
+                    // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
+                    // CLEAR red circles
+                    for (Circle myCircle : GoogleMapOperations.circleList) {
+                        myCircle.remove();
                     }
-                    */
-//                    user = null;
-//                }
-//
-//                @Override
-//                public void onCancelled(DatabaseError databaseError) {
-//                    Log.e(TAG, "[ ERROR ] -- setActiveMarker().onCancelled():");
-//                }
-//            }
-//        );
+                    GoogleMapOperations.circleList.clear();
+
+                    double lat  = Double.parseDouble(showMarkerTempUser.getPosition().getLatitude());
+                    double lang = Double.parseDouble(showMarkerTempUser.getPosition().getLongitude());
+                    location = new LatLng(lat, lang);
+
+                    // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+                    // animation
+                    GoogleMapOperations.addingCircleView(mMap, location);
+                    Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: latlang: " + location.toString());
+
+                    // It is notified each time one of the device's location is updated.
+                    // When this happens, it will either create a new marker at the device's location,
+                    // or move the marker for a device if it exists already.
+                    if (blueMarkers.containsKey(showMarkerTempUID)){
+                        Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: CHANGE color as user already exits at map");
+
+                        blueMarkers.get(showMarkerTempUID).setTitle(showMarkerTempUser.getName());
+                        blueMarkers.get(showMarkerTempUID).setSnippet("cell, msg, fnd req");
+                        blueMarkers.get(showMarkerTempUID).setIcon(
+                                BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_RED       // SET live user marker green
+                                )
+                        );
+                        blueMarkers.get(showMarkerTempUID).setPosition(location);
+                        blueMarkers.get(showMarkerTempUID).showInfoWindow();
+                    }
+                }catch (Exception e) {
+                    Log.d(TAG, "[ ERROR ] -- showAnimatedMarkerAtDanger: " + e.getMessage());
+                }
+
+                // START danger sound
+                if (makeDangerSound) {
+                    makeDangerSound = false;
+                    dangerSound.start();
+                    Toast.makeText(getApplicationContext(), "NEED help!\n" + showMarkerTempUser.getName()
+                            + " is at DANGER now", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+    // TO make offline: close app -> tab notification to stop service -> clear app running history
+    private void showOnlineOfflineStatus(User currentUser, String currentUID) {
+        if (currentUser.getOnline() != null) {
+            if (currentUser.getOnline().equals("1")) {
+                Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 1");
+                try {
+                    double lat  = Double.parseDouble(currentUser.getPosition().getLatitude());
+                    double lang = Double.parseDouble(currentUser.getPosition().getLongitude());
+                    location = new LatLng(lat, lang);
+                    Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: latlang: " + location.toString());
+
+                    // It is notified each time one of the device's location is updated.
+                    // When this happens, it will either create a new marker at the device's location,
+                    // or move the marker for a device if it exists already.
+                    if (blueMarkers.containsKey(currentUID)){
+                        Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: CHANGE color as user already exits at map");
+
+                        blueMarkers.get(currentUID).setTitle(currentUser.getName());
+                        blueMarkers.get(currentUID).setSnippet("cell, msg, fnd req");
+                        blueMarkers.get(currentUID).setIcon(
+                                BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_GREEN       // SET live user marker green
+                                )
+                        );
+                        blueMarkers.get(currentUID).setPosition(location);
+                        blueMarkers.get(currentUID).showInfoWindow();
+                    } else if(!blueMarkers.containsKey(currentUID)){
+                        Marker marker = mMap.addMarker(new MarkerOptions().title("" + currentUser.getName() + "")
+                            .position(location)
+                            .snippet("cell, msg, fnd req")
+                            .icon(BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+                            )));
+                        blueMarkers.put(currentUID, marker);
+                        marker.showInfoWindow();
+                    }
+                }catch (Exception e) {
+                    Log.d(TAG, "[ ERROR ] -- showOnlineOfflineStatus: " + e.getMessage());
+                }
+            } else if (currentUser.getOnline().equals("0")){
+                Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 0");
+                Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: DISCONNECTING USER...");
+                blueMarkers.get(currentUID).setTitle(currentUser.getName());
+                blueMarkers.get(currentUID).setSnippet("cell, msg, fnd req");
+                blueMarkers.get(currentUID).setIcon(
+                        BitmapDescriptorFactory.defaultMarker(
+                                BitmapDescriptorFactory.HUE_BLUE       // SET live user marker green
+                        )
+                );
+                blueMarkers.get(currentUID).setPosition(location);
+                blueMarkers.get(currentUID).showInfoWindow();
+            }
+        }
     }
 
     static boolean friendsOnlyIconClicked = false;
+
     public void onClickFriendsOnly(View view) {
         Log.d(TAG, "onClickLiveUsers: DEBUGGER:--------");
         // RE-DESIGN & WRITE code for live feature
@@ -817,30 +704,12 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-    // TODO: 4/23/2018 ANALYZE the below code for SHOWING LIVE FRIENDS
-    Marker myMarker;
-    private void updateDisplay(DataSnapshot dataSnapshot) {
-        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
-        double lat = Double.parseDouble(value.get("latitude").toString());
-        double lng = Double.parseDouble(value.get("longitude").toString());
-        LatLng location = new LatLng(lat, lng);
-
-        if (myMarker != null) {
-            myMarker.remove();
-        }
-
-        myMarker = mMap.addMarker(new MarkerOptions().position(location).title("My Location").snippet("address, cell, msg"));
-        myMarker.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomValue));
-    }
-
     // shared variable
     private float zoomValue = 0;
     @Override
     public void onCameraMove() {
         zoomValue = mMap.getCameraPosition().zoom;
     }
-
     /** Called when the user clicks on a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -911,8 +780,10 @@ public class DisplayActivity extends FragmentActivity implements
                 }
             });
     }
+
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
     private String name = "";
+
     // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
     private void popUpForName(final String key) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -966,7 +837,6 @@ public class DisplayActivity extends FragmentActivity implements
         });
         builder.show();
     }
-
     public static double lat;
     public static double lang;
     @Override
@@ -998,7 +868,7 @@ public class DisplayActivity extends FragmentActivity implements
                 ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run));
 
                 // TODO: 4/18/2018: UPDATE db: danger = 1
-                databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("1");
+                databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("1");
                 // TODO: 4/23/2018 MAKE animated marker
                 dialog.dismiss();
                 }
@@ -1022,7 +892,7 @@ public class DisplayActivity extends FragmentActivity implements
                     ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon));
 
                     // TODO: 4/18/2018: UPDATE db: danger = 0
-                    databaseReference.child("users").child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("0");
+                    databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("0");
 
                     dialog.dismiss();
                 }
@@ -1041,8 +911,8 @@ public class DisplayActivity extends FragmentActivity implements
         AlertDialog alert = builder.create();
         alert.show();
     }
-
     boolean pictureStatus = false;
+
     public void onClickLocationPicture(View view) {
 
         if (!pictureStatus) {
@@ -1063,7 +933,6 @@ public class DisplayActivity extends FragmentActivity implements
 
 
     }
-
     // Android SDK Lifecycle
     // SUPPORT: https://stackoverflow.com/questions/19484493/activity-life-cycle-android
     @Override
@@ -1071,6 +940,7 @@ public class DisplayActivity extends FragmentActivity implements
         super.onStart();
         Log.d(TAG, "[ OK ] ---- onStart: ----");
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -1081,6 +951,7 @@ public class DisplayActivity extends FragmentActivity implements
         super.onPause();
         Log.d(TAG, "[ OK ] ---- onPause: ----");
     }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -1099,5 +970,204 @@ public class DisplayActivity extends FragmentActivity implements
         super.onDestroy();
         Log.d(TAG, "[ OK ] ---- onDestroy: ----");
         databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
+    }
+    private void backup() {
+        //        // HERE WHAT CORRESPONDS TO JOIN
+//        databaseReference.child(uid)
+//        .addValueEventListener(
+//            new ValueEventListener() {
+//                @Override
+//                public void onDataChange(DataSnapshot childDataSnapshot) {
+//                    try{
+//                        value = (HashMap<String, Object>) childDataSnapshot.getValue();
+////                        user = childDataSnapshot.getValue(User.class);
+//                        Log.d(TAG, "[ OK ] -- setActiveMarker.onDataChange: " + value.get("latitude").toString() +", " + i++ + childDataSnapshot.getValue());
+//                    } catch (Exception e){
+//                        Log.e(TAG, "[ ERROR ] -- setActiveMarker().onDataChange(): " + e.getMessage());
+//                    }
+
+
+
+//                    if (user != null) {
+////                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
+////                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
+////                                " DEBUGGER:-------- ");
+//
+////                        double lat = Double.parseDouble(value.get("latitude").toString());
+////                        double lng = Double.parseDouble(value.get("longitude").toString());
+//
+//                        LatLng location = new LatLng(user.position.getLatitude(), user.position.getLongitude());
+
+        // SHOW live all
+//                        if (showAllLiveUser) {
+//                            // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
+//                            for (Circle myCircle : GoogleMapOperations.circleList) {
+//                                myCircle.remove();
+//                            }
+//                            GoogleMapOperations.circleList.clear();
+//
+//                            Log.d(TAG, "setActiveMarker: KEY: " + i + " " + uid + "," +
+//                                    " DEBUGGER:-------- ");
+//
+//                            // It is notified each time one of the device's location is updated.
+//                            // When this happens, it will either create a new marker at the device's location,
+//                            // or move the marker for a device if it exists already.
+//                            if (!blueMarkers.containsKey(uid)) {
+//                                tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
+//                                    .position(location)
+//                                    .snippet("cell, msg, fnd req")
+//                                    .icon(BitmapDescriptorFactory.defaultMarker(
+//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+//                                    )));
+//                                blueMarkers.put(uid, tempGreenMarker);
+//                                tempGreenMarker.showInfoWindow();
+//
+//                                // READY to CHANGE CODE
+//                                // SET animated marker at danger
+//                                if (greenMarkerUser.getDanger() != null) {
+//                                    String danger = greenMarkerUser.getDanger();
+//                                    if (danger.equals("1")) {
+//                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+//                                        GoogleMapOperations.addingCircleView(mMap, location);
+//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
+//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+//                                        ));
+//                                    }
+//                                }
+//                            } else {
+//                                // READY to CHANGE CODE
+//                                // SET animated marker at danger
+//                                if (greenMarkerUser.getDanger() != null) {
+//                                    String danger = greenMarkerUser.getDanger();
+//                                    if (danger.equals("1")) {
+//                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+//                                        GoogleMapOperations.addingCircleView(mMap, location);
+//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
+//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
+//                                        ));
+//
+//                                        // START danger sound
+//                                        if (makeDangerSound) {
+//                                            makeDangerSound = false;
+//                                            dangerSound.start();
+//                                            Toast.makeText(getApplicationContext(), "NEED help!\n" + greenMarkerUser.getName()
+//                                                    + " is at DANGER now", Toast.LENGTH_LONG).show();
+//                                        }
+//                                    } else if (danger.equals("0")) {
+//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
+//                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
+//                                        ));
+//                                    }
+//                                }
+//                                mMarkers.get(uid).setPosition(location);
+//                            }
+//                        }
+
+        // SHOW live friends
+//                        if (friendsOnlyIconClicked) {
+//                            for (Marker CurrMarker : mMarkers.values()) {
+//                                // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
+//                                CurrMarker.remove();
+//                            }
+//                            mMarkers.clear();
+//                        }
+//                    }
+
+//                    user = null;
+//                }
+
+//                @Override
+//                public void onCancelled(DatabaseError databaseError) {
+//                    Log.e(TAG, "[ ERROR ] -- setActiveMarker().onCancelled():");
+//                }
+//            }
+//        );
+    }
+
+    // TODO: 4/23/2018 ANALYZE the below code for SHOWING LIVE FRIENDS
+    Marker myMarker;
+    private void updateDisplay(DataSnapshot dataSnapshot) {
+        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
+        double lat = Double.parseDouble(value.get("latitude").toString());
+        double lng = Double.parseDouble(value.get("longitude").toString());
+        LatLng location = new LatLng(lat, lng);
+
+        if (myMarker != null) {
+            myMarker.remove();
+        }
+
+        myMarker = mMap.addMarker(new MarkerOptions().position(location).title("My Location").snippet("address, cell, msg"));
+        myMarker.showInfoWindow();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomValue));
+    }
+    // setting the marker on the map
+    // which are responsible for
+    // We've also got two empty methods - subscribeToUpdates() and setMarker()
+    private void backupGeoFire() {
+        //        // SUPPORT: https://www.101apps.co.za/index.php/item/182-firebase-realtime-database-tutorial.html
+//        // 1: https://github.com/firebase/FirebaseUI-Android/issues/1040
+//        // 2: https://stackoverflow.com/questions/26700924/query-based-on-multiple-where-clauses-in-firebase
+//        // todo 3: https://github.com/firebase/geofire-java
+
+//        // look for the matching item
+//        locationRef.orderByChild("locations").equalTo(uniqueID)
+//                .addListenerForSingleValueEvent(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(DataSnapshot dataSnapshotInner) {
+//                        try{
+////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
+//
+//                            // SUPPORT handle idea raised by myself first then suggested
+//                            // from: https://www.youtube.com/watch?v=Idu9EJPSxiY
+//                            // AS unique id is just the last value of the dataSnapshot.getChildren() then
+//                            // store keys + value on a hasmap/arraylist to handle/loop through later.
+//                            Log.d(TAG, counter ++ +" DEBUGGER: --- id: " + tempSnapShot.getKey());
+//                        } catch (Exception e){
+//                            Log.d(TAG, "NULL pointer exception: DEBUGGER: ---");
+//                        }
+//
+////                                    if (tempSnapShot != null) {
+////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
+//
+////                                        double lat = Double.parseDouble(value.get("latitude").toString());
+////                                        double lng = Double.parseDouble(value.get("longitude").toString());
+////                                        location = new LatLng(lat, lng);
+//
+////                                        // SHOW all users by default through black marker
+////
+////                                        // create a new marker at the device's location
+////                                        // move the marker for a device if it exists already.
+////
+////                                        if (dataSnapshotInner != null) {
+////                                            Log.d(TAG, "--- --- DEBUGGER: --- " + tempUser.getEmail());
+////                                            if (!mMarkers.containsKey(dataSnapshotInner.getKey())) {
+////                                                if (tempSnapShot.getChildrenCount() == 2) {
+////                                                    markerTitle = tempUser.getEmail();
+////                                                } else if (tempSnapShot.getChildrenCount() == 3) {
+////                                                    markerTitle = tempUser.getName();
+////                                                } else {
+////                                                    markerTitle = tempUser.getName();
+////                                                }
+////                                                marker = mMap.addMarker(new MarkerOptions().title("" + markerTitle + "")
+////                                                        .position(location)
+////                                                        .snippet("cell, msg, fnd req")
+////                                                        .icon(BitmapDescriptorFactory.defaultMarker(
+////                                                                BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
+////                                                        )));
+////                                                mMarkers.put(uid, marker);
+////                                                marker.showInfoWindow();
+////
+////                                                tempSnapShot = null;
+////                                                tempUser = null;
+////                                            }
+////                                        }
+////                                    }
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError databaseError) {
+
+//                    }
+//                });
     }
 }

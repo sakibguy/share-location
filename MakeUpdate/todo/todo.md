@@ -17,7 +17,7 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr29.1.?
+> 2018.Apr30.1.?
 1. TODO: **ADD** cluster marker
 2. TODO: **SHOW** user last online status
 3. TODO: **FIX** all issues
@@ -28,9 +28,15 @@ Working Version
 8. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
 9. TODO: **NOTIFY** live users 
 10. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+11. TODO: **CREATE** user friendly D icon for danger
 
 Previous Versions
 -----------------
+> 2018.Apr30.1.12.1
+1. **FIXED** issue: functional danger feature
+2. **ADDED** feature: user's last danger footprint (red surrounded) on the map
+3. **CHANGED** code structure
+
 > 2018.Apr28.1.12.0
 1. **USED** developer friendly debugger at every function
 2. **CHANGED** db structure<br>
@@ -45,7 +51,8 @@ Previous Versions
 3. **HANDLED** name isNameProvided() for <= 1.6.0 users of Share Location and **STORE** name at v1.6.0 pointed db.
 4. **COPIED** data to new structure db from v1.11.0 pointed db. **RUN app 2 times** 
 5. **SHOWING** all registered users by default at map. **Blue markers** for all registered users by default.
-6. **ENSURED** user online/offline status by onDisconnect and given marker colors (green=live users, red=at danger user, blue = not live).
+6. **ENSURED** user online/offline status by onDisconnect and given marker colors (green=live users, red=at danger user, blue = not live). **TO make offline: close app -> tab notification to stop service -> clear app running history**
+
 
 > 2018.Apr23.1.11.0
 1. **CHANGED** marker color: green=live users, red = danger

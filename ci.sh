@@ -103,7 +103,10 @@ echo
 # 2018.Apr28
 ## 💚 UPLOAD cr2018.Apr28.1.12.0
 
-git commit -m "💚 UPLOAD cr2018.Apr28.1.12.0"
+# 2018.Apr30
+## 💚 UPLOAD cr2018.Apr30.1.12.1
+
+git commit -m "💚 UPLOAD cr2018.Apr30.1.12.1"
 
 ############
 # Step: 05 #
