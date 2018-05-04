@@ -18,6 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -35,7 +36,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -781,9 +781,9 @@ public class DisplayActivity extends FragmentActivity implements
             });
     }
 
+
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
     private String name = "";
-
     // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
     private void popUpForName(final String key) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -837,6 +837,8 @@ public class DisplayActivity extends FragmentActivity implements
         });
         builder.show();
     }
+
+    String userName = "";
     public static double lat;
     public static double lang;
     @Override
@@ -845,9 +847,57 @@ public class DisplayActivity extends FragmentActivity implements
         marker.hideInfoWindow();
         lat = marker.getPosition().latitude;
         lang =marker.getPosition().longitude;
-        String name = marker.getTitle();
-        Toast.makeText(getApplicationContext(), "" + name + "'s Current Location", Toast.LENGTH_SHORT).show();
-        startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+        userName = marker.getTitle();
+
+        // SUPPORT: https://www.mkyong.com/android/android-custom-dialog-example/
+        // custom dialog
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.marker_click_dialog);
+
+        // WIRE widgets
+        TextView tvName = dialog.findViewById(R.id.tvName);
+        Button btnAddFriend = dialog.findViewById(R.id.btnAddFriend);
+        ImageView ivStreetView = dialog.findViewById(R.id.ivStreetView);
+        ImageView ivCall = dialog.findViewById(R.id.ivCall);
+        ImageView ivMessage = dialog.findViewById(R.id.ivMessage);
+
+        // HANDLE event through listener
+        tvName.setText(userName);
+        ivStreetView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // IMPLEMENT game style touch event
+                Toast.makeText(getApplicationContext(), "" +
+                        "" + userName + "'s Current Location", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+                return false;
+            }
+        });
+
+        ivCall.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Coming soon... PHONE CALL", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        ivMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Coming soon... CHAT ENGINE", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        btnAddFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Coming soon... ADD FRIEND", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     // SUPPORT: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
@@ -1083,7 +1133,6 @@ public class DisplayActivity extends FragmentActivity implements
 //            }
 //        );
     }
-
     // TODO: 4/23/2018 ANALYZE the below code for SHOWING LIVE FRIENDS
     Marker myMarker;
     private void updateDisplay(DataSnapshot dataSnapshot) {

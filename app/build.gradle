@@ -6,8 +6,8 @@ android {
         applicationId "playlagom.sharelocation"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1121
-        versionName "1.12.1"
+        versionCode 1130
+        versionName "1.13.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -31,6 +31,8 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     // ADS: https://developers.google.com/admob/android/banner
     compile 'com.google.android.gms:play-services-ads:11.2.0'
+    // Google Maps Android API Utility Library
+    compile 'com.google.maps.android:android-maps-utils:0.5+'
 }
 
 apply plugin: 'com.google.gms.google-services'

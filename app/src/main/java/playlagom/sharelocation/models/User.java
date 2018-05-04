@@ -1,6 +1,8 @@
 package playlagom.sharelocation.models;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.IgnoreExtraProperties;
+import com.google.maps.android.clustering.ClusterItem;
 
 /**
  * Created by User on 4/12/2018.
@@ -13,8 +15,8 @@ public class User {
     private String email;
     private String password;
     private String danger;
-    private Position position;
     private String online;
+    private Position position;
 
     //default constructor
     public User() {
@@ -24,7 +26,6 @@ public class User {
         // empty default constructor, necessary for Firebase to be able to deserialize users
         // SUPPORT: https://stackoverflow.com/questions/39552348/firebase-databaseexception-failed-to-convert-value-of-type-java-lang-long-to-st
     }
-
     public User(String name, String email, String password, String danger, Position position) {
         this.name = name;
         this.email = email;
@@ -33,52 +34,46 @@ public class User {
         this.position = position;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
-
-    public String getEmail() {
-        return email;
+    public String getName() {
+        return name;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
-
-    public String getPassword() {
-        return password;
+    public String getEmail() {
+        return email;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
-
-    public String getDanger() {
-        return danger;
+    public String getPassword() {
+        return password;
     }
 
     public void setDanger(String danger) {
         this.danger = danger;
     }
-
-    public Position getPosition() {
-        return position;
+    public String getDanger() {
+        return danger;
     }
 
     public void setPosition(Position position) {
         this.position = position;
     }
-
-    public String getOnline() {
-        return online;
+    public Position getPosition() {
+        return position;
     }
 
     public void setOnline(String online) {
         this.online = online;
+    }
+    public String getOnline() {
+        return online;
     }
 
     // ERROR: Position is missing a constructor with no arguments
@@ -97,26 +92,23 @@ public class User {
             // empty default constructor, necessary for Firebase to be able to deserialize users
             // SUPPORT: https://stackoverflow.com/questions/39552348/firebase-databaseexception-failed-to-convert-value-of-type-java-lang-long-to-st
         }
-
         public Position(String latitude, String longitude) {
             this.latitude = latitude;
             this.longitude = longitude;
         }
 
+        public void setLatitude(String latitude) {
+            this.latitude = latitude;
+        }
         public String getLatitude() {
             return latitude;
         }
 
-        public void setLatitude(String latitude) {
-            this.latitude = latitude;
-        }
-
-        public String getLongitude() {
-            return longitude;
-        }
-
         public void setLongitude(String longitude) {
             this.longitude = longitude;
+        }
+        public String getLongitude() {
+            return longitude;
         }
     }
 }

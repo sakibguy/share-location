@@ -17,18 +17,18 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.Apr30.1.?
-1. TODO: **ADD** cluster marker
-2. TODO: **SHOW** user last online status
+> 2018.May1.13.0
+1. DOING: **ADD** cluster marker
 3. TODO: **FIX** all issues
 4. TODO: **ADD** search option and **DISPLAY** search based realtime result
 5. TOOD: **MAKE** Live friends functional + location based friends search feature
-6. TODO: **MAKE** cluster markers
-7. TODO: **ADD** feature: Send feedback
-8. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
-9. TODO: **NOTIFY** live users 
-10. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
-11. TODO: **CREATE** user friendly D icon for danger
+8. TODO: **ADD** feature: Send feedback
+9. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+10. TODO: **NOTIFY** live users 
+11. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+12. TODO: **CREATE** user friendly D icon for danger
+13. TODO: **SHOW** user designation based markers with user image. (ex: police = policeMarkerIcon, student = studentMarkerIcon, agedPeople = agedMarkerIcon, girl = girlMarkerIcon, boy = boyMarkerIcon)
+14. **ADDED** block diagram of custom dialog for infoWindow Click Event
 
 Previous Versions
 -----------------
