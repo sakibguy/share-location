@@ -46,6 +46,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import playlagom.sharelocation.auth.LoginActivity;
@@ -61,18 +62,22 @@ public class DisplayActivity extends FragmentActivity implements
 
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
-    private HashMap<String, Marker> blueMarkers;
-    GoogleMap mMap;
-
     private static final int PERMISSIONS_REQUEST = 1;
+    private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
+    private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
+
+    private HashMap<String, Marker> blueMarkers;
+
     static boolean taskCompleted = false;
     private boolean insideShouldShow = false;
-
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivPicture;
-    TextView tvPosition, tvPoint;
     boolean locationPermissionGranted = false;
 
-    // Firebase attributes
+    GoogleMap mMap;
+
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivStreetView, ivNotification;
+    TextView tvPosition, tvPoint;
+
+    // Firebase
     FirebaseAuth firebaseAuth;
     DatabaseReference databaseReference;
     DatabaseReference allMarkerRef;
@@ -82,8 +87,8 @@ public class DisplayActivity extends FragmentActivity implements
 
     // Danger sound
     MediaPlayer dangerSound;
-    int width, height;
     private static boolean makeDangerSound = true;
+    int width, height;
     private int userCounter = 1;
     private LatLng location = new LatLng(0, 0);
 
@@ -93,49 +98,78 @@ public class DisplayActivity extends FragmentActivity implements
         setContentView(R.layout.activity_display);
         Log.d(TAG, "[ OK ] ---- onCreate: ----");
 
+        // INIT: firebase
+        firebaseAuth = FirebaseAuth.getInstance();
+        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+        allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+
+        // TODO: 5/6/2018 REMOVE method below, at next version
+        // COPY name: from sharelocation-users to SL11302018MAY6
+        copyLoggedInUserInfoToNewStructure();
+
+        // SETUP: google map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         Log.d(TAG, "[ OK ] ---- async map request done. Waiting... for onMapReady interface/callback listener execution");
         mapView = mapFragment.getView();
 
-        // wire xml imageview components with java object
-        // icons: live friends + danger
-        ivMyCircle = findViewById(R.id.ivMyCircle);
+        // WIRE widgets: convert xml components to java object
+        // ImageView
         ivDanger = findViewById(R.id.ivDanger);
-        ivPicture = findViewById(R.id.ivPicture);
         ivUserImage = findViewById(R.id.ivUserImage);
+        ivMyCircle = findViewById(R.id.ivMyCircle);
+        ivStreetView = findViewById(R.id.ivStreetView);
+        ivNotification = findViewById(R.id.ivNotification);
 
-        // WIRE textview widgets
+        // TextView
         tvPosition = findViewById(R.id.tvPosition);
         tvPosition.setVisibility(View.INVISIBLE);
         tvPoint = findViewById(R.id.tvPoint);
         tvPoint.setVisibility(View.INVISIBLE);
 
-        // INIT danger sound
+        // Sound
         // SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
         dangerSound = MediaPlayer.create(this, R.raw.siren_alert_1);
 
-        // MAKE round user image
-        ivUserImage.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
+        // INIT setup
+        // ImageView: CHECK danger status and SET icon
+        showDangerIcon();
 
-        ImageView ivLogout = findViewById(R.id.ivLogout);
-        ivLogout.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                FirebaseAuth.getInstance().signOut();
-                Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
-                Log.d(TAG, "onTouch: DEBUGGER-----Logout icon");
-                startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
-                finish();
-                return false;
-            }
-        });
+        // ImageView: MAKE round user image
+        ivUserImage.setImageBitmap(Converter.getCroppedBitmap(
+                BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
+
+        // ImageView: CHECK if new friend request and SET icon NEW
+        databaseReference
+            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(RECEIVED_FRIEND_REQUESTS)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.getChildrenCount() > 0) {
+                                ivNotification.setImageBitmap(
+                                        BitmapFactory.decodeResource(getResources(), R.drawable.ic_fiber_new_black_24dp));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+        // HANDLE events
+        // ImageView: see onClickLogout()
+        // ImageView: see onClickStreetView()
+        // ImageView: see onClickMyCircle()
+        // ImageView: see onClickUserImage()
+        // ImageView: see onClickNotification()
 
         // CHECK GPS is status
         LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Toast.makeText(this, "Please enable GPS location services", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please ON GPS", Toast.LENGTH_LONG).show();
             finish();
         }
 
@@ -147,59 +181,35 @@ public class DisplayActivity extends FragmentActivity implements
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
-        // INIT: firebase dependency
-        firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
-        allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
-
         // Local cache for markers
         blueMarkers = new HashMap<>();
 
-        // SET: danger icon, set value = 0 or read danger status and select icon
-        showDangerIcon();
-
-        // COPY v1.11.0 pointed db data to new structure db
-        copyLoggedInUserInfoToNewStructure();
-        backupGeoFire();
         checkLocationPermission();
     }
 
-    // COPY v1.11.0 pointed db data to new structure db
+    // TODO: 5/6/2018 REMOVE method below, at next version
+    // COPY name: from sharelocation-users to SL11302018MAY6
     private void copyLoggedInUserInfoToNewStructure() {
         Log.d(TAG, "[ OK ] -------- COPIED: copyLoggedInUserInfoToNewStructure: ");
-        DatabaseReference copyFromRef = FirebaseDatabase.getInstance().getReference("users");
-        copyFromRef.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-            .addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure(): LOGGED IN USER INFO: " + dataSnapshot.toString());
-                    User copyUser;
-                    try{
-                        copyUser = dataSnapshot.getValue(User.class);
-                        Log.d(TAG, "[ OK ] -------- copyLoggedInUserInfoToNewStructure(): " +
-                                "name: " + copyUser.getName() + ", " +
-                                "email: " + copyUser.getEmail() + ", " +
-                                "pass: " + copyUser.getPassword() + ", " +
-                                "danger: " + copyUser.getDanger());
-                        if (dataSnapshot.getChildrenCount() == 2) {
-                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
-                            databaseReference.child(dataSnapshot.getKey()).child("danger").setValue("0");
-                        } else if (dataSnapshot.getChildrenCount() == 3) {
-                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
-                            databaseReference.child(dataSnapshot.getKey()).child("danger").setValue("0");
-                        } else if (dataSnapshot.getChildrenCount() == 4) {
-                            databaseReference.child(dataSnapshot.getKey()).setValue(copyUser);
+        DatabaseReference tempRef = FirebaseDatabase.getInstance().getReference("sharelocation-users");
+        tempRef
+            .child(firebaseAuth.getCurrentUser().getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Log.d(TAG, "[ test ] --- " + dataSnapshot.toString());
+                        if (dataSnapshot.hasChild("name")) {
+                            databaseReference
+                                .child(firebaseAuth.getCurrentUser().getUid())
+                                    .child("name").setValue(dataSnapshot.child("name").getValue());
                         }
-                    } catch (Exception e){
-                        Log.e(TAG, "[ ERROR ] -------- copyLoggedInUserInfoToNewStructure: " + e.getMessage());
                     }
-                }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(TAG, "[ test ] --- " + databaseError.toString());
+                    }
+                });
     }
 
     private void showDangerIcon() {
@@ -207,40 +217,20 @@ public class DisplayActivity extends FragmentActivity implements
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.getChildrenCount() == 3 || dataSnapshot.getChildrenCount() == 4) {
-                            // SET danger = 0
-                            databaseReference.child(firebaseAuth.getCurrentUser().getUid())
-                                    .child("danger").setValue("0");
-                            // SET default danger icon
-                            ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
-                            dangerStatus = false;
-                        } else if (dataSnapshot.getChildrenCount() == 5) {
-                            User dangerUser = dataSnapshot.getValue(User.class);
-                            if (dangerUser.getDanger().equals("0")){
-                                // SET default danger icon
-                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
-                                dangerStatus = false;
-                            }
-                            if (dangerUser.getDanger().equals("1")){
+
+                        if (dataSnapshot.hasChild("danger")) {
+                            if (dataSnapshot.child("danger").getValue().equals("1")) {
                                 // SET run danger icon
-                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(
+                                        BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
                                 Toast.makeText(getApplicationContext(), "Your status in DANGER",
                                         Toast.LENGTH_LONG).show();
                                 dangerStatus = true;
-                            }
-                        } else if (dataSnapshot.getChildrenCount() == 6) {
-                            User dangerUser = dataSnapshot.getValue(User.class);
-                            if (dangerUser.getDanger().equals("0")){
+                            } else {
                                 // SET default danger icon
-                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(
+                                        BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
                                 dangerStatus = false;
-                            }
-                            if (dangerUser.getDanger().equals("1")){
-                                // SET run danger icon
-                                ivDanger.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
-                                Toast.makeText(getApplicationContext(), "Your status in DANGER",
-                                        Toast.LENGTH_LONG).show();
-                                dangerStatus = true;
                             }
                         }
                     }
@@ -252,6 +242,8 @@ public class DisplayActivity extends FragmentActivity implements
                 });
     }
 
+    // SUPPORT: https://stackoverflow.com/questions/15368028/getting-a-map-marker-by-its-id-in-google-maps-v2
+    private HashMap<String, String> hashMapMidUid = new HashMap<String, String>();
     Marker tempBlueMarker = null;
     private void showAllRegisteredUsers() {
         // SHOW all users black/blue marker icon
@@ -278,12 +270,14 @@ public class DisplayActivity extends FragmentActivity implements
                             if (!blueMarkers.containsKey(uniqueID)) {
                                 tempBlueMarker = mMap.addMarker(new MarkerOptions().title("" + temporaryUser.getName() + "")
                                         .position(location)
-                                        .snippet("cell, msg, fnd req")
+                                        .snippet("img, fnd req, call, msg")
                                         .icon(BitmapDescriptorFactory.defaultMarker(
                                                 BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
                                         )));
                                 blueMarkers.put(uniqueID, tempBlueMarker);
                                 tempBlueMarker.showInfoWindow();
+                                // STORE (MarkerID vs UID)at RAM
+                                hashMapMidUid.put(tempBlueMarker.getId(), uniqueID);
                             } else {
                                 blueMarkers.get(uniqueID).setPosition(location);
                             }
@@ -324,7 +318,7 @@ public class DisplayActivity extends FragmentActivity implements
 
             // CODE is ready to CHANGE
             // CHECK isNameProvided. Basically popup will not show 1st time where will show during running app 2nd time.
-            isNameProvided(firebaseAuth.getCurrentUser().getUid());
+            isNameProvided();
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this,
@@ -411,8 +405,9 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
+    public static double lat;
+    public static double lang;
     LatLng latLng;
-
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
@@ -489,6 +484,7 @@ public class DisplayActivity extends FragmentActivity implements
         // zoom control: plus | minus button by default android sdk
 //        mMap.getUiSettings().setZoomControlsEnabled(true);
     }
+
     @Override
     public boolean onMyLocationButtonClick() {
         Toast.makeText(this, "My Location", Toast.LENGTH_SHORT).show();
@@ -498,9 +494,7 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
-
     // subscribing to updates in Firebase and
-
     // when an update occurs.
     static boolean showAllLiveUser = true;
 
@@ -646,7 +640,7 @@ public class DisplayActivity extends FragmentActivity implements
                         Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: CHANGE color as user already exits at map");
 
                         blueMarkers.get(currentUID).setTitle(currentUser.getName());
-                        blueMarkers.get(currentUID).setSnippet("cell, msg, fnd req");
+                        blueMarkers.get(currentUID).setSnippet("img, fnd req, call, msg");
                         blueMarkers.get(currentUID).setIcon(
                                 BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_GREEN       // SET live user marker green
@@ -657,7 +651,7 @@ public class DisplayActivity extends FragmentActivity implements
                     } else if(!blueMarkers.containsKey(currentUID)){
                         Marker marker = mMap.addMarker(new MarkerOptions().title("" + currentUser.getName() + "")
                             .position(location)
-                            .snippet("cell, msg, fnd req")
+                            .snippet("img, fnd req, call, msg")
                             .icon(BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_RED       // SET live users marker green
                             )));
@@ -680,27 +674,6 @@ public class DisplayActivity extends FragmentActivity implements
                 blueMarkers.get(currentUID).setPosition(location);
                 blueMarkers.get(currentUID).showInfoWindow();
             }
-        }
-    }
-
-    static boolean friendsOnlyIconClicked = false;
-
-    public void onClickFriendsOnly(View view) {
-        Log.d(TAG, "onClickLiveUsers: DEBUGGER:--------");
-        // RE-DESIGN & WRITE code for live feature
-
-        // TODO: 4/21/2018 HANDLE Showing friends only
-        if (!friendsOnlyIconClicked){
-            showAllLiveUser = false;
-            friendsOnlyIconClicked = true;
-            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_black_24dp));
-            Toast.makeText(getApplicationContext(), "IMPLEMENT live friends functionality",
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            showAllLiveUser = true;
-            friendsOnlyIconClicked = false;
-            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
-            Toast.makeText(getApplicationContext(), "Live all", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -730,47 +703,16 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     // Auto pop up feature for <= v1.6.0 users of Share Location
-    DatabaseReference refUsers;
     // SUPPORT: https://stackoverflow.com/questions/47105575/android-firebase-stop-childeventlistener
-    private void isNameProvided(String currentUser) {
+    private void isNameProvided() {
         Log.d(TAG, "[ OK ] isNameProvided: ");
-        refUsers = FirebaseDatabase.getInstance().getReference();
-        refUsers.child("users").child("" + currentUser)
+        databaseReference.child(firebaseAuth.getCurrentUser().getUid())
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    User isNameUser = null;
-                    try {
-                        isNameUser = dataSnapshot.getValue(User.class);
-                    } catch (Exception e) {
-                        Log.d(TAG, "[ ERROR ] isNameProvided().onDataChange: " + e.getMessage());
-                    }
-
-                    if (dataSnapshot.getChildrenCount() == 2) {
-                        // TODO: 4/16/2018      7h later eureka!!! at 2018.Apr15 12.24 pm where started at 5.10 pm
-                        // Never give up! Just keep standing...!!!
-                        // Now, User will see map first but to interact with the map, user must have to input name
-                        // I don't need to change my LoginActivity.java code. Where i will change from DisplayActivity.java code
-
-                        // CODE is READY to CHANGE
-                        // User friendly Toast
-                        Toast.makeText(getApplicationContext(),
-                                "Please input your name, to get better UX. As you are <= v1.6.0 users of Share Location", Toast.LENGTH_LONG).show();
-                        // DEBUGGER
-                        try {
-                            Log.d(TAG, "[ OK ] isNameProvided().onDataChange: isNameProvided = " + false + " ------KEY: "
-                                    + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + isNameUser.getName());
-                        } catch (Exception e){
-                            Log.d(TAG, "[ ERROR ] isNameProvided().onDataChange: " + e.getMessage());
-                        }
-
-                        // Take Input through pop up window and save to db
-                        // step 1:  MAKE pop up window to take name input
-                        // call method
+                    if (!dataSnapshot.hasChild("name")) {
+                        // MAKE pop up window to take name
                         popUpForName(dataSnapshot.getKey());
-                    } else if (dataSnapshot.getChildrenCount() == 3) {
-                        Log.d(TAG, "[ OK ] onDataChange: DEBUGGER----- >= v1.7.0 users of Share Location. So, Name already provide during sign up");
-                        Log.d(TAG, "[ OK ] onDataChange: DEBUGGER-----INSIDE isNameProvided ------KEY: " + dataSnapshot.getKey() + ", " + dataSnapshot.getChildrenCount() + ", NAME: " + isNameUser.getName());
                     }
                 }
 
@@ -781,9 +723,7 @@ public class DisplayActivity extends FragmentActivity implements
             });
     }
 
-
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
-    private String name = "";
     // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
     private void popUpForName(final String key) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -796,28 +736,24 @@ public class DisplayActivity extends FragmentActivity implements
         input.setLayoutParams(lp);
         builder.setView(input);
 
-        // Set up the buttons
+        // SETUP buttons
         builder.setPositiveButton("SUBMIT", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // do something here on SUBMIT
-                name = input.getText().toString();
+                final String name = input.getText().toString();
                 Toast.makeText(getApplicationContext(), "Thank you!  " + name, Toast.LENGTH_SHORT).show();
                 final String msg = "Congratulation! Your name saved";
 
-                // setp 2:  Store name into db
-                refUsers.child("users").child(key).child("name").setValue(name);
+                // STORE name
+                databaseReference.child(key).child("name").setValue(name);
 
-                // Make sure user
-                refUsers.child("users").child(key)
-                .addListenerForSingleValueEvent( new ValueEventListener() {
+                // NOTIFY user
+                databaseReference.child(key)
+                    .addListenerForSingleValueEvent( new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
-                        Log.d(TAG, "onDataChange: DEBUGGER----- name: " + user.getName());
-
                         // ERROR: user.getName() == name
-                        if (user.getName().equals(name)) {
+                        if (dataSnapshot.child("name").getValue().equals(name)) {
                             Toast.makeText(getApplicationContext(), "" + msg, Toast.LENGTH_LONG).show();
                         }
                     }
@@ -838,31 +774,67 @@ public class DisplayActivity extends FragmentActivity implements
         builder.show();
     }
 
-    String userName = "";
-    public static double lat;
-    public static double lang;
     @Override
     public void onInfoWindowClick(Marker marker) {
         // SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
         marker.hideInfoWindow();
-        lat = marker.getPosition().latitude;
-        lang =marker.getPosition().longitude;
-        userName = marker.getTitle();
+
+        // GET marker obj info
+        final String userName = marker.getTitle();
+        // GET (MarkerID vs UID) from RAM
+        final String markerUID = hashMapMidUid.get(marker.getId());
+        // GET logged in user unique key, who click onto marker?
+        final String UID = firebaseAuth.getCurrentUser().getUid();
 
         // SUPPORT: https://www.mkyong.com/android/android-custom-dialog-example/
-        // custom dialog
+        // ADD custom dialog
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.marker_click_dialog);
 
         // WIRE widgets
-        TextView tvName = dialog.findViewById(R.id.tvName);
-        Button btnAddFriend = dialog.findViewById(R.id.btnAddFriend);
+        TextView tvFriendRequestStatus = dialog.findViewById(R.id.tvFriendRequestStatus);
+        final Button btnAddFriend = dialog.findViewById(R.id.btnAddFriend);
         ImageView ivStreetView = dialog.findViewById(R.id.ivStreetView);
-        ImageView ivCall = dialog.findViewById(R.id.ivCall);
         ImageView ivMessage = dialog.findViewById(R.id.ivMessage);
+        ImageView ivCall = dialog.findViewById(R.id.ivCall);
+        TextView tvName = dialog.findViewById(R.id.tvName);
 
-        // HANDLE event through listener
+        // INIT widgets values
+        // TextView
+        tvFriendRequestStatus.setVisibility(View.GONE);
         tvName.setText(userName);
+        // ImageView
+        ivCall.setVisibility(View.VISIBLE);
+
+        if (markerUID.equals(UID)) {    // CHECK clicked to self or not
+            btnAddFriend.setVisibility(View.GONE);
+            ivCall.setVisibility(View.GONE);
+        } else {                        // Button: CHECK already friend req sent or not
+            databaseReference
+                    .child(UID)
+                    .child(SENT_FRIEND_REQUESTS)
+                    .child(markerUID)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            Log.d(TAG, "[ OK ] ----- fnd req sent: " + dataSnapshot.getValue());
+                            if (dataSnapshot.getValue() != null) {
+                                if (dataSnapshot.getValue().toString().equals("0")) {
+                                    btnAddFriend.setText("Friend Request Sent");
+                                    Toast.makeText(getApplicationContext(), "Already you'v sent friend request",
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.e(TAG, "[ ERROR ] ---- onCancelled: " + databaseError.getMessage());
+                        }
+                    });
+        }
+        // HANDLE events through listener
+        // ImageView
         ivStreetView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -874,6 +846,7 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
 
+        // HANDLE call event
         ivCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -882,6 +855,7 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
 
+        // HANDLE chatengine event
         ivMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -890,13 +864,29 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
 
+        // HANDLE add friend event
         btnAddFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "Coming soon... ADD FRIEND", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(getApplicationContext(), "" +
+                        "Wait for accepting friend request", Toast.LENGTH_SHORT).show();
+                // TODO: 5/5/2018 SHOW text "Friend request sent"
+                btnAddFriend.setText("Friend Request Sent");
+                // TODO: 5/5/2018 SET friend request to user structure (which marker clicked)
+                databaseReference
+                        .child(markerUID)    // USED HashMap to get clicked marker uid & logged in user uid
+                        .child(RECEIVED_FRIEND_REQUESTS)
+                        .child(UID)
+                        .setValue("0");
+
+                databaseReference
+                        .child(UID)    // USED HashMap to get clicked marker uid & logged in user uid
+                        .child(SENT_FRIEND_REQUESTS)
+                        .child(markerUID)
+                        .setValue("0");
             }
         });
-
         dialog.show();
     }
 
@@ -961,28 +951,7 @@ public class DisplayActivity extends FragmentActivity implements
         AlertDialog alert = builder.create();
         alert.show();
     }
-    boolean pictureStatus = false;
 
-    public void onClickLocationPicture(View view) {
-
-        if (!pictureStatus) {
-            pictureStatus = true;
-            // SUPPORT: https://stackoverflow.com/questions/5756136/how-to-hide-a-view-programmatically
-            tvPoint.setVisibility(View.VISIBLE);
-
-            Toast.makeText(getApplicationContext(), "Picture enable", Toast.LENGTH_SHORT).show();
-            ivPicture.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_photo_black_24dp)));
-
-        } else {
-            pictureStatus = false;
-            tvPoint.setVisibility(View.INVISIBLE);
-
-            Toast.makeText(getApplicationContext(), "Picture disable", Toast.LENGTH_SHORT).show();
-            ivPicture.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.image_2)));
-        }
-
-
-    }
     // Android SDK Lifecycle
     // SUPPORT: https://stackoverflow.com/questions/19484493/activity-life-cycle-android
     @Override
@@ -1218,5 +1187,63 @@ public class DisplayActivity extends FragmentActivity implements
 
 //                    }
 //                });
+    }
+
+    boolean pictureStatus = false;
+    public void onClickStreetView(View view) {
+        if (!pictureStatus) {
+            pictureStatus = true;
+            // SUPPORT: https://stackoverflow.com/questions/5756136/how-to-hide-a-view-programmatically
+            tvPoint.setVisibility(View.VISIBLE);
+
+            Toast.makeText(getApplicationContext(), "SWIPE map to see Picture", Toast.LENGTH_SHORT).show();
+            ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_style_black_24dp)));
+
+        } else {
+            pictureStatus = false;
+            tvPoint.setVisibility(View.INVISIBLE);
+
+            Toast.makeText(getApplicationContext(), "Picture mode disabled", Toast.LENGTH_SHORT).show();
+            ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_crop_original_black_24dp)));
+        }
+    }
+
+    static boolean friendsOnlyIconClicked = false;
+    public void onClickMyCircle(View view) {
+        Log.d(TAG, "onClickLiveUsers: DEBUGGER:--------");
+        // RE-DESIGN & WRITE code for live feature
+
+        // TODO: 4/21/2018 HANDLE Showing friends only
+        if (!friendsOnlyIconClicked){
+            showAllLiveUser = false;
+            friendsOnlyIconClicked = true;
+            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_black_24dp));
+            Toast.makeText(getApplicationContext(), "IMPLEMENT live friends functionality",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            showAllLiveUser = true;
+            friendsOnlyIconClicked = false;
+            ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
+            Toast.makeText(getApplicationContext(), "Live all", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void onClickUserImage(View view) {
+        Toast.makeText(getApplicationContext(), "IMPLEMENT user hide from map", Toast.LENGTH_LONG).show();
+    }
+
+    public void onClickLogout(View view) {
+        FirebaseAuth.getInstance().signOut();
+        Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
+        Log.d(TAG, "onTouch: DEBUGGER-----Logout icon");
+        startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
+        finish();
+    }
+
+    public void onClickNotification(View view) {
+        Toast.makeText(getApplicationContext(), "Notifications", Toast.LENGTH_LONG).show();
+
+        // SUPPORT: https://www.androidcode.ninja/android-alertdialog-example/
+        // SUPPORT: https://developer.android.com/guide/topics/ui/dialogs
     }
 }

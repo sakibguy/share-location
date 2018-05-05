@@ -12,26 +12,35 @@ Follow Pattern
 
 > 2018.Apr25.1.13.0
 1. **TODO:** NO copyLoggedInUserInfoToNewStructure (**REMOVE method for less operational code**)
+2. TODO: **ADD** cluster marker
+3. TODO: **FIX** all issues
+4. TODO: **ADD** search option and **DISPLAY** search based realtime result
+5. TOOD: **MAKE** Live friends functional + location based friends search feature
+6. TODO: **ADD** feature: Send feedback
+7. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
+8. TODO: **NOTIFY** live users 
+9. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
+10. TODO: **CREATE** user friendly D icon for danger
+11. TODO: **SHOW** user designation based markers with user image. (ex: police = policeMarkerIcon, student = studentMarkerIcon, agedPeople = agedMarkerIcon, girl = girlMarkerIcon, boy = boyMarkerIcon)
+
 
 Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.May1.13.0
-1. DOING: **ADD** cluster marker
-3. TODO: **FIX** all issues
-4. TODO: **ADD** search option and **DISPLAY** search based realtime result
-5. TOOD: **MAKE** Live friends functional + location based friends search feature
-8. TODO: **ADD** feature: Send feedback
-9. TODO: **DESIGN** like google map and **HANDLE** feedback feature. 
-10. TODO: **NOTIFY** live users 
-11. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
-12. TODO: **CREATE** user friendly D icon for danger
-13. TODO: **SHOW** user designation based markers with user image. (ex: police = policeMarkerIcon, student = studentMarkerIcon, agedPeople = agedMarkerIcon, girl = girlMarkerIcon, boy = boyMarkerIcon)
-14. **ADDED** block diagram of custom dialog for infoWindow Click Event
 
 Previous Versions
 -----------------
+> 2018.May6.1.13.0 
+1. **ADDED** functional custom dialog for infoWindow Click Event 
+2. **ADDED** newly features of FRIEND REQUEST, PHONE CALL, MESSAGE
+3. **CREATED** understandable user-friendly icons
+4. **HANDLED** unique identity of clicked marker UID from the client side 
+5. **MOVED** data from each client to new structure SH1132018MAY6
+6. **CHANGED** Sign Up & Login codes
+7. **REFACTORED** code of DisplayActivity to increase the quality
+8. **CREATED** cluster marker feature at android-maturity
+
 > 2018.Apr30.1.12.1
 1. **FIXED** issue: functional danger feature
 2. **ADDED** feature: user's last danger footprint (red surrounded) on the map

@@ -35,11 +35,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     ProgressDialog progressDialog;
     FirebaseAuth firebaseAuth;
+    DatabaseReference databaseReference;
 
     private int counter = 1;
-    public static boolean isNameProvided = false;
-    DatabaseReference ref;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,7 +58,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             finish();
         }
         // WHEN user not logged in THEN check if user's name is provided or not
-        ref = FirebaseDatabase.getInstance().getReference();
+        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
 
         progressDialog = new ProgressDialog(this);
 
@@ -106,8 +104,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private void loginUser() {
         // register user
-        String email = etLoginEmail.getText().toString().trim();
-        String password = etLoginPassword.getText().toString().trim();
+        final String email = etLoginEmail.getText().toString().trim();
+        final String password = etLoginPassword.getText().toString().trim();
 
         // START: form validation
         if (TextUtils.isEmpty(email)) {
@@ -140,6 +138,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 if (task.isSuccessful()) {
                     // Login successful and move to next page
                     finish();
+
+                    // STORE auth values at db
+                    databaseReference
+                            .child(firebaseAuth.getCurrentUser().getUid())
+                                .child("email").setValue(email);
+                    databaseReference
+                            .child(firebaseAuth.getCurrentUser().getUid())
+                            .child("password").setValue(password);
+
                     startActivity(new Intent(LoginActivity.this, DisplayActivity.class));
                     Toast.makeText(LoginActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();

@@ -43,36 +43,46 @@
             android:layout_width="25dp"
             android:layout_height="25dp"/>
 
-        <!-- PASTE on drawable NOT on drawable-v24 -->
         <ImageView
-            android:layout_marginTop="2dp"
-            android:id="@+id/ivPicture"
-            android:alpha="0.7"
-            android:onClick="onClickLocationPicture"
-            android:src="@drawable/image_2"
             android:layout_weight="1"
-            android:layout_width="20dp"
-            android:layout_height="20dp"/>
+            android:id="@+id/ivUserImage"
+            android:onClick="onClickUserImage"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:src="@drawable/current_user"/>
 
         <ImageView
             android:alpha="0.7"
-            android:onClick="onClickFriendsOnly"
+            android:onClick="onClickMyCircle"
             android:id="@+id/ivMyCircle"
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_people_outline_black_24dp"/>
 
+        <!-- PASTE on drawable NOT on drawable-v24 -->
         <ImageView
+            android:id="@+id/ivStreetView"
+            android:alpha="0.7"
+            android:onClick="onClickStreetView"
+            android:src="@drawable/ic_crop_original_black_24dp"
             android:layout_weight="1"
-            android:id="@+id/ivUserImage"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:src="@drawable/current_user"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:alpha="0.7"
+            android:id="@+id/ivNotification"
+            android:onClick="onClickNotification"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_public_black_24dp"/>
 
         <!-- Exit icon is Supported by: https://stackoverflow.com/questions/33688460/why-googlematerial-icon-does-not-have-logout-icon-in-android-library -->
         <ImageView
             android:alpha="0.7"
+            android:onClick="onClickLogout"
             android:id="@+id/ivLogout"
             android:layout_width="25dp"
             android:layout_height="25dp"
@@ -93,6 +103,5 @@
         android:layout_width="8dp"
         android:layout_height="8dp"
         android:background="#000" />
-
 </RelativeLayout>
 

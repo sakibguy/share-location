@@ -148,6 +148,8 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     databaseReference.child(currentUser.getUid()).child("name").setValue(name);
                     databaseReference.child(currentUser.getUid()).child("email").setValue(email);
                     databaseReference.child(currentUser.getUid()).child("password").setValue(password);
+                    databaseReference.child(currentUser.getUid()).child("danger").setValue("0");
+                    databaseReference.child(currentUser.getUid()).child("online").setValue("0");
 
                     progressDialog.dismiss();
                     finish();
