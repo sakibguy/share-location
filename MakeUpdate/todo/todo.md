@@ -10,8 +10,8 @@ Follow Pattern
    1. **Cmd** key
    2. **Cmd** key
 
-> 2018.Apr25.1.13.0
-1. **TODO:** NO copyLoggedInUserInfoToNewStructure (**REMOVE method for less operational code**)
+> 2018.MayN.1.N.N
+1. TODO: **MAKE** friends icon functional to view friends on map.
 2. TODO: **ADD** cluster marker
 3. TODO: **FIX** all issues
 4. TODO: **ADD** search option and **DISPLAY** search based realtime result
@@ -22,15 +22,21 @@ Follow Pattern
 9. TODO: **MAKE** user-friendly GPS enable option (Swadesh vai faced this problem)
 10. TODO: **CREATE** user friendly D icon for danger
 11. TODO: **SHOW** user designation based markers with user image. (ex: police = policeMarkerIcon, student = studentMarkerIcon, agedPeople = agedMarkerIcon, girl = girlMarkerIcon, boy = boyMarkerIcon)
+12. DOING: **MAKE** functional FRIEND REQUESTS NOTIFICATIONS
 
+13. TODO: **INCREASE** streetview view rate: POINT google, fb, apple, ...etc location place
+14. TODO: **INCREASE** streetview view rate: historical place
 
 Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-
 Previous Versions
 -----------------
+> 2018.May9.1.14.0
+1. **REMOVED** method for less operational code. NO copyLoggedInUserInfoToNewStructure exists.
+2. **ADDED** realtime functional friend list with addition & deletion features.
+
 > 2018.May6.1.13.0 
 1. **ADDED** functional custom dialog for infoWindow Click Event 
 2. **ADDED** newly features of FRIEND REQUEST, PHONE CALL, MESSAGE

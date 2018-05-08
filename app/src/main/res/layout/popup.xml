@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center_vertical|center_horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:background="#ffffff"
+        android:orientation="vertical"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:textStyle="bold"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Order Details"
+            android:textColor="#111"
+            android:id="@+id/textView2"
+            android:layout_gravity="center_horizontal" />
+
+        <ImageView
+            android:padding="10dp"
+            android:src="@drawable/image_2"
+            android:layout_marginTop="10dp"
+            android:layout_width="200dp"
+            android:layout_gravity="center"
+            android:layout_height="150dp" />
+
+        <RelativeLayout
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:padding="10dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:layout_marginLeft="30dp"
+                android:padding="7dp"
+                android:background="@drawable/round_border"
+                android:textSize="13sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/etQuantity"
+                android:hint="How much...?" />
+
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_marginRight="30dp"
+                android:padding="5dp"
+                android:layout_alignParentRight="true"
+                android:gravity="right"
+                android:background="@drawable/round_border"
+                android:text="Order"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:textColor="#000"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </RelativeLayout>
+
+    </LinearLayout>
+</LinearLayout>

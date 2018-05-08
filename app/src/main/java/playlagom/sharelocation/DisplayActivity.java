@@ -48,10 +48,13 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
 import playlagom.sharelocation.libs.GoogleMapOperations;
+import playlagom.sharelocation.models.KeyValue;
 import playlagom.sharelocation.models.User;
 
 public class DisplayActivity extends FragmentActivity implements
@@ -60,37 +63,46 @@ public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnInfoWindowClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
+    private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivStreetView, ivNotification;
+    private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
     private static final int PERMISSIONS_REQUEST = 1;
-    private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
-    private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
-
     private HashMap<String, Marker> blueMarkers;
-
-    static boolean taskCompleted = false;
-    private boolean insideShouldShow = false;
     boolean locationPermissionGranted = false;
-
-    GoogleMap mMap;
-
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivStreetView, ivNotification;
+    private boolean insideShouldShow = false;
+    static boolean taskCompleted = false;
     TextView tvPosition, tvPoint;
+    GoogleMap mMap;
 
     // Firebase
     FirebaseAuth firebaseAuth;
-    DatabaseReference databaseReference;
     DatabaseReference allMarkerRef;
+    DatabaseReference databaseReference;
 
-    AdView mAdView;
     View mapView;
+    AdView mAdView;
 
     // Danger sound
-    MediaPlayer dangerSound;
-    private static boolean makeDangerSound = true;
-    int width, height;
-    private int userCounter = 1;
     private LatLng location = new LatLng(0, 0);
+    private static boolean makeDangerSound = true;
+    private int userCounter = 1;
+    MediaPlayer dangerSound;
+    int width, height;
+
+    // TODO: 5/8/2018  VISUALIZE through icon
+    public static List<KeyValue> friends = new ArrayList<>();
+    // TODO: 5/8/2018  VISUALIZE through icon
+    public static List<KeyValue> sentFriendRequests = new ArrayList<>();
+    public static List<KeyValue> receivedFriendRequestsList = new ArrayList<>();
+
+    // IMPLEMENT logic to USE less memory through LinkedHashMap
+    // NOW using HashMap for completion purpose, where more memory is used
+    // FAILED:   HashMap<String, KeyValue> keyValuePosition = new HashMap<>();
+    // SUPPORT: https://stackoverflow.com/questions/5237101/is-it-possible-to-get-element-from-hashmap-by-its-position
+    // SUPPORT: https://www.tutorialspoint.com/compile_java_online.php
+    public static LinkedHashMap<String, KeyValue> linkedHashMap = new LinkedHashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,21 +110,28 @@ public class DisplayActivity extends FragmentActivity implements
         setContentView(R.layout.activity_display);
         Log.d(TAG, "[ OK ] ---- onCreate: ----");
 
-        // INIT: firebase
+        // INIT dependencies setup
+        // firebase
         firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
-        allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
+        allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
 
         // TODO: 5/6/2018 REMOVE method below, at next version
         // COPY name: from sharelocation-users to SL11302018MAY6
-        copyLoggedInUserInfoToNewStructure();
+//        copyLoggedInUserInfoToNewStructure();
 
-        // SETUP: google map
+        // google map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        Log.d(TAG, "[ OK ] ---- async map request done. Waiting... for onMapReady interface/callback listener execution");
+        Log.d(TAG, "[ OK ] ---- async map request done. " +
+                "Waiting... for onMapReady interface/callback listener execution");
         mapView = mapFragment.getView();
+
+        // RETRIEVE friend list, and STORE on cache
+//        retrieveFriends();
+        // RETRIEVE receivedFriendRequests, and STORE on cache
+        retrieveReceivedFriendRequests();
 
         // WIRE widgets: convert xml components to java object
         // ImageView
@@ -185,6 +204,115 @@ public class DisplayActivity extends FragmentActivity implements
         blueMarkers = new HashMap<>();
 
         checkLocationPermission();
+    }
+
+    private void retrieveReceivedFriendRequests() {
+        databaseReference
+            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(getString(R.string.receivedFriendRequests))
+                    .addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                            if (dataSnapshot != null) {
+                                Log.d(TAG, "[ OK ] ------ " +
+                                        "retrieveReceivedFriendRequests.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
+                                        "VALUE " + dataSnapshot.getValue());
+
+                                // TEST with ListView<T>
+                                // KeyValue keyValue = new KeyValue();
+                                // keyValue.key = dataSnapshot.getKey();
+                                // keyValue.value = String.valueOf(dataSnapshot.getValue());
+
+                                // receivedFriendRequestsList.add(keyValue);
+
+
+                                KeyValue keyValue = new KeyValue();
+                                keyValue.key = dataSnapshot.getKey();
+                                keyValue.value = String.valueOf(dataSnapshot.getValue());
+
+                                // How to track which key at which position in List?
+                                // NEED LinkedHashMap
+                                // SUPPORT: https://stackoverflow.com/questions/5237101/is-it-possible-to-get-element-from-hashmap-by-its-position
+//                                keyValuePosition.put(keyValue.key, keyValue);
+
+                                // TODO: 5/8/2018 CODING CHALLENGE
+                                // WHY LinkedHashMap: to track HashMap index/position
+                                /* Populate */
+                                linkedHashMap.put(dataSnapshot.getKey(), keyValue);
+                            }
+                        }
+
+                        @Override
+                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                            Log.d(TAG, "[ OK ] ------ " +
+                                    "retrieveReceivedFriendRequests.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
+
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
+                            keyValue.value = String.valueOf(dataSnapshot.getValue());
+
+                            linkedHashMap.put(dataSnapshot.getKey(), keyValue);
+                        }
+
+                        @Override
+                        public void onChildRemoved(DataSnapshot dataSnapshot) {
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
+                            keyValue.value = String.valueOf(dataSnapshot.getValue());
+
+                            // SUPPORT: http://candidjava.com/remove-key-value-pair-from-linkedhashmap-v-removeobject-key/
+                            linkedHashMap.remove(keyValue.key);
+                        }
+
+                        @Override
+                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.e(TAG, "[ OK ] -------- retrieveReceivedFriendRequests.onCancelled: " +
+                                    "" + databaseError.getMessage());
+                        }
+                    });
+    }
+
+    private void retrieveFriends() {
+        databaseReference
+            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(getString(R.string.retrieveFriends))
+                    .addChildEventListener(new ChildEventListener() {
+
+                        @Override
+                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                            if (dataSnapshot != null) {
+                                Log.d(TAG, "[ OK ] -------- retrieveFriends.onChildAdded: " +
+                                        "" + dataSnapshot.toString());
+                            }
+                        }
+
+                        @Override
+                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                        }
+
+                        @Override
+                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.e(TAG, "[ OK ] -------- retrieveFriends.onCancelled: " +
+                                    "" + databaseError.getMessage());
+                        }
+                    });
     }
 
     // TODO: 5/6/2018 REMOVE method below, at next version
@@ -430,7 +558,9 @@ public class DisplayActivity extends FragmentActivity implements
         if (mapView != null &&
                 mapView.findViewById(Integer.parseInt("1")) != null) {
             // Get the button view
-            View locationButton = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+            View locationButton = ((View) mapView
+                    .findViewById(Integer.parseInt("1"))
+                        .getParent()).findViewById(Integer.parseInt("2"));
             // and next place it, on bottom right (as Google Maps app)
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                     locationButton.getLayoutParams();
@@ -501,7 +631,7 @@ public class DisplayActivity extends FragmentActivity implements
     // The subscribeToUpdates() method calls setMarker()
     // whenever it receives a new or updated location for a tracked device.
     private void subscribeToUpdates() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
 
         // logcat color SUPPORT: https://medium.com/@gun0912/android-studio-how-to-change-logcat-color-3c17a10beef8
         Log.d(TAG, "[ OK ] -- subscribeToUpdates:");
@@ -988,6 +1118,7 @@ public class DisplayActivity extends FragmentActivity implements
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "[ OK ] ---- onDestroy: ----");
+        receivedFriendRequestsList.clear();
         databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
     }
     private void backup() {
@@ -1241,8 +1372,9 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     public void onClickNotification(View view) {
-        Toast.makeText(getApplicationContext(), "Notifications", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Notifications", Toast.LENGTH_SHORT).show();
 
+        startActivity(new Intent(DisplayActivity.this, ProductListActivity.class));
         // SUPPORT: https://www.androidcode.ninja/android-alertdialog-example/
         // SUPPORT: https://developer.android.com/guide/topics/ui/dialogs
     }

@@ -58,7 +58,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             finish();
         }
         // WHEN user not logged in THEN check if user's name is provided or not
-        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation_users));
+        databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
 
         progressDialog = new ProgressDialog(this);
 

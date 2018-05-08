@@ -49,7 +49,7 @@ public class TrackerService extends Service {
         firebaseAuthForOnDisconnect = FirebaseAuth.getInstance();
         currentUserOnDisconnect = firebaseAuthForOnDisconnect.getCurrentUser();
         userIdOnDisconnect = currentUserOnDisconnect.getUid();
-        pathOnDisconnect = getString(R.string.sharelocation_users) + "/" + userIdOnDisconnect;
+        pathOnDisconnect = getString(R.string.sharelocation) + "/" + userIdOnDisconnect;
         databaseReferenceOnDisconnect = FirebaseDatabase.getInstance().getReference(pathOnDisconnect);
 
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
@@ -96,7 +96,7 @@ public class TrackerService extends Service {
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         final String userId = currentUser.getUid();
-        final String path = getString(R.string.sharelocation_users) + "/" + userId;
+        final String path = getString(R.string.sharelocation) + "/" + userId;
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
         if (permission == PackageManager.PERMISSION_GRANTED) {

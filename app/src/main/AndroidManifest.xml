@@ -49,6 +49,7 @@
             android:exported="true" />
 
         <activity android:name=".StreetViewPanoramaBasicDemoActivity"></activity>
+        <activity android:name=".ProductListActivity"></activity>
     </application>
 
 </manifest>

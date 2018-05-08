@@ -4,6 +4,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.maps.android.clustering.ClusterItem;
 
+import java.util.HashMap;
+
 /**
  * Created by User on 4/12/2018.
  */

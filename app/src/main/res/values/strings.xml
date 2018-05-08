@@ -2,6 +2,10 @@
     <string name="app_name">Share Location</string>
     <string name="title_activity_display">Live Users</string>
     <string name="notification_text">Sharing Location, tap to cancel</string>
-    <string name="sharelocation_users" translatable="false">SL1132018MAY6</string>
+    <string name="sharelocation" translatable="false">SL1132018MAY6</string>
+    <string name="sentFriendRequests">sentFriendRequests</string>
+    <string name="retrieveFriends">retrieveFriends</string>
     <string name="title_activity_maps">Map</string>
+    <string name="receivedFriendRequests">receivedFriendRequests</string>
+    <string name="friends">friends</string>
 </resources>
