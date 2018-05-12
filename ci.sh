@@ -117,8 +117,9 @@ echo
 
 # 2018.May12
 ## UPLOAD stable release: TabLayout with PageViewer & UX+UI+ReceivedFriends
+## UPLOAD functional friends: (stable release 2)
 
-git commit -m "UPLOAD stable release: TabLayout with PageViewer & UX+UI+ReceivedFriends"
+git commit -m "UPLOAD functional friends: (stable release 2)"
 
 ############
 # Step: 05 #

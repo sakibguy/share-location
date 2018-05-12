@@ -4,10 +4,17 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/tvTotalFriends"
         android:layout_gravity="center"
         android:padding="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Your Friend List (N)"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/rvFriends">
+    </android.support.v7.widget.RecyclerView>
 
 </LinearLayout>

@@ -29,108 +29,50 @@ import playlagom.sharelocation.R;
 import playlagom.sharelocation.fragments.ReceivedFriendRequestsFragment;
 import playlagom.sharelocation.models.KeyValue;
 
-public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class FriendsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final String TAG = "ProductAdapter";
+    private static final String TAG = "FriendsAdapter";
 
     private Context context;
     private LayoutInflater inflater;
     DatabaseReference databaseReference;
     FirebaseAuth firebaseAuth;
 
-    // CHECK with List<KeyValue>
-    // CREATE constructor to initialize context and receivedFriendRequestsList sent from ProductListActivity
-//    public ProductAdapter(Context context, List<KeyValue> receivedFriendRequestsList) {
-//        this.context = context;
-//        inflater = LayoutInflater.from(context);
-//        this.receivedFriendRequestsList = receivedFriendRequestsList;
-//
-//        databaseReference = FirebaseDatabase
-//                .getInstance()
-//                .getReference(context.getString(R.string.sharelocation));
-//        firebaseAuth = FirebaseAuth.getInstance();
-//    }
-
-    public ReceivedFriendRequestsAdapter(Context context) {
+    public FriendsAdapter(Context context) {
         this.context = context;
         inflater = LayoutInflater.from(context);
 
-        databaseReference = FirebaseDatabase
-                .getInstance()
-                .getReference(context.getString(R.string.sharelocation));
+        databaseReference = FirebaseDatabase.getInstance().getReference(context.getString(R.string.sharelocation));
         firebaseAuth = FirebaseAuth.getInstance();
     }
 
     // INFLATE the layout when ViewHolder created
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = inflater.inflate(R.layout.item_received_friend_requests, parent, false);
+        View view = inflater.inflate(R.layout.item_friends, parent, false);
         MyHolder holder = new MyHolder(view);
         return holder;
     }
 
-    // BIND receivedFriendRequestsList
+    // BIND Friend List
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
 
         // GET product position of item in RecyclerView to bind receivedFriendRequestsList and assign values from list
         final MyHolder myHolder = (MyHolder) holder;
-        /* Get by position */
+        // Get by position
         final KeyValue keyValue = (new ArrayList<KeyValue>(
-                DisplayActivity.lhmReceivedFriendRequests.values())).get(position);
-
+                DisplayActivity.lhmFriends.values())).get(position);
         myHolder.tvUserName.setText(keyValue.name);
-        // DEBUGGER
-        // myHolder.tvMessage.setText("" + keyValue.friendRequestStatus);
 
-        myHolder.tvMessage.setText("No message sent");
-        Log.d(TAG, "[ OK ] ----- onBindViewHolder [KEY] " + keyValue.key + " " + keyValue.value  + " [VALUE]");
-
-        // HANDLE ACCEPT & DELETE
-        myHolder.tvAccept.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                Toast.makeText(context.getApplicationContext(), "You accepted friend request " +
-                        "" + position, Toast.LENGTH_SHORT).show();
-//                DisplayActivity.lhmReceivedFriendRequests.remove(keyValue.key);
-                myHolder.tvMessage.setVisibility(View.GONE);
-                myHolder.tvUserName.setVisibility(View.GONE);
-                myHolder.ivUserImage.setVisibility(View.GONE);
-                myHolder.tvAccept.setVisibility(View.GONE);
-                myHolder.tvDelete.setVisibility(View.GONE);
-
-                myHolder.tvClickMessage.setText("Accepted");
-
-
-                // CHECK with real data (firebase)
-                acceptFriendRequest(keyValue.key, keyValue.name);
-
-                // CHECK with false data (Cache)
-                // keyValue.value = "1";
-//                 KeyValue tempKeyValue = new KeyValue();
-//                 tempKeyValue.key = keyValue.key;
-//                 tempKeyValue.value = keyValue.value;
-//                 tempKeyValue.friendRequestStatus = true;
-//                 DisplayActivity.lhmReceivedFriendRequests.put(keyValue.key, tempKeyValue);
-                return false;
-            }
-        });
-
+        // HANDLE Delete
         myHolder.tvDelete.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Toast.makeText(context.getApplicationContext(), "You deleted friend request " +
-                        "" + position, Toast.LENGTH_SHORT).show();
-//                DisplayActivity.lhmReceivedFriendRequests.remove(keyValue.key);
-                myHolder.tvMessage.setVisibility(View.GONE);
                 myHolder.tvUserName.setVisibility(View.GONE);
                 myHolder.ivUserImage.setVisibility(View.GONE);
-                myHolder.tvAccept.setVisibility(View.GONE);
                 myHolder.tvDelete.setVisibility(View.GONE);
-
                 myHolder.tvClickMessage.setText("Deleted");
-
-                Log.d(TAG, "onTouch: KEY---- " + keyValue.key);
 
                 // CHECK with real data (firebase)
                 deleteFriend(keyValue.key);
@@ -145,13 +87,6 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 return false;
             }
         });
-
-//        myHolder.itemView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//            }
-//        });
     }
 
     private void acceptFriendRequest(String uid, String name) {
@@ -218,20 +153,33 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
 
     // OK: deleteFriend
     private void deleteFriend(String uid) {
-//        Toast.makeText(context.getApplicationContext(), "Unfriend Successful", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context.getApplicationContext(), "Unfriend Successful", Toast.LENGTH_SHORT).show();
 
-        // REMOVE from
-        // requested user: sentFriendRequests
+        // REMOVE from requested user
+        // friends
+        databaseReference
+                .child(uid)
+                .child(context.getString(R.string.friends))
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .removeValue();
+        // sentFriendRequests
         databaseReference
                 .child(uid)
                 .child(context.getString(R.string.sentFriendRequests))
                 .child(firebaseAuth.getCurrentUser().getUid())
                 .removeValue();
 
-        // loggedin user: receivedFriendRequests
+        // REMOVE from loggedin user
+        // friends
         databaseReference
                 .child(firebaseAuth.getCurrentUser().getUid())
-                .child(context.getString(R.string.receivedFriendRequests))
+                .child(context.getString(R.string.friends))
+                .child(uid)
+                .removeValue();
+        // sentFriendRequests
+        databaseReference
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .child(context.getString(R.string.sentFriendRequests))
                 .child(uid)
                 .removeValue();
     }
@@ -243,7 +191,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
         // return receivedFriendRequestsList.size();
 
         // CHECK with LinkedHashMap
-        return DisplayActivity.lhmReceivedFriendRequests.size();
+        return DisplayActivity.lhmFriends.size();
     }
 
     // SUPPORT: https://stackoverflow.com/questions/32771302/recyclerview-items-duplicate-and-constantly-changing
@@ -263,7 +211,6 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
         public ImageView ivUserImage;
         public TextView tvUserName;
         public TextView tvMessage;
-        public TextView tvAccept;
         public TextView tvDelete;
 
 
@@ -276,9 +223,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
 
             ivUserImage = itemView.findViewById(R.id.ivUserImage);
             tvUserName = itemView.findViewById(R.id.tvUserName);
-            tvMessage = itemView.findViewById(R.id.tvMessage);
 
-            tvAccept = itemView.findViewById(R.id.tvAccept);
             tvDelete = itemView.findViewById(R.id.tvDelete);
 
             rowItem = itemView.findViewById(R.id.firstRow);

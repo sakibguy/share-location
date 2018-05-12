@@ -92,10 +92,10 @@ public class DisplayActivity extends FragmentActivity implements
     int width, height;
 
     // TODO: 5/8/2018  VISUALIZE through icon
-    public static List<KeyValue> friends = new ArrayList<>();
-    // TODO: 5/8/2018  VISUALIZE through icon
-    public static List<KeyValue> sentFriendRequests = new ArrayList<>();
+    // CACHE STORAGE: for less server call & faster data manipulation
     public static LinkedHashMap<String, KeyValue> lhmReceivedFriendRequests = new LinkedHashMap<>();
+    public static LinkedHashMap<String, KeyValue> lhmFriends = new LinkedHashMap<>();
+    public static LinkedHashMap<String, KeyValue> lhmSentFriendRequests = new LinkedHashMap<>();
 
     // IMPLEMENT logic to USE less memory through LinkedHashMap
     // NOW using HashMap for completion purpose, where more memory is used
@@ -112,16 +112,6 @@ public class DisplayActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display);
         Log.d(TAG, "[ OK ] ---- onCreate: ----");
-
-        // STORE on cache (TESTING pipeline)
-        // FALSE DATA: received friend request
-//        for (int i = 0; i < 25; i++) {
-//            KeyValue keyValue = new KeyValue();
-//            keyValue.key = "key" + i;
-//            keyValue.value = "Name " + i;
-//
-//            lhmReceivedFriendRequests.put(keyValue.key, keyValue);
-//        }
 
         // google map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -142,14 +132,13 @@ public class DisplayActivity extends FragmentActivity implements
 //        copyLoggedInUserInfoToNewStructure();
 
 
-
-        // RETRIEVE
         // NEVER remove: logged in username
         retrieveLoggedInUserName();
 
-        // friend list, and STORE on cache
-//        retrieveFriends();
-        // RETRIEVE receivedFriendRequests, and STORE on cache
+        // RETRIEVE and STORE on cache
+        // friends
+        retrieveFriends();
+        // Received friend requests
         retrieveReceivedFriendRequests();
 
         // WIRE widgets: convert xml components to java object
@@ -338,25 +327,56 @@ public class DisplayActivity extends FragmentActivity implements
     private void retrieveFriends() {
         databaseReference
             .child(firebaseAuth.getCurrentUser().getUid())
-                .child(getString(R.string.retrieveFriends))
+                .child(getString(R.string.friends))
                     .addChildEventListener(new ChildEventListener() {
-
                         @Override
                         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                            // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
+                            Log.d(TAG, "[ OK ] -- -- " +
+                                    "retrieveFriends.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
                             if (dataSnapshot != null) {
-                                Log.d(TAG, "[ OK ] -------- retrieveFriends.onChildAdded: " +
-                                        "" + dataSnapshot.toString());
+
+                                KeyValue keyValue = new KeyValue();
+                                keyValue.key = dataSnapshot.getKey();
+
+                                if (dataSnapshot.hasChild("name")) {
+                                    keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
+                                    Log.d(TAG, "[ OK ] -- --- name: " + keyValue.name + ", " +
+                                            "KEY: " + keyValue.key);
+                                }
+                                lhmFriends.put(keyValue.key, keyValue);
                             }
                         }
 
                         @Override
                         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                            Log.d(TAG, "[ OK ] -- -- " +
+                                    "retrieveFriends.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
+                            // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
 
+                            if (dataSnapshot.hasChild("name")) {
+                                keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
+                                Log.d(TAG, "[ OK ] -- --- name: " + keyValue.name + ", " +
+                                        "KEY: " + keyValue.key);
+                            }
+                            lhmFriends.put(keyValue.key, keyValue);
                         }
 
                         @Override
                         public void onChildRemoved(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot != null) {
+                                KeyValue keyValue = new KeyValue();
+                                keyValue.key = dataSnapshot.getKey();
 
+                                lhmFriends.remove(keyValue.key);
+                                Log.d(TAG, "[ OK ] ------ " +
+                                        "retrieveFriends.onChildRemoved: KEY " + dataSnapshot.getKey() + ", " +
+                                        "VALUE " + dataSnapshot.getValue());
+                            }
                         }
 
                         @Override
@@ -1072,6 +1092,7 @@ public class DisplayActivity extends FragmentActivity implements
                             }
                         });
         }
+
         // HANDLE events through listener
         // ImageView
         ivStreetView.setOnTouchListener(new View.OnTouchListener() {
@@ -1259,6 +1280,7 @@ public class DisplayActivity extends FragmentActivity implements
         super.onDestroy();
         Log.d(TAG, "[ OK ] ---- onDestroy: ----");
         lhmReceivedFriendRequests.clear();
+        lhmFriends.clear();
         databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
     }
     private void backup() {
