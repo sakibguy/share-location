@@ -7,8 +7,6 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-
 import playlagom.sharelocation.models.KeyValue;
 
 public class ProductListActivity extends Activity {
@@ -28,7 +26,6 @@ public class ProductListActivity extends Activity {
             Log.d(TAG, "[ OK ] ----- onCreate: [KEY] " + value.key + " " + value.value  + " [VALUE] " +
                     ", cachestatus = " +value.friendRequestStatus );
         }
-
 
 //        for (int i = 0; i < DisplayActivity.receivedFriendRequestsList.size(); i++) {
 //            String key = DisplayActivity.receivedFriendRequestsList.get(i).key;

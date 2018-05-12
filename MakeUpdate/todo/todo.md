@@ -26,6 +26,7 @@ Follow Pattern
 
 13. TODO: **INCREASE** streetview view rate: POINT google, fb, apple, ...etc location place
 14. TODO: **INCREASE** streetview view rate: historical place
+15. TODO: **SET** marker point for scientiests (einstein), mark zukerberg, bill gates
 
 Working Version
 ---------------

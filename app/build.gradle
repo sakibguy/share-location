@@ -6,8 +6,8 @@ android {
         applicationId "playlagom.sharelocation"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1140
-        versionName "1.14.0"
+        versionCode 1150
+        versionName "1.15.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -35,6 +35,8 @@ dependencies {
     compile 'com.google.maps.android:android-maps-utils:0.5+'
     // RecyclerView
     compile 'com.android.support:recyclerview-v7:26.1.0'
+    // TabLayout
+    implementation 'com.android.support:design:26.1.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

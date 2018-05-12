@@ -115,7 +115,10 @@ echo
 # 2018.May9
 ## 💚 UPLOAD cr2018.May9.1.14.0
 
-git commit -m "💚 UPLOAD cr2018.May9.1.14.0"
+# 2018.May12
+## UPLOAD stable release: TabLayout with PageViewer & UX+UI+ReceivedFriends
+
+git commit -m "UPLOAD stable release: TabLayout with PageViewer & UX+UI+ReceivedFriends"
 
 ############
 # Step: 05 #

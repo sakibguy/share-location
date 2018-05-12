@@ -50,6 +50,9 @@
 
         <activity android:name=".StreetViewPanoramaBasicDemoActivity"></activity>
         <activity android:name=".ProductListActivity"></activity>
+        <activity
+            android:name=".TabNPageViewerActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 
 </manifest>
