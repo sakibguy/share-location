@@ -95,6 +95,7 @@ public class DisplayActivity extends FragmentActivity implements
     // CACHE STORAGE: for less server call & faster data manipulation
     public static LinkedHashMap<String, KeyValue> lhmReceivedFriendRequests = new LinkedHashMap<>();
     public static LinkedHashMap<String, KeyValue> lhmFriends = new LinkedHashMap<>();
+    // TODO: 5/12/2018 COMPLETE view of SentFriendRequests
     public static LinkedHashMap<String, KeyValue> lhmSentFriendRequests = new LinkedHashMap<>();
 
     // IMPLEMENT logic to USE less memory through LinkedHashMap
@@ -1028,6 +1029,7 @@ public class DisplayActivity extends FragmentActivity implements
                                 if (dataSnapshot != null) {
                                     if (dataSnapshot.hasChild(markerUID)) {
                                         btnAddFriend.setText("Already Friend");
+                                        // SUPPORT: https://stackoverflow.com/questions/4384890/how-to-disable-an-android-button
                                         btnAddFriend.setEnabled(false);
                                         Toast.makeText(getApplicationContext(), "Start chat/call",
                                                 Toast.LENGTH_LONG).show();
@@ -1250,7 +1252,6 @@ public class DisplayActivity extends FragmentActivity implements
         super.onStart();
         Log.d(TAG, "[ OK ] ---- onStart: ----");
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -1261,7 +1262,6 @@ public class DisplayActivity extends FragmentActivity implements
         super.onPause();
         Log.d(TAG, "[ OK ] ---- onPause: ----");
     }
-
     @Override
     protected void onStop() {
         super.onStop();
@@ -1283,6 +1283,7 @@ public class DisplayActivity extends FragmentActivity implements
         lhmFriends.clear();
         databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
     }
+
     private void backup() {
         //        // HERE WHAT CORRESPONDS TO JOIN
 //        databaseReference.child(uid)

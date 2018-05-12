@@ -10,7 +10,7 @@ Follow Pattern
    1. **Cmd** key
    2. **Cmd** key
 
-> 2018.MayN.1.N.N
+> 2018.May12.1.15.0
 1. TODO: **MAKE** friends icon functional to view friends on map.
 2. TODO: **ADD** cluster marker
 3. TODO: **FIX** all issues
@@ -34,6 +34,15 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May12.1.15.0
+1. **ADDED** TabLayout, PageViewer, Fragamens where PV contains RecyclerView
+2. **ADDED** functional friends feature
+3. **CREATED** view & functionality (Accept/Delete) for received friend requests
+4. **CREATED** view & functionality(Delete) for friend list
+5. **CREATED** view for sent friend requests
+6. **CHANGED** codebase structure
+7. **USED** local data cache for flexibility, reliability, less server call through LinkedHashMap where List & HashMap not fit in this problem domain.
+
 > 2018.May9.1.14.0
 1. **REMOVED** method for less operational code. NO copyLoggedInUserInfoToNewStructure exists.
 2. **ADDED** realtime functional friend list with addition & deletion features.
