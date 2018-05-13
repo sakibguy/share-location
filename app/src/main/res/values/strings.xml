@@ -7,4 +7,5 @@
     <string name="receivedFriendRequests">receivedFriendRequests</string>
     <string name="sentFriendRequests">sentFriendRequests</string>
     <string name="friends">friends</string>
+    <string name="danger">danger</string>
 </resources>

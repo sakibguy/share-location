@@ -132,7 +132,6 @@ public class DisplayActivity extends FragmentActivity implements
         // COPY name: from sharelocation-users to SL11302018MAY6
 //        copyLoggedInUserInfoToNewStructure();
 
-
         // NEVER remove: logged in username
         retrieveLoggedInUserName();
 
@@ -234,7 +233,6 @@ public class DisplayActivity extends FragmentActivity implements
                             }
                         });
     }
-
     private void retrieveReceivedFriendRequests() {
         databaseReference
             .child(firebaseAuth.getCurrentUser().getUid())
@@ -324,7 +322,6 @@ public class DisplayActivity extends FragmentActivity implements
                         }
                     });
     }
-
     private void retrieveFriends() {
         databaseReference
             .child(firebaseAuth.getCurrentUser().getUid())
@@ -423,9 +420,8 @@ public class DisplayActivity extends FragmentActivity implements
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-
-                        if (dataSnapshot.hasChild("danger")) {
-                            if (dataSnapshot.child("danger").getValue().equals("1")) {
+                        if (dataSnapshot.hasChild(getString(R.string.danger))) {
+                            if (dataSnapshot.child(getString(R.string.danger)).getValue().equals("1")) {
                                 // SET run danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(
                                         BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
@@ -438,6 +434,15 @@ public class DisplayActivity extends FragmentActivity implements
                                         BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
                                 dangerStatus = false;
                             }
+                        } else {
+                            databaseReference
+                                .child(firebaseAuth.getCurrentUser().getUid())
+                                    .child(getString(R.string.danger))
+                                        .setValue("0");
+                            // SET default danger icon
+                            ivDanger.setImageBitmap(Converter.getCroppedBitmap(
+                                    BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                            dangerStatus = false;
                         }
                     }
 
@@ -451,14 +456,14 @@ public class DisplayActivity extends FragmentActivity implements
     // SUPPORT: https://stackoverflow.com/questions/15368028/getting-a-map-marker-by-its-id-in-google-maps-v2
     private HashMap<String, String> hashMapMidUid = new HashMap<String, String>();
     Marker tempBlueMarker = null;
-    private void showAllRegisteredUsers() {
+    private void renderAll() {
         // SHOW all users black/blue marker icon
         allMarkerRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.d(TAG, "[ OK ] ---- TOTAL REGISTERED USER: " +
                         "" + dataSnapshot.getChildrenCount() +
-                        ", showAllRegisteredUsers().onDataChange: " +
+                        ", renderAll().onDataChange: " +
                         "" + dataSnapshot.toString());
                 User temporaryUser;
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -470,7 +475,7 @@ public class DisplayActivity extends FragmentActivity implements
                             double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
                             double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
                             location = new LatLng(lat, lang);
-                            Log.d(TAG, "[ OK ] ---- LOOP: showAllRegisteredUsers() .. " + userCounter ++ +
+                            Log.d(TAG, "[ OK ] ---- LOOP: renderAll() .. " + userCounter ++ +
                                     " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
 
                             if (!blueMarkers.containsKey(uniqueID)) {
@@ -489,7 +494,7 @@ public class DisplayActivity extends FragmentActivity implements
                             }
                         }
                     } catch (Exception e) {
-                        Log.e(TAG, "[ ERROR ] ---- showAllRegisteredUsers().onDataChange: " + e.getMessage());
+                        Log.e(TAG, "[ ERROR ] ---- renderAll().onDataChange: " + e.getMessage());
                     }
                 }
             }
@@ -510,6 +515,73 @@ public class DisplayActivity extends FragmentActivity implements
 //            }
 //        });
     }
+    private void renderFriends() {
+        // RETRIEVE and RENDER friends
+        databaseReference.child(firebaseAuth.getCurrentUser().getUid())
+                .child(getString(R.string.friends))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        Log.d(TAG, "[ OK ] - ----- TOTAL FRIENDS: " +
+                                "" + dataSnapshot.getChildrenCount() +
+                                ", renderFriends().onDataChange: KEY: " +
+                                "" + dataSnapshot.getKey());
+
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            Log.d(TAG, "[ OK ] - ----- KEY: " +
+                                    "" + snapshot.getKey());
+
+                            databaseReference
+                                    .child(snapshot.getKey())
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            Log.d(TAG, "[ OK ] -----------debug onDataChange: KEY: " + dataSnapshot.getKey() + "" +
+                                                    ", name: " + dataSnapshot.child("name").getValue());
+                                            try {
+                                                User temporaryUser = dataSnapshot.getValue(User.class);
+                                                String uniqueID = dataSnapshot.getKey();
+
+                                                if (temporaryUser != null) {
+                                                    double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
+                                                    double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
+                                                    location = new LatLng(lat, lang);
+                                                    Log.d(TAG, "[ OK ] --- - LOOP: renderFriends() .. " + userCounter ++ +
+                                                            " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
+
+                                                    if (!blueMarkers.containsKey(uniqueID)) {
+                                                        tempBlueMarker = mMap.addMarker(new MarkerOptions().title("" + temporaryUser.getName() + "")
+                                                                .position(location)
+                                                                .snippet("img, fnd req, call, msg")
+                                                                .icon(BitmapDescriptorFactory.defaultMarker(
+                                                                        BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
+                                                                )));
+                                                        blueMarkers.put(uniqueID, tempBlueMarker);
+                                                        tempBlueMarker.showInfoWindow();
+                                                        // STORE (MarkerID vs UID)at RAM
+                                                        hashMapMidUid.put(tempBlueMarker.getId(), uniqueID);
+                                                    } else {
+                                                        blueMarkers.get(uniqueID).setPosition(location);
+                                                    }
+                                                }
+                                            } catch (Exception e) {
+                                                Log.e(TAG, "[ ERROR ] ---- renderFriends().onDataChange: " + e.getMessage());
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+    }
+
     private void checkLocationPermission() {
         // Check location permission is granted - if it is, start
         // the service, otherwise request the permission
@@ -622,7 +694,7 @@ public class DisplayActivity extends FragmentActivity implements
 
         if (mMap != null) {
             // SET: blue markers for all registered users by default.
-            showAllRegisteredUsers();
+            renderAll();
         } else {
             Log.e(TAG, "[ ERROR ] ---- onMapReady: null");
         }
@@ -704,8 +776,6 @@ public class DisplayActivity extends FragmentActivity implements
     // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
     // subscribing to updates in Firebase and
     // when an update occurs.
-    static boolean showAllLiveUser = true;
-
     // The subscribeToUpdates() method calls setMarker()
     // whenever it receives a new or updated location for a tracked device.
     private void subscribeToUpdates() {
@@ -743,41 +813,28 @@ public class DisplayActivity extends FragmentActivity implements
         });
     }
 
+    // UPDATE marker position & color
     // SUPPORT: https://codelabs.developers.google.com/codelabs/realtime-asset-tracking/index.html?index=..%2F..%2Findex#5
     private void showMarker(DataSnapshot dataSnapshot) {
-        Log.d(TAG, "[ OK ] -- setActiveMarker: obj: " + dataSnapshot.toString());
-        String showMarkerTempUID = null;
+        try {
+            // CASE 1: HANDLE null value(as real-time system) through try catch
+            User showMarkerTempUser = dataSnapshot.getValue(User.class);
+            Log.d(TAG, "[ OK ] -- showMarker: name: " + showMarkerTempUser.getName());
+            String showMarkerTempUID = dataSnapshot.getKey();
 
-        if (showAllLiveUser) {          // SHOW all (live + not live)
-            // CASE 1: RECEIVE data through try catch
-            try {
-                User showMarkerTempUser = dataSnapshot.getValue(User.class);
-                Log.d(TAG, "[ OK ] -- setActiveMarker: name: " + showMarkerTempUser.getName());
-                showMarkerTempUID = dataSnapshot.getKey();
+            // CASE 2: CHECK value
+            if (showMarkerTempUser != null) {
+                // CASE 3: CHECK and SET marker green/blue as user online/offline
+                showOnlineOfflineStatus(showMarkerTempUser, showMarkerTempUID);
 
-                // CASE 2: CHECK data
-                if (showMarkerTempUser != null) {
-                    // CASE 3: CHECK and SET marker green/blue as user online/offline
-                    showOnlineOfflineStatus(showMarkerTempUser, showMarkerTempUID);
-
-                    // CASE 4: CHECK and SET animated marker as user at danger
-                    showAnimatedMarkerAtDanger(showMarkerTempUser, showMarkerTempUID);
-                } else {
-                    Log.e(TAG, "[ ERROR ] -- NULL USER, showMarker()");
-                }
-            } catch (Exception e){
-                Log.e(TAG, "[ ERROR ] -- showMarker(): " + e.getMessage());
+                // CASE 4: CHECK and SET animated marker as user at danger
+                showAnimatedMarkerAtDanger(showMarkerTempUser, showMarkerTempUID);
+            } else {
+                Log.e(TAG, "[ ERROR ] -- NULL USER, showMarker()");
             }
-        } else {                            // SHOW friends (live + not live)
-            if (friendsOnlyIconClicked) {
-                for (Marker CurrMarker : blueMarkers.values()) {
-                    // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
-                    CurrMarker.remove();
-                }
-                blueMarkers.clear();
-            }
+        } catch (Exception e){
+            Log.e(TAG, "[ ERROR ] -- showMarker(): " + e.getMessage());
         }
-//        backup();
     }
 
     private void showAnimatedMarkerAtDanger(User showMarkerTempUser, String showMarkerTempUID) {
@@ -1504,28 +1561,33 @@ public class DisplayActivity extends FragmentActivity implements
 
     static boolean friendsOnlyIconClicked = false;
     public void onClickMyCircle(View view) {
-        Log.d(TAG, "onClickLiveUsers: DEBUGGER:--------");
-        // RE-DESIGN & WRITE code for live feature
+        Log.d(TAG, "[ OK ] --- onClickMyCircle()");
 
-        // TODO: 4/21/2018 HANDLE Showing friends only
+        // CLEAR markers from cache & map
+        for (Marker CurrMarker : blueMarkers.values()) {
+            // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
+            CurrMarker.remove();
+        }
+        blueMarkers.clear();
+
+        // DRAW markers
         if (!friendsOnlyIconClicked){
-            showAllLiveUser = false;
+            renderFriends();            // RENDER friends
             friendsOnlyIconClicked = true;
             ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_black_24dp));
-            Toast.makeText(getApplicationContext(), "IMPLEMENT live friends functionality",
+            Toast.makeText(getApplicationContext(), "My Friends",
                     Toast.LENGTH_SHORT).show();
         } else {
-            showAllLiveUser = true;
+            renderAll();                // RENDER all
             friendsOnlyIconClicked = false;
             ivMyCircle.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_people_outline_black_24dp));
-            Toast.makeText(getApplicationContext(), "Live all", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "All", Toast.LENGTH_LONG).show();
         }
     }
 
     public void onClickUserImage(View view) {
         Toast.makeText(getApplicationContext(), "IMPLEMENT user hide from map", Toast.LENGTH_LONG).show();
     }
-
     public void onClickLogout(View view) {
         FirebaseAuth.getInstance().signOut();
         Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
@@ -1533,7 +1595,6 @@ public class DisplayActivity extends FragmentActivity implements
         startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
         finish();
     }
-
     public void onClickNotification(View view) {
         Toast.makeText(getApplicationContext(), "Notifications", Toast.LENGTH_SHORT).show();
 

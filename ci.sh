@@ -120,7 +120,10 @@ echo
 ## UPLOAD functional friends: (stable release 2)
 ## 💚 UPLOAD cr2018.May12.1.15.0
 
-git commit -m "💚 UPLOAD cr2018.May12.1.15.0"
+# 2018.May13
+## 💚 UPLOAD cr2018.May13.1.16.0
+
+git commit -m "💚 UPLOAD cr2018.May13.1.16.0"
 
 ############
 # Step: 05 #

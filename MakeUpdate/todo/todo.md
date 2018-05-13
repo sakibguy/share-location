@@ -10,7 +10,7 @@ Follow Pattern
    1. **Cmd** key
    2. **Cmd** key
 
-> 2018.May12.1.15.0
+> 2018.May12.1.N.N
 1. TODO: **MAKE** friends icon functional to view friends on map.
 2. TODO: **ADD** cluster marker
 3. TODO: **FIX** all issues
@@ -34,6 +34,12 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May13.1.16.0
+1. **CREATED** close track at Play Store named **SL1160-1200** as suggested by google
+2. **ADDED** full functional all/friends feature
+3. **FIXED** app crash issue. Never change db manually cause this lead to occur type mismatch/null pointer exception.
+4. **MADE** independent functional codebase structure: **READY TO CHANGE**
+
 > 2018.May12.1.15.0
 1. **ADDED** TabLayout, PageViewer, Fragamens where PV contains RecyclerView
 2. **ADDED** functional friends feature
@@ -77,7 +83,6 @@ Previous Versions
 4. **COPIED** data to new structure db from v1.11.0 pointed db. **RUN app 2 times** 
 5. **SHOWING** all registered users by default at map. **Blue markers** for all registered users by default.
 6. **ENSURED** user online/offline status by onDisconnect and given marker colors (green=live users, red=at danger user, blue = not live). **TO make offline: close app -> tab notification to stop service -> clear app running history**
-
 
 > 2018.Apr23.1.11.0
 1. **CHANGED** marker color: green=live users, red = danger
