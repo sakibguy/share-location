@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
@@ -45,7 +46,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -64,7 +69,7 @@ public class DisplayActivity extends FragmentActivity implements
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
     private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivStreetView, ivNotification;
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification;
     private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
@@ -144,8 +149,10 @@ public class DisplayActivity extends FragmentActivity implements
         // WIRE widgets: convert xml components to java object
         // ImageView
         ivDanger = findViewById(R.id.ivDanger);
+        ivDanger.setVisibility(View.GONE);
         ivUserImage = findViewById(R.id.ivUserImage);
         ivMyCircle = findViewById(R.id.ivMyCircle);
+        ivSmallStreetView = findViewById(R.id.ivSmallStreetView);
         ivStreetView = findViewById(R.id.ivStreetView);
         ivNotification = findViewById(R.id.ivNotification);
 
@@ -421,6 +428,7 @@ public class DisplayActivity extends FragmentActivity implements
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         if (dataSnapshot.hasChild(getString(R.string.danger))) {
+                            ivDanger.setVisibility(View.VISIBLE);
                             if (dataSnapshot.child(getString(R.string.danger)).getValue().equals("1")) {
                                 // SET run danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(
@@ -754,8 +762,18 @@ public class DisplayActivity extends FragmentActivity implements
                 lat = latLng.latitude;
                 lang = latLng.longitude;
 
+                String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
+                        "" + lat +
+                        "," + lang +
+                        "&fov=90&heading=235&pitch=10";
+
                 if (pictureStatus) {
-                    startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+                    ivSmallStreetView.setVisibility(View.VISIBLE);
+                    // SUPPORT 1: https://stackoverflow.com/questions/27024965/how-to-display-a-streetview-preview
+                    // SUPPORT 2: http://square.github.io/picasso/
+                    // Picasso: A powerful image downloading and caching library for Android
+                    // TODO: 5/14/2018 MAKE movable round image
+                    Picasso.get().load(imageURL).into(ivSmallStreetView);
                 }
             }
         });
@@ -1061,7 +1079,7 @@ public class DisplayActivity extends FragmentActivity implements
         // WIRE widgets
         TextView tvFriendRequestStatus = dialog.findViewById(R.id.tvFriendRequestStatus);
         final Button btnAddFriend = dialog.findViewById(R.id.btnAddFriend);
-        ImageView ivStreetView = dialog.findViewById(R.id.ivStreetView);
+        ImageView ivStreetViewMarker = dialog.findViewById(R.id.ivStreetViewMarker);
         ImageView ivMessage = dialog.findViewById(R.id.ivMessage);
         ImageView ivCall = dialog.findViewById(R.id.ivCall);
         TextView tvName = dialog.findViewById(R.id.tvName);
@@ -1071,6 +1089,12 @@ public class DisplayActivity extends FragmentActivity implements
         tvFriendRequestStatus.setVisibility(View.GONE);
         tvName.setText(userName);
         // ImageView
+        String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
+                "" + marker.getPosition().latitude +        // SUPPORT: https://stackoverflow.com/questions/16181945/get-latitude-and-longitude-of-marker-in-google-maps
+                "," + marker.getPosition().longitude +
+                "&fov=90&heading=235&pitch=10";
+        Picasso.get().load(imageURL).into(ivStreetViewMarker);
+
         ivCall.setVisibility(View.VISIBLE);
 
         if (markerUID.equals(UID)) {    // CHECK clicked to self or not
@@ -1154,7 +1178,7 @@ public class DisplayActivity extends FragmentActivity implements
 
         // HANDLE events through listener
         // ImageView
-        ivStreetView.setOnTouchListener(new View.OnTouchListener() {
+        ivStreetViewMarker.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 // IMPLEMENT game style touch event
@@ -1248,7 +1272,7 @@ public class DisplayActivity extends FragmentActivity implements
         builder.setTitle("DANGER !!!");
 
         // SET danger control: Logic
-        if (dangerStatus == false) {
+        if (!dangerStatus) {
             builder.setMessage("Are you in Danger?");
 
             builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
@@ -1549,13 +1573,13 @@ public class DisplayActivity extends FragmentActivity implements
 
             Toast.makeText(getApplicationContext(), "SWIPE map to see Picture", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_style_black_24dp)));
-
         } else {
             pictureStatus = false;
             tvPoint.setVisibility(View.INVISIBLE);
 
             Toast.makeText(getApplicationContext(), "Picture mode disabled", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_crop_original_black_24dp)));
+            ivSmallStreetView.setVisibility(View.GONE);
         }
     }
 
@@ -1586,7 +1610,7 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     public void onClickUserImage(View view) {
-        Toast.makeText(getApplicationContext(), "IMPLEMENT user hide from map", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "IMPLEMENT hide me from others", Toast.LENGTH_LONG).show();
     }
     public void onClickLogout(View view) {
         FirebaseAuth.getInstance().signOut();
@@ -1602,5 +1626,9 @@ public class DisplayActivity extends FragmentActivity implements
         startActivity(new Intent(DisplayActivity.this, TabNPageViewerActivity.class));
         // SUPPORT: https://www.androidcode.ninja/android-alertdialog-example/
         // SUPPORT: https://developer.android.com/guide/topics/ui/dialogs
+    }
+
+    public void onClickSmallStreetView(View view) {
+        startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
     }
 }

@@ -1,5 +1,4 @@
-﻿#!/usr/bin/env bash
-##################################################
+﻿##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
 ### Target : Tool dev			       ###
@@ -123,7 +122,10 @@ echo
 # 2018.May13
 ## 💚 UPLOAD cr2018.May13.1.16.0
 
-git commit -m "💚 UPLOAD cr2018.May13.1.16.0"
+# 2018.May14
+## 💚 UPLOAD cr2018.May14.1.17.0
+
+git commit -m "💚 UPLOAD cr2018.May14.1.17.0"
 
 ############
 # Step: 05 #

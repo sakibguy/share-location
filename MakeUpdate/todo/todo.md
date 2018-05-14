@@ -11,6 +11,10 @@ Follow Pattern
    2. **Cmd** key
 
 > 2018.May12.1.N.N
+2. TODO: **SHARE** location image with friends
+> IMPROVE UX
+3. TODO: **MAKE** movable round image at smallStreetView
+
 1. TODO: **MAKE** friends icon functional to view friends on map.
 2. TODO: **ADD** cluster marker
 3. TODO: **FIX** all issues
@@ -34,6 +38,10 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May14.1.17.0
+1. **IMPROVED** UX by adding a small preview of location image for blackbox and dialog infoWindow feature
+2. **SOLVED** issue at danger icon. Where danger icon was not showing but click event at danger icon position fired up dialog. Now, only dialog will fire up after showing danger icon.
+
 > 2018.May13.1.16.0
 1. **CREATED** close track at Play Store named **SL1160-1200** as suggested by google
 2. **ADDED** full functional all/friends feature

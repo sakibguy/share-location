@@ -26,6 +26,15 @@
         ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
     </com.google.android.gms.ads.AdView>
 
+    <ImageView
+        android:onClick="onClickSmallStreetView"
+        android:id="@+id/ivSmallStreetView"
+        android:layout_margin="5dp"
+        android:layout_width="70dp"
+        android:layout_height="48dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"/>
+
     <LinearLayout
         android:layout_alignParentBottom="true"
         android:padding="10dp"
