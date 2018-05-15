@@ -6,8 +6,8 @@ android {
         applicationId "playlagom.sharelocation"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1170
-        versionName "1.17.0"
+        versionCode 1180
+        versionName "1.18.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -37,7 +37,8 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:26.1.0'
     // TabLayout
     implementation 'com.android.support:design:26.1.0'
-    // preview streetview
+    // preview library for streetview
+    // http://square.github.io/picasso/
     implementation 'com.squareup.picasso:picasso:2.71828'
 }
 

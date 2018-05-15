@@ -11,13 +11,11 @@ Follow Pattern
    2. **Cmd** key
 
 > 2018.May12.1.N.N
-2. TODO: **SHARE** location image with friends
+1. TODO: **SHARE** location image with friends
 > IMPROVE UX
-3. TODO: **MAKE** movable round image at smallStreetView
-
-1. TODO: **MAKE** friends icon functional to view friends on map.
-2. TODO: **ADD** cluster marker
-3. TODO: **FIX** all issues
+1. TODO: **MAKE** movable round image at smallStreetView
+2. TODO: **MAKE** friends icon functional to view friends on map.
+3. TODO: **ADD** cluster marker
 4. TODO: **ADD** search option and **DISPLAY** search based realtime result
 5. TOOD: **MAKE** Live friends functional + location based friends search feature
 6. TODO: **ADD** feature: Send feedback
@@ -38,6 +36,13 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May15.1.18.0
+1. **SOLVED** logout crash issue
+2. **ADDED** popup dialog at logout icon
+3. **ADDED** functional one click uber feature 
+4. **ADDED** one click traffic jam/status feature
+5. **IMPROVED** UI + UX to help user to understand easily different features
+
 > 2018.May14.1.17.0
 1. **IMPROVED** UX by adding a small preview of location image for blackbox and dialog infoWindow feature
 2. **SOLVED** issue at danger icon. Where danger icon was not showing but click event at danger icon position fired up dialog. Now, only dialog will fire up after showing danger icon.

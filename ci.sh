@@ -1,9 +1,10 @@
-﻿##################################################
+﻿#!/usr/bin/env bash
+##################################################
 ### Script : ci.sh (14-10-2017)                ###
 ### CI     : Continious Integration            ###
-### Target : Tool dev			       ###
-###	     Automated Continious Integration  ###
-###	     among local & remote repo	       ###
+### Target : Tool dev			               ###
+###	     Automated Continious Integration      ###
+###	     among local & remote repo	           ###
 ##################################################
 
 
@@ -125,7 +126,10 @@ echo
 # 2018.May14
 ## 💚 UPLOAD cr2018.May14.1.17.0
 
-git commit -m "💚 UPLOAD cr2018.May14.1.17.0"
+# 2018.May15
+## 💚 UPLOAD cr2018.May15.1.18.0, ATTRACTIVE to ENGAGE
+
+git commit -m "💚 UPLOAD cr2018.May15.1.18.0, ATTRACTIVE to ENGAGE"
 
 ############
 # Step: 05 #

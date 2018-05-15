@@ -114,6 +114,9 @@ public class TrackerService extends Service {
                         double latitude = location.getLatitude();
                         double longitude = location.getLongitude();
 
+                        DisplayActivity.myLocationLatitude = latitude;
+                        DisplayActivity.myLocationLongitude = longitude;
+
                         HashMap<String, String> dataMap = new HashMap<>();
                         dataMap.put("latitude", String.valueOf(latitude));
                         dataMap.put("longitude", String.valueOf(longitude));

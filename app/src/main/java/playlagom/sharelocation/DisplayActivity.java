@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
@@ -78,7 +79,8 @@ public class DisplayActivity extends FragmentActivity implements
     boolean locationPermissionGranted = false;
     private boolean insideShouldShow = false;
     static boolean taskCompleted = false;
-    TextView tvPosition, tvPoint;
+    public static double myLocationLatitude = 0, myLocationLongitude = 0;
+    TextView tvPosition, tvPoint, tvTraffic, tvUber, tvInstruction;
     GoogleMap mMap;
 
     // Firebase
@@ -112,6 +114,8 @@ public class DisplayActivity extends FragmentActivity implements
 
     // Retrieve logged in username to use on add friend feature
     public static String loggedInUserName;
+    private static double destinationLatitude = 0;
+    private static double destinationLongitude = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,6 +157,7 @@ public class DisplayActivity extends FragmentActivity implements
         ivUserImage = findViewById(R.id.ivUserImage);
         ivMyCircle = findViewById(R.id.ivMyCircle);
         ivSmallStreetView = findViewById(R.id.ivSmallStreetView);
+        ivSmallStreetView.setVisibility(View.GONE);
         ivStreetView = findViewById(R.id.ivStreetView);
         ivNotification = findViewById(R.id.ivNotification);
 
@@ -161,6 +166,11 @@ public class DisplayActivity extends FragmentActivity implements
         tvPosition.setVisibility(View.INVISIBLE);
         tvPoint = findViewById(R.id.tvPoint);
         tvPoint.setVisibility(View.INVISIBLE);
+        tvTraffic = findViewById(R.id.tvTraffic);
+        tvTraffic.setVisibility(View.GONE);
+        tvUber = findViewById(R.id.tvUber);
+        tvUber.setVisibility(View.GONE);
+        tvInstruction = findViewById(R.id.tvInstruction);
 
         // Sound
         // SUPPORT: https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
@@ -735,9 +745,20 @@ public class DisplayActivity extends FragmentActivity implements
             subscribeToUpdates();
         }
 
-        // SET a listener for info window events.
         // SUPPORT: https://developers.google.com/maps/documentation/android-api/infowindows
+        // SET a listener for info window events.
         mMap.setOnInfoWindowClickListener(this);
+        // SET marker click event lister
+        mMap.setOnMarkerClickListener(this);
+        // SET camera change listener
+        mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int i) {
+                tvUber.setVisibility(View.GONE);
+                tvTraffic.setVisibility(View.GONE);
+                tvInstruction.setVisibility(View.GONE);
+            }
+        });
         // ADD a camera idle listener.
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
@@ -762,6 +783,7 @@ public class DisplayActivity extends FragmentActivity implements
                 lat = latLng.latitude;
                 lang = latLng.longitude;
 
+
                 String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
                         "" + lat +
                         "," + lang +
@@ -772,8 +794,23 @@ public class DisplayActivity extends FragmentActivity implements
                     // SUPPORT 1: https://stackoverflow.com/questions/27024965/how-to-display-a-streetview-preview
                     // SUPPORT 2: http://square.github.io/picasso/
                     // Picasso: A powerful image downloading and caching library for Android
-                    // TODO: 5/14/2018 MAKE movable round image
+                    // TODO: 5/14/2018 MAKE resizable, movable round/square image like messenger
                     Picasso.get().load(imageURL).into(ivSmallStreetView);
+
+                    destinationLatitude = latLng.latitude;
+                    destinationLongitude = latLng.longitude;
+
+                    tvUber.setVisibility(View.VISIBLE);
+                    tvTraffic.setVisibility(View.VISIBLE);
+                    tvInstruction.setVisibility(View.VISIBLE);
+                    tvInstruction.setText("Go There");
+                }
+                if (onMarkerClicked) {
+                    // MAKE visible
+                    tvUber.setVisibility(View.VISIBLE);
+                    tvTraffic.setVisibility(View.VISIBLE);
+                    tvInstruction.setVisibility(View.VISIBLE);
+                    onMarkerClicked = false;
                 }
             }
         });
@@ -781,6 +818,10 @@ public class DisplayActivity extends FragmentActivity implements
         // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
         // zoom control: plus | minus button by default android sdk
 //        mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        // SUPPORT: https://stackoverflow.com/questions/30430664/how-to-hide-navigation-and-gps-pointer-buttons-when-i-click-the-marker-on-th/30431024
+        // Disable Map Toolbar
+        mMap.getUiSettings().setMapToolbarEnabled(false);
     }
 
     @Override
@@ -788,6 +829,8 @@ public class DisplayActivity extends FragmentActivity implements
         Toast.makeText(this, "My Location", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
+//        myLocationLatitude = mMap.getMyLocation().getLatitude();
+//        myLocationLangitude = mMap.getMyLocation().getLongitude();
         return false;
     }
 
@@ -962,6 +1005,8 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
+    // logic var for user friendly presentation
+    static boolean onMarkerClicked = false;
     // shared variable
     private float zoomValue = 0;
     @Override
@@ -971,19 +1016,44 @@ public class DisplayActivity extends FragmentActivity implements
     /** Called when the user clicks on a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
+        onMarkerClicked = true;
         // Retrieve the data from the marker.
-        Integer clickCount = (Integer) marker.getTag();
-        Log.d(TAG, "onMarkerClick: ");
+        Toast.makeText(getApplicationContext(), "distance, time, cost, traffic", Toast.LENGTH_SHORT).show();
 
-        // Check if a click count was set, then display the click count.
-        if (clickCount != null) {
-            clickCount = clickCount + 1;
-            marker.setTag(clickCount);
-            Toast.makeText(this,
-                    marker.getTitle() +
-                            " has been clicked " + clickCount + " times.",
-                    Toast.LENGTH_SHORT).show();
-        }
+        // Update destination position for uber + traffic
+        destinationLatitude = marker.getPosition().latitude;
+        destinationLongitude = marker.getPosition().longitude;
+
+        tvInstruction.setText(marker.getTitle());
+
+//                // OPEN STREETVIEW
+////                // Create a Uri from an intent string. Use the result to create an Intent.
+////                Uri gmmIntentUri = Uri.parse("google.streetview:cbll=46.414382,10.013988");
+////
+////// Create an Intent from gmmIntentUri. Set the action to ACTION_VIEW
+////                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+////// Make the Intent explicit by setting the Google Maps package
+////                mapIntent.setPackage("com.google.android.apps.maps");
+////
+//////// Attempt to start an activity that can handle the Intent
+//////                startActivity(mapIntent);
+////                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+////                    startActivity(mapIntent);
+////                }
+//
+////                Uri gmmIntentUri = Uri.parse("geo:37.7749,-122.4194");
+////                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+////                mapIntent.setPackage("com.google.android.apps.maps");
+////                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+////                    startActivity(mapIntent);
+////                }
+//
+//                return false;
+//            }
+//        });
+
+        // SEE later: If uber app not found then how to automatically install uber. Then set position
+
         return false;
     }
 
@@ -1360,208 +1430,11 @@ public class DisplayActivity extends FragmentActivity implements
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "[ OK ] ---- onDestroy: ----");
-        lhmReceivedFriendRequests.clear();
-        lhmFriends.clear();
-        databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
-    }
-
-    private void backup() {
-        //        // HERE WHAT CORRESPONDS TO JOIN
-//        databaseReference.child(uid)
-//        .addValueEventListener(
-//            new ValueEventListener() {
-//                @Override
-//                public void onDataChange(DataSnapshot childDataSnapshot) {
-//                    try{
-//                        value = (HashMap<String, Object>) childDataSnapshot.getValue();
-////                        user = childDataSnapshot.getValue(User.class);
-//                        Log.d(TAG, "[ OK ] -- setActiveMarker.onDataChange: " + value.get("latitude").toString() +", " + i++ + childDataSnapshot.getValue());
-//                    } catch (Exception e){
-//                        Log.e(TAG, "[ ERROR ] -- setActiveMarker().onDataChange(): " + e.getMessage());
-//                    }
-
-
-
-//                    if (user != null) {
-////                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotGlobal.getValue();
-////                        Log.d(TAG, i++ + " setActiveMarker, KEY: " + uid + ", VALUE: " + value.toString() + "," +
-////                                " DEBUGGER:-------- ");
-//
-////                        double lat = Double.parseDouble(value.get("latitude").toString());
-////                        double lng = Double.parseDouble(value.get("longitude").toString());
-//
-//                        LatLng location = new LatLng(user.position.getLatitude(), user.position.getLongitude());
-
-        // SHOW live all
-//                        if (showAllLiveUser) {
-//                            // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
-//                            for (Circle myCircle : GoogleMapOperations.circleList) {
-//                                myCircle.remove();
-//                            }
-//                            GoogleMapOperations.circleList.clear();
-//
-//                            Log.d(TAG, "setActiveMarker: KEY: " + i + " " + uid + "," +
-//                                    " DEBUGGER:-------- ");
-//
-//                            // It is notified each time one of the device's location is updated.
-//                            // When this happens, it will either create a new marker at the device's location,
-//                            // or move the marker for a device if it exists already.
-//                            if (!blueMarkers.containsKey(uid)) {
-//                                tempGreenMarker = mMap.addMarker(new MarkerOptions().title("" + greenMarkerUser.getName() + "")
-//                                    .position(location)
-//                                    .snippet("cell, msg, fnd req")
-//                                    .icon(BitmapDescriptorFactory.defaultMarker(
-//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-//                                    )));
-//                                blueMarkers.put(uid, tempGreenMarker);
-//                                tempGreenMarker.showInfoWindow();
-//
-//                                // READY to CHANGE CODE
-//                                // SET animated marker at danger
-//                                if (greenMarkerUser.getDanger() != null) {
-//                                    String danger = greenMarkerUser.getDanger();
-//                                    if (danger.equals("1")) {
-//                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
-//                                        GoogleMapOperations.addingCircleView(mMap, location);
-//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
-//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-//                                        ));
-//                                    }
-//                                }
-//                            } else {
-//                                // READY to CHANGE CODE
-//                                // SET animated marker at danger
-//                                if (greenMarkerUser.getDanger() != null) {
-//                                    String danger = greenMarkerUser.getDanger();
-//                                    if (danger.equals("1")) {
-//                                        // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
-//                                        GoogleMapOperations.addingCircleView(mMap, location);
-//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
-//                                                BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-//                                        ));
-//
-//                                        // START danger sound
-//                                        if (makeDangerSound) {
-//                                            makeDangerSound = false;
-//                                            dangerSound.start();
-//                                            Toast.makeText(getApplicationContext(), "NEED help!\n" + greenMarkerUser.getName()
-//                                                    + " is at DANGER now", Toast.LENGTH_LONG).show();
-//                                        }
-//                                    } else if (danger.equals("0")) {
-//                                        tempGreenMarker.setIcon(BitmapDescriptorFactory.defaultMarker(
-//                                                BitmapDescriptorFactory.HUE_GREEN       // SET live users marker green
-//                                        ));
-//                                    }
-//                                }
-//                                mMarkers.get(uid).setPosition(location);
-//                            }
-//                        }
-
-        // SHOW live friends
-//                        if (friendsOnlyIconClicked) {
-//                            for (Marker CurrMarker : mMarkers.values()) {
-//                                // SUPPORT: https://stackoverflow.com/questions/13692398/remove-a-marker-from-a-googlemap
-//                                CurrMarker.remove();
-//                            }
-//                            mMarkers.clear();
-//                        }
-//                    }
-
-//                    user = null;
-//                }
-
-//                @Override
-//                public void onCancelled(DatabaseError databaseError) {
-//                    Log.e(TAG, "[ ERROR ] -- setActiveMarker().onCancelled():");
-//                }
-//            }
-//        );
-    }
-    // TODO: 4/23/2018 ANALYZE the below code for SHOWING LIVE FRIENDS
-    Marker myMarker;
-    private void updateDisplay(DataSnapshot dataSnapshot) {
-        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshot.getValue();
-        double lat = Double.parseDouble(value.get("latitude").toString());
-        double lng = Double.parseDouble(value.get("longitude").toString());
-        LatLng location = new LatLng(lat, lng);
-
-        if (myMarker != null) {
-            myMarker.remove();
+        if (!isLogoutSuccessful) {
+            lhmReceivedFriendRequests.clear();
+            lhmFriends.clear();
+            databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
         }
-
-        myMarker = mMap.addMarker(new MarkerOptions().position(location).title("My Location").snippet("address, cell, msg"));
-        myMarker.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomValue));
-    }
-    // setting the marker on the map
-    // which are responsible for
-    // We've also got two empty methods - subscribeToUpdates() and setMarker()
-    private void backupGeoFire() {
-        //        // SUPPORT: https://www.101apps.co.za/index.php/item/182-firebase-realtime-database-tutorial.html
-//        // 1: https://github.com/firebase/FirebaseUI-Android/issues/1040
-//        // 2: https://stackoverflow.com/questions/26700924/query-based-on-multiple-where-clauses-in-firebase
-//        // todo 3: https://github.com/firebase/geofire-java
-
-//        // look for the matching item
-//        locationRef.orderByChild("locations").equalTo(uniqueID)
-//                .addListenerForSingleValueEvent(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(DataSnapshot dataSnapshotInner) {
-//                        try{
-////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
-//
-//                            // SUPPORT handle idea raised by myself first then suggested
-//                            // from: https://www.youtube.com/watch?v=Idu9EJPSxiY
-//                            // AS unique id is just the last value of the dataSnapshot.getChildren() then
-//                            // store keys + value on a hasmap/arraylist to handle/loop through later.
-//                            Log.d(TAG, counter ++ +" DEBUGGER: --- id: " + tempSnapShot.getKey());
-//                        } catch (Exception e){
-//                            Log.d(TAG, "NULL pointer exception: DEBUGGER: ---");
-//                        }
-//
-////                                    if (tempSnapShot != null) {
-////                                        HashMap<String, Object> value = (HashMap<String, Object>) dataSnapshotInner.getValue();
-//
-////                                        double lat = Double.parseDouble(value.get("latitude").toString());
-////                                        double lng = Double.parseDouble(value.get("longitude").toString());
-////                                        location = new LatLng(lat, lng);
-//
-////                                        // SHOW all users by default through black marker
-////
-////                                        // create a new marker at the device's location
-////                                        // move the marker for a device if it exists already.
-////
-////                                        if (dataSnapshotInner != null) {
-////                                            Log.d(TAG, "--- --- DEBUGGER: --- " + tempUser.getEmail());
-////                                            if (!mMarkers.containsKey(dataSnapshotInner.getKey())) {
-////                                                if (tempSnapShot.getChildrenCount() == 2) {
-////                                                    markerTitle = tempUser.getEmail();
-////                                                } else if (tempSnapShot.getChildrenCount() == 3) {
-////                                                    markerTitle = tempUser.getName();
-////                                                } else {
-////                                                    markerTitle = tempUser.getName();
-////                                                }
-////                                                marker = mMap.addMarker(new MarkerOptions().title("" + markerTitle + "")
-////                                                        .position(location)
-////                                                        .snippet("cell, msg, fnd req")
-////                                                        .icon(BitmapDescriptorFactory.defaultMarker(
-////                                                                BitmapDescriptorFactory.HUE_BLUE       // SET live users marker green
-////                                                        )));
-////                                                mMarkers.put(uid, marker);
-////                                                marker.showInfoWindow();
-////
-////                                                tempSnapShot = null;
-////                                                tempUser = null;
-////                                            }
-////                                        }
-////                                    }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError databaseError) {
-
-//                    }
-//                });
     }
 
     boolean pictureStatus = false;
@@ -1573,6 +1446,10 @@ public class DisplayActivity extends FragmentActivity implements
 
             Toast.makeText(getApplicationContext(), "SWIPE map to see Picture", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_style_black_24dp)));
+
+            // MAKE visible uber+traffic
+            tvTraffic.setVisibility(View.VISIBLE);
+            tvUber.setVisibility(View.VISIBLE);
         } else {
             pictureStatus = false;
             tvPoint.setVisibility(View.INVISIBLE);
@@ -1580,6 +1457,11 @@ public class DisplayActivity extends FragmentActivity implements
             Toast.makeText(getApplicationContext(), "Picture mode disabled", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_crop_original_black_24dp)));
             ivSmallStreetView.setVisibility(View.GONE);
+
+            // REMOVE uber+traffic
+            tvTraffic.setVisibility(View.GONE);
+            tvUber.setVisibility(View.GONE);
+            tvInstruction.setVisibility(View.GONE);
         }
     }
 
@@ -1612,12 +1494,39 @@ public class DisplayActivity extends FragmentActivity implements
     public void onClickUserImage(View view) {
         Toast.makeText(getApplicationContext(), "IMPLEMENT hide me from others", Toast.LENGTH_LONG).show();
     }
+    static boolean isLogoutSuccessful = false;
     public void onClickLogout(View view) {
-        FirebaseAuth.getInstance().signOut();
-        Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
-        Log.d(TAG, "onTouch: DEBUGGER-----Logout icon");
-        startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
-        finish();
+
+        // REQUESTED FEATURE: ADD dialog for logout confirmation
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Logout");
+        builder.setMessage("Are you sure to logout?");
+
+        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                isLogoutSuccessful = true;
+                lhmReceivedFriendRequests.clear();
+                lhmFriends.clear();
+                databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("online").onDisconnect().setValue("0");
+
+                FirebaseAuth.getInstance().signOut();
+                Toast.makeText(getApplicationContext(), "Successfully Logout", Toast.LENGTH_LONG).show();
+                dialog.dismiss();
+                startActivity(new Intent(DisplayActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
+
+        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(getApplicationContext(), "Whoops! It's OK", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog alert = builder.create();
+        alert.show();
     }
     public void onClickNotification(View view) {
         Toast.makeText(getApplicationContext(), "Notifications", Toast.LENGTH_SHORT).show();
@@ -1630,5 +1539,45 @@ public class DisplayActivity extends FragmentActivity implements
 
     public void onClickSmallStreetView(View view) {
         startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
+    }
+
+    // HANDLE event by listener
+    public void onClickUber(View view) {
+        // SUPPORT: https://stackoverflow.com/questions/6205827/how-to-open-standard-google-map-application-from-my-application
+        // SUPPORT: https://developers.google.com/maps/documentation/urls/android-intents
+
+        // SUPPORT: https://stackoverflow.com/questions/35913628/open-uber-app-from-my-app-android
+        // Opens Source UBER: https://github.com/uber
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES);
+
+            String uri = String.format(Locale.ENGLISH, "geo:%f,%f", destinationLatitude,
+                destinationLongitude);
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+            intent.setPackage("com.ubercab");
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.ubercab")));
+            } catch (android.content.ActivityNotFoundException anfe) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.ubercab")));
+            }
+        }
+    }
+
+    // HANDLE event by listener
+    public void onClickTraffic(View view) {
+        // SUPPORT: https://stackoverflow.com/questions/6205827/how-to-open-standard-google-map-application-from-my-application
+        // SUPPORT: https://developers.google.com/maps/documentation/urls/android-intents
+
+        String uri = "http://maps.google.com/maps?saddr=" + myLocationLatitude + "," + myLocationLongitude + "&daddr=" + destinationLatitude + "," + destinationLongitude;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+        intent.setPackage("com.google.android.apps.maps");
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
     }
 }
