@@ -6,8 +6,8 @@ android {
         applicationId "playlagom.sharelocation"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1190
-        versionName "1.19.0"
+        versionCode 1200
+        versionName "1.20.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

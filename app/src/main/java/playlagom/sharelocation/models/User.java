@@ -16,6 +16,7 @@ public class User {
     private String name;
     private String email;
     private String password;
+    private String phone;
     private String danger;
     private String online;
     private Position position;
@@ -28,13 +29,22 @@ public class User {
         // empty default constructor, necessary for Firebase to be able to deserialize users
         // SUPPORT: https://stackoverflow.com/questions/39552348/firebase-databaseexception-failed-to-convert-value-of-type-java-lang-long-to-st
     }
-    public User(String name, String email, String password, String danger, Position position) {
+    public User(String name, String email, String password, String phone, String danger, Position position) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.phone = phone;
         this.danger = danger;
         this.position = position;
     }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    public String getPhone() {
+        return phone;
+    }
+
 
     public void setName(String name) {
         this.name = name;

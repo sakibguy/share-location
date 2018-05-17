@@ -11,9 +11,9 @@
         android:layout_centerHorizontal="true"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="30dp"
         android:layout_alignParentTop="true"
-        android:layout_marginBottom="60dp"
+        android:layout_marginBottom="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="User Registration"/>
@@ -50,19 +50,31 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/etSignUpEmail"/>
 
+    <EditText
+        android:layout_below="@+id/etSignUpPassword"
+        android:id="@+id/etPhone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/etSignUpPassword"
+        android:layout_alignStart="@+id/etSignUpPassword"
+        android:layout_centerVertical="true"
+        android:hint="Type phone number"
+        android:inputType="phone" />
+
     <Button
         android:id="@+id/btnSignUp"
         android:layout_margin="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/etSignUpPassword"
+        android:layout_below="@+id/etPhone"
         android:text="Sign Up"/>
 
     <RelativeLayout
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/btnSignUp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:id="@+id/relativeLayout">
 
         <TextView
             android:id="@+id/tvQuestion"
@@ -78,5 +90,4 @@
             android:layout_height="wrap_content"
             android:text="Sign In"/>
     </RelativeLayout>
-
 </RelativeLayout>

@@ -32,7 +32,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private static final String TAG = "SignUpActivity";
     Button btnSignUp;
-    EditText etSignUpEmail, etSignUpPassword, etName;
+    EditText etSignUpEmail, etSignUpPassword, etName, etPhone;
     TextView tvSignIn;
 
     ProgressDialog progressDialog;
@@ -59,9 +59,10 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         firebaseAuth = FirebaseAuth.getInstance();
         progressDialog = new ProgressDialog(this);
 
+        etName = findViewById(R.id.etName);
         etSignUpEmail = findViewById(R.id.etSignUpEmail);
         etSignUpPassword = findViewById(R.id.etSignUpPassword);
-        etName = findViewById(R.id.etName);
+        etPhone = findViewById(R.id.etPhone);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvSignIn = findViewById(R.id.tvSignIn);
 
@@ -104,6 +105,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         final String name = etName.getText().toString().trim();
         final String email = etSignUpEmail.getText().toString().trim();
         final String password = etSignUpPassword.getText().toString().trim();
+        final String phone = etPhone.getText().toString().trim();
 
         // START: form validation
         if (TextUtils.isEmpty(name)) {
@@ -133,6 +135,12 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             etSignUpPassword.setError("Minimum length of pass should be 6");
             etSignUpPassword.requestFocus();
             return;
+        }
+        if (TextUtils.isEmpty(phone)) {
+            Toast.makeText(this, "Please enter your Phone number", Toast.LENGTH_LONG).show();
+            etPhone.setError("Phone is required");
+            etPhone.requestFocus();
+            return;
         } // END: form validation
 
         progressDialog.setMessage("Registering user...");
@@ -148,6 +156,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     databaseReference.child(currentUser.getUid()).child("name").setValue(name);
                     databaseReference.child(currentUser.getUid()).child("email").setValue(email);
                     databaseReference.child(currentUser.getUid()).child("password").setValue(password);
+                    databaseReference.child(currentUser.getUid()).child("phone").setValue(phone);
                     databaseReference.child(currentUser.getUid()).child("danger").setValue("0");
                     databaseReference.child(currentUser.getUid()).child("online").setValue("0");
 

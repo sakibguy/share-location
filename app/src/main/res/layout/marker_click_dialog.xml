@@ -51,6 +51,7 @@
             android:src="@mipmap/streetview" />
 
         <ImageView
+            android:onClick="onClickPhone"
             android:id="@+id/ivCall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

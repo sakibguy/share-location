@@ -131,8 +131,9 @@ echo
 
 # 2018.May17
 ## ADD onClickWave to engage
+## ADD functional phone call button
 
-git commit -m "ADD onClickWave to engage"
+git commit -m "ADD functional phone call button"
 
 ############
 # Step: 05 #

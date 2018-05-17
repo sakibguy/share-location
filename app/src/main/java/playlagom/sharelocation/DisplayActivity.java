@@ -3,6 +3,8 @@ package playlagom.sharelocation;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,6 +18,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -78,6 +81,7 @@ public class DisplayActivity extends FragmentActivity implements
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
     private static final int PERMISSIONS_REQUEST = 1;
+    private static final int CALL_PERMISSIONS_REQUEST = 2;
     private HashMap<String, Marker> blueMarkers;
     boolean locationPermissionGranted = false;
     private boolean insideShouldShow = false;
@@ -191,22 +195,22 @@ public class DisplayActivity extends FragmentActivity implements
 
         // ImageView: CHECK if new friend request and SET icon NEW
         databaseReference
-            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(firebaseAuth.getCurrentUser().getUid())
                 .child(RECEIVED_FRIEND_REQUESTS)
-                    .addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.getChildrenCount() > 0) {
-                                ivNotification.setImageBitmap(
-                                        BitmapFactory.decodeResource(getResources(), R.drawable.ic_fiber_new_black_24dp));
-                            }
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.getChildrenCount() > 0) {
+                            ivNotification.setImageBitmap(
+                                    BitmapFactory.decodeResource(getResources(), R.drawable.ic_fiber_new_black_24dp));
                         }
+                    }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                        }
-                    });
+                    }
+                });
 
         // HANDLE events
         // ImageView: see onClickLogout()
@@ -239,142 +243,126 @@ public class DisplayActivity extends FragmentActivity implements
     private void retrieveLoggedInUserName() {
         databaseReference
                 .child(firebaseAuth.getCurrentUser().getUid())
-                    .child("name")
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (dataSnapshot != null ) {
-                                    loggedInUserName = String.valueOf(dataSnapshot.getValue());
-                                    Log.d(TAG, "[ OK ] -------- logged in user: " + loggedInUserName);
-                                }
-                            }
+                .child("name")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            loggedInUserName = String.valueOf(dataSnapshot.getValue());
+                            Log.d(TAG, "[ OK ] -------- logged in user: " + loggedInUserName);
+                        }
+                    }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                            }
-                        });
+                    }
+                });
     }
+
     private void retrieveReceivedFriendRequests() {
         databaseReference
-            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(firebaseAuth.getCurrentUser().getUid())
                 .child(getString(R.string.receivedFriendRequests))
-                    .addChildEventListener(new ChildEventListener() {
-                        @Override
-                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                            if (dataSnapshot != null) {
-                                // DON'T USE dataSnapshot.getChildrenCount() > 0 to get rid of error
+                .addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        if (dataSnapshot != null) {
+                            // DON'T USE dataSnapshot.getChildrenCount() > 0 to get rid of error
 //                                if (dataSnapshot.getChildrenCount() > 0) {
-                                    Log.d(TAG, "[ OK ] ------ " +
-                                            "retrieveReceivedFriendRequests.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
-                                            "VALUE " + dataSnapshot.getValue());
+                            Log.d(TAG, "[ OK ] ------ " +
+                                    "retrieveReceivedFriendRequests.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
 
-                                    // TEST with ListView<T>
-                                    // KeyValue keyValue = new KeyValue();
-                                    // keyValue.key = dataSnapshot.getKey();
-                                    // keyValue.value = String.valueOf(dataSnapshot.getValue());
+                            // TEST with ListView<T>
+                            // KeyValue keyValue = new KeyValue();
+                            // keyValue.key = dataSnapshot.getKey();
+                            // keyValue.value = String.valueOf(dataSnapshot.getValue());
 
-                                    // receivedFriendRequestsList.add(keyValue);
+                            // receivedFriendRequestsList.add(keyValue);
 
-                                    KeyValue keyValue = new KeyValue();
+                            KeyValue keyValue = new KeyValue();
 
-                                    keyValue.key = dataSnapshot.getKey();
-                                    if (dataSnapshot.hasChild("name")) {
-                                        keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
-                                        Log.d(TAG, "[ OK ] ---------  .... works... " + keyValue.name + ", " +
-                                                "KEY: " + keyValue.key);
+                            keyValue.key = dataSnapshot.getKey();
+                            if (dataSnapshot.hasChild("name")) {
+                                keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
+                                Log.d(TAG, "[ OK ] ---------  .... works... " + keyValue.name + ", " +
+                                        "KEY: " + keyValue.key);
 //                                        keyValue.value = String.valueOf(dataSnapshot.getValue());
-                                    }
+                            }
 
-                                    // How to track which key at which position in List?
-                                    // NEED LinkedHashMap
-                                    // SUPPORT: https://stackoverflow.com/questions/5237101/is-it-possible-to-get-element-from-hashmap-by-its-position
+                            // How to track which key at which position in List?
+                            // NEED LinkedHashMap
+                            // SUPPORT: https://stackoverflow.com/questions/5237101/is-it-possible-to-get-element-from-hashmap-by-its-position
 //                                keyValuePosition.put(keyValue.key, keyValue);
 
-                                    // TODO: 5/8/2018 CODING CHALLENGE
-                                    // WHY LinkedHashMap: to track HashMap index/position
+                            // TODO: 5/8/2018 CODING CHALLENGE
+                            // WHY LinkedHashMap: to track HashMap index/position
                                 /* Populate */
 //                                    linkedHashMap.put(dataSnapshot.getKey(), keyValue);
 
-                                    lhmReceivedFriendRequests.put(keyValue.key, keyValue);
+                            lhmReceivedFriendRequests.put(keyValue.key, keyValue);
 //                                }
+                        }
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        if (dataSnapshot != null) {
+                            Log.d(TAG, "[ OK ] ------ " +
+                                    "retrieveReceivedFriendRequests.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
+
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
+                            if (dataSnapshot.hasChild("name")) {
+                                keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
+                                Log.d(TAG, "[ OK ] --------- retrieveReceivedFriendRequests.onChildChanged: .... works... " + keyValue.name + ", " +
+                                        "KEY: " + keyValue.key);
                             }
+                            lhmReceivedFriendRequests.put(keyValue.key, keyValue);
                         }
+                    }
 
-                        @Override
-                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                            if (dataSnapshot != null) {
-                                Log.d(TAG, "[ OK ] ------ " +
-                                        "retrieveReceivedFriendRequests.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
-                                        "VALUE " + dataSnapshot.getValue());
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
 
-                                KeyValue keyValue = new KeyValue();
-                                keyValue.key = dataSnapshot.getKey();
-                                if (dataSnapshot.hasChild("name")) {
-                                    keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
-                                    Log.d(TAG, "[ OK ] --------- retrieveReceivedFriendRequests.onChildChanged: .... works... " + keyValue.name + ", " +
-                                            "KEY: " + keyValue.key);
-                                }
-                                lhmReceivedFriendRequests.put(keyValue.key, keyValue);
-                            }
+                            lhmReceivedFriendRequests.remove(keyValue.key);
+                            Log.d(TAG, "[ OK ] ------ " +
+                                    "retrieveReceivedFriendRequests.onChildRemoved: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
                         }
+                    }
 
-                        @Override
-                        public void onChildRemoved(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot != null) {
-                                KeyValue keyValue = new KeyValue();
-                                keyValue.key = dataSnapshot.getKey();
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                        Log.d(TAG, "[ OK ] ------ onChildMoved: retrieveReceivedFriendRequests...?? WHY");
+                    }
 
-                                lhmReceivedFriendRequests.remove(keyValue.key);
-                                Log.d(TAG, "[ OK ] ------ " +
-                                        "retrieveReceivedFriendRequests.onChildRemoved: KEY " + dataSnapshot.getKey() + ", " +
-                                        "VALUE " + dataSnapshot.getValue());
-                            }
-                        }
-
-                        @Override
-                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                            Log.d(TAG, "[ OK ] ------ onChildMoved: retrieveReceivedFriendRequests...?? WHY");
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Log.e(TAG, "[ OK ] -------- retrieveReceivedFriendRequests.onCancelled: " +
-                                    "" + databaseError.getMessage());
-                        }
-                    });
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(TAG, "[ OK ] -------- retrieveReceivedFriendRequests.onCancelled: " +
+                                "" + databaseError.getMessage());
+                    }
+                });
     }
+
     private void retrieveFriends() {
         databaseReference
-            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(firebaseAuth.getCurrentUser().getUid())
                 .child(getString(R.string.friends))
-                    .addChildEventListener(new ChildEventListener() {
-                        @Override
-                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                            // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
-                            Log.d(TAG, "[ OK ] -- -- " +
-                                    "retrieveFriends.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
-                                    "VALUE " + dataSnapshot.getValue());
-                            if (dataSnapshot != null) {
+                .addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
+                        Log.d(TAG, "[ OK ] -- -- " +
+                                "retrieveFriends.onChildAdded: KEY " + dataSnapshot.getKey() + ", " +
+                                "VALUE " + dataSnapshot.getValue());
+                        if (dataSnapshot != null) {
 
-                                KeyValue keyValue = new KeyValue();
-                                keyValue.key = dataSnapshot.getKey();
-
-                                if (dataSnapshot.hasChild("name")) {
-                                    keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
-                                    Log.d(TAG, "[ OK ] -- --- name: " + keyValue.name + ", " +
-                                            "KEY: " + keyValue.key);
-                                }
-                                lhmFriends.put(keyValue.key, keyValue);
-                            }
-                        }
-
-                        @Override
-                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                            Log.d(TAG, "[ OK ] -- -- " +
-                                    "retrieveFriends.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
-                                    "VALUE " + dataSnapshot.getValue());
-                            // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
                             KeyValue keyValue = new KeyValue();
                             keyValue.key = dataSnapshot.getKey();
 
@@ -385,31 +373,49 @@ public class DisplayActivity extends FragmentActivity implements
                             }
                             lhmFriends.put(keyValue.key, keyValue);
                         }
+                    }
 
-                        @Override
-                        public void onChildRemoved(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot != null) {
-                                KeyValue keyValue = new KeyValue();
-                                keyValue.key = dataSnapshot.getKey();
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        Log.d(TAG, "[ OK ] -- -- " +
+                                "retrieveFriends.onChildChanged: KEY " + dataSnapshot.getKey() + ", " +
+                                "VALUE " + dataSnapshot.getValue());
+                        // DON'T USE dataSnapshot.getChildrenCount() > 0 to stay error free
+                        KeyValue keyValue = new KeyValue();
+                        keyValue.key = dataSnapshot.getKey();
 
-                                lhmFriends.remove(keyValue.key);
-                                Log.d(TAG, "[ OK ] ------ " +
-                                        "retrieveFriends.onChildRemoved: KEY " + dataSnapshot.getKey() + ", " +
-                                        "VALUE " + dataSnapshot.getValue());
-                            }
+                        if (dataSnapshot.hasChild("name")) {
+                            keyValue.name = String.valueOf(dataSnapshot.child("name").getValue());
+                            Log.d(TAG, "[ OK ] -- --- name: " + keyValue.name + ", " +
+                                    "KEY: " + keyValue.key);
                         }
+                        lhmFriends.put(keyValue.key, keyValue);
+                    }
 
-                        @Override
-                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            KeyValue keyValue = new KeyValue();
+                            keyValue.key = dataSnapshot.getKey();
 
+                            lhmFriends.remove(keyValue.key);
+                            Log.d(TAG, "[ OK ] ------ " +
+                                    "retrieveFriends.onChildRemoved: KEY " + dataSnapshot.getKey() + ", " +
+                                    "VALUE " + dataSnapshot.getValue());
                         }
+                    }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Log.e(TAG, "[ OK ] -------- retrieveFriends.onCancelled: " +
-                                    "" + databaseError.getMessage());
-                        }
-                    });
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(TAG, "[ OK ] -------- retrieveFriends.onCancelled: " +
+                                "" + databaseError.getMessage());
+                    }
+                });
     }
 
     // TODO: 5/6/2018 REMOVE method below, at next version
@@ -418,14 +424,14 @@ public class DisplayActivity extends FragmentActivity implements
         Log.d(TAG, "[ OK ] -------- COPIED: copyLoggedInUserInfoToNewStructure: ");
         DatabaseReference tempRef = FirebaseDatabase.getInstance().getReference("sharelocation-users");
         tempRef
-            .child(firebaseAuth.getCurrentUser().getUid())
+                .child(firebaseAuth.getCurrentUser().getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Log.d(TAG, "[ test ] --- " + dataSnapshot.toString());
                         if (dataSnapshot.hasChild("name")) {
                             databaseReference
-                                .child(firebaseAuth.getCurrentUser().getUid())
+                                    .child(firebaseAuth.getCurrentUser().getUid())
                                     .child("name").setValue(dataSnapshot.child("name").getValue());
                         }
                     }
@@ -459,9 +465,9 @@ public class DisplayActivity extends FragmentActivity implements
                             }
                         } else {
                             databaseReference
-                                .child(firebaseAuth.getCurrentUser().getUid())
+                                    .child(firebaseAuth.getCurrentUser().getUid())
                                     .child(getString(R.string.danger))
-                                        .setValue("0");
+                                    .setValue("0");
                             // SET default danger icon
                             ivDanger.setImageBitmap(Converter.getCroppedBitmap(
                                     BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
@@ -477,8 +483,9 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     // SUPPORT: https://stackoverflow.com/questions/15368028/getting-a-map-marker-by-its-id-in-google-maps-v2
-    private HashMap<String, String> hashMapMidUid = new HashMap<String, String>();
+    private HashMap<String, KeyValue> hashMapMidUid = new HashMap<String, KeyValue>();
     Marker tempBlueMarker = null;
+
     private void renderAll() {
         // SHOW all users black/blue marker icon
         allMarkerRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -488,18 +495,24 @@ public class DisplayActivity extends FragmentActivity implements
                         "" + dataSnapshot.getChildrenCount() +
                         ", renderAll().onDataChange: " +
                         "" + dataSnapshot.toString());
+
                 User temporaryUser;
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     temporaryUser = snapshot.getValue(User.class);
                     String uniqueID = snapshot.getKey();
 
+                    // STORE at object to phone call as well as to retrieve markerId
+                    KeyValue keyValue = new KeyValue();
+                    keyValue.key = uniqueID;
+                    keyValue.value = temporaryUser.getPhone();
+
                     try {
                         if (temporaryUser != null) {
-                            double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
+                            double lat = Double.parseDouble(temporaryUser.getPosition().getLatitude());
                             double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
                             location = new LatLng(lat, lang);
-                            Log.d(TAG, "[ OK ] ---- LOOP: renderAll() .. " + userCounter ++ +
-                                    " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
+                            Log.d(TAG, "[ OK ] ---- LOOP: renderAll() .. " + userCounter++ +
+                                    " uid: " + uniqueID + ", phone: " + temporaryUser.getPhone() + ", " + location);
 
                             if (!blueMarkers.containsKey(uniqueID)) {
                                 tempBlueMarker = mMap.addMarker(new MarkerOptions().title("" + temporaryUser.getName() + "")
@@ -511,7 +524,7 @@ public class DisplayActivity extends FragmentActivity implements
                                 blueMarkers.put(uniqueID, tempBlueMarker);
                                 tempBlueMarker.showInfoWindow();
                                 // STORE (MarkerID vs UID)at RAM
-                                hashMapMidUid.put(tempBlueMarker.getId(), uniqueID);
+                                hashMapMidUid.put(tempBlueMarker.getId(), keyValue);
                             } else {
                                 blueMarkers.get(uniqueID).setPosition(location);
                             }
@@ -521,8 +534,10 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                 }
             }
+
             @Override
-            public void onCancelled(DatabaseError databaseError) {}
+            public void onCancelled(DatabaseError databaseError) {
+            }
         });
 
         // SET boundary: for auto focus area at dev time
@@ -538,6 +553,7 @@ public class DisplayActivity extends FragmentActivity implements
 //            }
 //        });
     }
+
     private void renderFriends() {
         // RETRIEVE and RENDER friends
         databaseReference.child(firebaseAuth.getCurrentUser().getUid())
@@ -567,10 +583,13 @@ public class DisplayActivity extends FragmentActivity implements
                                                 String uniqueID = dataSnapshot.getKey();
 
                                                 if (temporaryUser != null) {
-                                                    double lat  = Double.parseDouble(temporaryUser.getPosition().getLatitude());
+                                                    double lat = Double.parseDouble(temporaryUser.getPosition().getLatitude());
                                                     double lang = Double.parseDouble(temporaryUser.getPosition().getLongitude());
+                                                    KeyValue keyValue = new KeyValue();
+                                                    keyValue.key = uniqueID;
+                                                    keyValue.value = temporaryUser.getPhone();
                                                     location = new LatLng(lat, lang);
-                                                    Log.d(TAG, "[ OK ] --- - LOOP: renderFriends() .. " + userCounter ++ +
+                                                    Log.d(TAG, "[ OK ] --- - LOOP: renderFriends() .. " + userCounter++ +
                                                             " uid: " + uniqueID + ", " + temporaryUser.getEmail() + ", " + location);
 
                                                     if (!blueMarkers.containsKey(uniqueID)) {
@@ -583,7 +602,7 @@ public class DisplayActivity extends FragmentActivity implements
                                                         blueMarkers.put(uniqueID, tempBlueMarker);
                                                         tempBlueMarker.showInfoWindow();
                                                         // STORE (MarkerID vs UID)at RAM
-                                                        hashMapMidUid.put(tempBlueMarker.getId(), uniqueID);
+                                                        hashMapMidUid.put(tempBlueMarker.getId(), keyValue);
                                                     } else {
                                                         blueMarkers.get(uniqueID).setPosition(location);
                                                     }
@@ -600,8 +619,10 @@ public class DisplayActivity extends FragmentActivity implements
                                     });
                         }
                     }
+
                     @Override
-                    public void onCancelled(DatabaseError databaseError) {}
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
                 });
     }
 
@@ -620,6 +641,7 @@ public class DisplayActivity extends FragmentActivity implements
             // CODE is ready to CHANGE
             // CHECK isNameProvided. Basically popup will not show 1st time where will show during running app 2nd time.
             isNameProvided();
+            isPhoneProvided();
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this,
@@ -639,68 +661,85 @@ public class DisplayActivity extends FragmentActivity implements
     private void startTrackerService() {
         startService(new Intent(this, TrackerService.class));
     }
+
     @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[]
             grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST && grantResults.length == 1
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // Start the service when the permission is granted
-            mMap.setMyLocationEnabled(true);
-            mMap.setOnMyLocationButtonClickListener(this);
-            startTrackerService();
-            subscribeToUpdates();
-            // when ALLOWED then no problem, but when DENY then there two cases for deny 1. Don't ask again 2. Just Deny
-            // We will detect that using below code
-        } else {
-            // Now be sure which one user selected!
-            // Don't ask again | DENY
-            // simple logic below
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Build the alert dialog
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Location Services Not Active");
-                builder.setMessage("Please enable Location permission for this app to go ahead");
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialogInterface, int i) {
 
-                        taskCompleted = true;
-                        // this code for launch app permission setting page
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.parse("package:" + getPackageName()));
-                        intent.addCategory(Intent.CATEGORY_DEFAULT);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                });
-                Dialog alertDialog = builder.create();
-                alertDialog.setCanceledOnTouchOutside(false);
-                alertDialog.show();
-            } else {
-                // Don't show me again selected for first time
-                if (insideShouldShow) {
-                    finish();
+        // SUPPORT: https://stackoverflow.com/questions/40125931/how-to-ask-permission-to-make-phone-call-from-android-from-android-version-marsh
+        // switch case support
+        switch (requestCode) {
+            case CALL_PERMISSIONS_REQUEST: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + tempPhoneNumber));
+                    startActivity(intent);
                 } else {
-                    String msg = "This dialog as 'Don't ask again' was selected at previous time";
-                    // Build the alert dialog
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Location Services Not Active");
-                    builder.setMessage(msg + "\n\nPlease enable Location permission for this app to go ahead");
-                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialogInterface, int i) {
+                    Toast.makeText(getApplicationContext(), "Please, Enable phone call permission", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+            case PERMISSIONS_REQUEST: {
+                if (requestCode == PERMISSIONS_REQUEST && grantResults.length == 1
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Start the service when the permission is granted
+                    mMap.setMyLocationEnabled(true);
+                    mMap.setOnMyLocationButtonClickListener(this);
+                    startTrackerService();
+                    subscribeToUpdates();
+                    // when ALLOWED then no problem, but when DENY then there two cases for deny 1. Don't ask again 2. Just Deny
+                    // We will detect that using below code
+                } else {
+                    // Now be sure which one user selected!
+                    // Don't ask again | DENY
+                    // simple logic below
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        // Build the alert dialog
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("Location Services Not Active");
+                        builder.setMessage("Please enable Location permission for this app to go ahead");
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialogInterface, int i) {
 
-                            // this code for launch app permission setting page
-                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    Uri.parse("package:" + getPackageName()));
-                            intent.addCategory(Intent.CATEGORY_DEFAULT);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(intent);
-                            taskCompleted = true;
+                                taskCompleted = true;
+                                // this code for launch app permission setting page
+                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.parse("package:" + getPackageName()));
+                                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        });
+                        Dialog alertDialog = builder.create();
+                        alertDialog.setCanceledOnTouchOutside(false);
+                        alertDialog.show();
+                    } else {
+                        // Don't show me again selected for first time
+                        if (insideShouldShow) {
+                            finish();
+                        } else {
+                            String msg = "This dialog as 'Don't ask again' was selected at previous time";
+                            // Build the alert dialog
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setTitle("Location Services Not Active");
+                            builder.setMessage(msg + "\n\nPlease enable Location permission for this app to go ahead");
+                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    // this code for launch app permission setting page
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                            Uri.parse("package:" + getPackageName()));
+                                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+                                    taskCompleted = true;
+                                }
+                            });
+                            Dialog alertDialog = builder.create();
+                            alertDialog.setCanceledOnTouchOutside(false);
+                            alertDialog.show();
                         }
-                    });
-                    Dialog alertDialog = builder.create();
-                    alertDialog.setCanceledOnTouchOutside(false);
-                    alertDialog.show();
+                    }
                 }
             }
         }
@@ -709,6 +748,7 @@ public class DisplayActivity extends FragmentActivity implements
     public static double lat;
     public static double lang;
     LatLng latLng;
+
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap map) {
@@ -733,7 +773,7 @@ public class DisplayActivity extends FragmentActivity implements
             // Get the button view
             View locationButton = ((View) mapView
                     .findViewById(Integer.parseInt("1"))
-                        .getParent()).findViewById(Integer.parseInt("2"));
+                    .getParent()).findViewById(Integer.parseInt("2"));
             // and next place it, on bottom right (as Google Maps app)
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
                     locationButton.getLayoutParams();
@@ -783,7 +823,7 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                 });
 
-                GoogleMapOperations.setMargins(tvPoint, width/2, height/2, 0, 0);
+                GoogleMapOperations.setMargins(tvPoint, width / 2, height / 2, 0, 0);
                 // DEBUGGER: tvPosition.setText(" " + height + ", " + width);
                 // tvPosition.setText("" + latLng.latitude + ", " + latLng.longitude);
 
@@ -902,7 +942,7 @@ public class DisplayActivity extends FragmentActivity implements
             } else {
                 Log.e(TAG, "[ ERROR ] -- NULL USER, showMarker()");
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, "[ ERROR ] -- showMarker(): " + e.getMessage());
         }
     }
@@ -919,7 +959,7 @@ public class DisplayActivity extends FragmentActivity implements
                     }
                     GoogleMapOperations.circleList.clear();
 
-                    double lat  = Double.parseDouble(showMarkerTempUser.getPosition().getLatitude());
+                    double lat = Double.parseDouble(showMarkerTempUser.getPosition().getLatitude());
                     double lang = Double.parseDouble(showMarkerTempUser.getPosition().getLongitude());
                     location = new LatLng(lat, lang);
 
@@ -931,7 +971,7 @@ public class DisplayActivity extends FragmentActivity implements
                     // It is notified each time one of the device's location is updated.
                     // When this happens, it will either create a new marker at the device's location,
                     // or move the marker for a device if it exists already.
-                    if (blueMarkers.containsKey(showMarkerTempUID)){
+                    if (blueMarkers.containsKey(showMarkerTempUID)) {
                         Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: CHANGE color as user already exits at map");
 
                         blueMarkers.get(showMarkerTempUID).setTitle(showMarkerTempUser.getName());
@@ -944,7 +984,7 @@ public class DisplayActivity extends FragmentActivity implements
                         blueMarkers.get(showMarkerTempUID).setPosition(location);
                         blueMarkers.get(showMarkerTempUID).showInfoWindow();
                     }
-                }catch (Exception e) {
+                } catch (Exception e) {
                     Log.d(TAG, "[ ERROR ] -- showAnimatedMarkerAtDanger: " + e.getMessage());
                 }
 
@@ -965,7 +1005,7 @@ public class DisplayActivity extends FragmentActivity implements
             if (currentUser.getOnline().equals("1")) {
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 1");
                 try {
-                    double lat  = Double.parseDouble(currentUser.getPosition().getLatitude());
+                    double lat = Double.parseDouble(currentUser.getPosition().getLatitude());
                     double lang = Double.parseDouble(currentUser.getPosition().getLongitude());
                     location = new LatLng(lat, lang);
                     Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: latlang: " + location.toString());
@@ -973,7 +1013,7 @@ public class DisplayActivity extends FragmentActivity implements
                     // It is notified each time one of the device's location is updated.
                     // When this happens, it will either create a new marker at the device's location,
                     // or move the marker for a device if it exists already.
-                    if (blueMarkers.containsKey(currentUID)){
+                    if (blueMarkers.containsKey(currentUID)) {
                         Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: CHANGE color as user already exits at map");
 
                         blueMarkers.get(currentUID).setTitle(currentUser.getName());
@@ -985,20 +1025,20 @@ public class DisplayActivity extends FragmentActivity implements
                         );
                         blueMarkers.get(currentUID).setPosition(location);
                         blueMarkers.get(currentUID).showInfoWindow();
-                    } else if(!blueMarkers.containsKey(currentUID)){
+                    } else if (!blueMarkers.containsKey(currentUID)) {
                         Marker marker = mMap.addMarker(new MarkerOptions().title("" + currentUser.getName() + "")
-                            .position(location)
-                            .snippet("img, fnd req, call, msg")
-                            .icon(BitmapDescriptorFactory.defaultMarker(
+                                .position(location)
+                                .snippet("img, fnd req, call, msg")
+                                .icon(BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_RED       // SET live users marker green
-                            )));
+                                )));
                         blueMarkers.put(currentUID, marker);
                         marker.showInfoWindow();
                     }
-                }catch (Exception e) {
+                } catch (Exception e) {
                     Log.d(TAG, "[ ERROR ] -- showOnlineOfflineStatus: " + e.getMessage());
                 }
-            } else if (currentUser.getOnline().equals("0")){
+            } else if (currentUser.getOnline().equals("0")) {
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 0");
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: DISCONNECTING USER...");
                 blueMarkers.get(currentUID).setTitle(currentUser.getName());
@@ -1014,17 +1054,18 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-
     // DECLARE shared marker: when click event occurred at marker
     Marker clickedMarker;
     // logic var for user friendly presentation
     static boolean onMarkerClicked = false;
     // shared variable
     private float zoomValue = 0;
+
     @Override
     public void onCameraMove() {
         zoomValue = mMap.getCameraPosition().zoom;
     }
+
     /** Called when the user clicks on a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -1075,20 +1116,20 @@ public class DisplayActivity extends FragmentActivity implements
     private void isNameProvided() {
         Log.d(TAG, "[ OK ] isNameProvided: ");
         databaseReference.child(firebaseAuth.getCurrentUser().getUid())
-            .addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (!dataSnapshot.hasChild("name")) {
-                        // MAKE pop up window to take name
-                        popUpForName(dataSnapshot.getKey());
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (!dataSnapshot.hasChild("name")) {
+                            // MAKE pop up window to take name
+                            popUpForName(dataSnapshot.getKey());
+                        }
                     }
-                }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                }
-            });
+                    }
+                });
     }
 
     // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
@@ -1117,20 +1158,20 @@ public class DisplayActivity extends FragmentActivity implements
 
                 // NOTIFY user
                 databaseReference.child(key)
-                    .addListenerForSingleValueEvent( new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        // ERROR: user.getName() == name
-                        if (dataSnapshot.child("name").getValue().equals(name)) {
-                            Toast.makeText(getApplicationContext(), "" + msg, Toast.LENGTH_LONG).show();
-                        }
-                    }
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                // ERROR: user.getName() == name
+                                if (dataSnapshot.child("name").getValue().equals(name)) {
+                                    Toast.makeText(getApplicationContext(), "" + msg, Toast.LENGTH_LONG).show();
+                                }
+                            }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
 
-                    }
-                });
+                            }
+                        });
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1142,15 +1183,90 @@ public class DisplayActivity extends FragmentActivity implements
         builder.show();
     }
 
+    private void isPhoneProvided() {
+        Log.d(TAG, "[ OK ] isPhoneProvided: ");
+        databaseReference.child(firebaseAuth.getCurrentUser().getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (!dataSnapshot.hasChild("phone")) {
+                            // MAKE pop up window to take name
+                            popUpForPhone(dataSnapshot.getKey());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+    // SUPPORT: https://stackoverflow.com/questions/10903754/input-text-dialog-android
+    // SUPPORT: https://stackoverflow.com/questions/4134117/edittext-on-a-popup-window
+    private void popUpForPhone(final String key) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add your phone number");
+
+        final EditText input = new EditText(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        builder.setView(input);
+
+        // SETUP buttons
+        builder.setPositiveButton("SUBMIT", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                final String phone = input.getText().toString();
+                Toast.makeText(getApplicationContext(), "Thank you! ", Toast.LENGTH_SHORT).show();
+                final String msg = "Congratulation! Your phone no. added";
+
+                // STORE name
+                databaseReference.child(key).child("phone").setValue(phone)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                // Write was successful!
+                                // NOTIFY user
+                                Toast.makeText(getApplicationContext(), "" + msg, Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                // Write failed
+                                Toast.makeText(getApplicationContext(), "Failed adding phone..try again", Toast.LENGTH_LONG).show();
+                            }
+                        });
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    public String tempPhoneNumber;
     @Override
     public void onInfoWindowClick(final Marker marker) {
         // SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
         marker.hideInfoWindow();
 
+        KeyValue keyValue = hashMapMidUid.get(marker.getId());
+
         // GET marker obj info
         final String userName = marker.getTitle();
         // GET (MarkerID vs UID) from RAM
-        final String markerUID = hashMapMidUid.get(marker.getId());
+        final String markerUID = keyValue.key;
+        // GET phone
+        final String phone = keyValue.value;
+        tempPhoneNumber = phone;
+
         // GET logged in user unique key, who click onto marker?
         final String UID = firebaseAuth.getCurrentUser().getUid();
 
@@ -1185,78 +1301,78 @@ public class DisplayActivity extends FragmentActivity implements
             ivCall.setVisibility(View.GONE);
         } else {                        // Button: CHECK already friend or not then req sent or not
             databaseReference
-                .child(UID)
+                    .child(UID)
                     .child(getString(R.string.friends))
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (dataSnapshot != null) {
-                                    if (dataSnapshot.hasChild(markerUID)) {
-                                        btnAddFriend.setText("Already Friend");
-                                        // SUPPORT: https://stackoverflow.com/questions/4384890/how-to-disable-an-android-button
-                                        btnAddFriend.setEnabled(false);
-                                        Toast.makeText(getApplicationContext(), "Start chat/call",
-                                                Toast.LENGTH_LONG).show();
-                                    } else {
-                                        // CHECK isExist at RECEIVED_FRIEND_REQUESTS
-                                        databaseReference
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot != null) {
+                                if (dataSnapshot.hasChild(markerUID)) {
+                                    btnAddFriend.setText("Already Friend");
+                                    // SUPPORT: https://stackoverflow.com/questions/4384890/how-to-disable-an-android-button
+                                    btnAddFriend.setEnabled(false);
+                                    Toast.makeText(getApplicationContext(), "Start call/chat",
+                                            Toast.LENGTH_SHORT).show();
+                                } else {
+                                    // CHECK isExist at RECEIVED_FRIEND_REQUESTS
+                                    databaseReference
                                             .child(UID).child(getString(R.string.receivedFriendRequests)).addListenerForSingleValueEvent(new ValueEventListener() {
-                                            @Override
-                                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                                    if (dataSnapshot != null) {
-                                                        if (dataSnapshot.hasChild(markerUID)) {
-                                                            btnAddFriend.setText("CHECK Friend Requests");
-                                                            btnAddFriend.setEnabled(false);
-                                                            Toast.makeText(getApplicationContext(), "This user want to be your friend",
-                                                                    Toast.LENGTH_LONG).show();
-                                                        } else {
-                                                            databaseReference
-                                                                .child(UID)
-                                                                    .child(SENT_FRIEND_REQUESTS)
-                                                                    .child(markerUID)
-                                                                    .child("value")
-                                                                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                                                                        @Override
-                                                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                                                            Log.d(TAG, "[ OK ] ----- fnd req sent: " + dataSnapshot.getValue());
-                                                                            if (dataSnapshot.getValue() != null) {
-                                                                                if (dataSnapshot.getValue().toString().equals("0")) {
-                                                                                    btnAddFriend.setText("Friend Request Sent");
-                                                                                    Toast.makeText(getApplicationContext(), "Please wait for acceptance",
-                                                                                            Toast.LENGTH_LONG).show();
-                                                                                    btnAddFriend.setEnabled(false);
-                                                                                } else if (dataSnapshot.getValue().toString().equals("1")) {
-                                                                                    btnAddFriend.setText("Already Friend");
-                                                                                    btnAddFriend.setEnabled(false);
-                                                                                    Toast.makeText(getApplicationContext(), "Start chat/call",
-                                                                                            Toast.LENGTH_LONG).show();
-                                                                                }
-                                                                            }
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot != null) {
+                                                if (dataSnapshot.hasChild(markerUID)) {
+                                                    btnAddFriend.setText("CHECK Friend Requests");
+                                                    btnAddFriend.setEnabled(false);
+                                                    Toast.makeText(getApplicationContext(), "This user want to be your friend",
+                                                            Toast.LENGTH_LONG).show();
+                                                } else {
+                                                    databaseReference
+                                                            .child(UID)
+                                                            .child(SENT_FRIEND_REQUESTS)
+                                                            .child(markerUID)
+                                                            .child("value")
+                                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                                @Override
+                                                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                                                    Log.d(TAG, "[ OK ] ----- fnd req sent: " + dataSnapshot.getValue());
+                                                                    if (dataSnapshot.getValue() != null) {
+                                                                        if (dataSnapshot.getValue().toString().equals("0")) {
+                                                                            btnAddFriend.setText("Friend Request Sent");
+                                                                            Toast.makeText(getApplicationContext(), "Please wait for acceptance",
+                                                                                    Toast.LENGTH_LONG).show();
+                                                                            btnAddFriend.setEnabled(false);
+                                                                        } else if (dataSnapshot.getValue().toString().equals("1")) {
+                                                                            btnAddFriend.setText("Already Friend");
+                                                                            btnAddFriend.setEnabled(false);
+                                                                            Toast.makeText(getApplicationContext(), "Start chat/call",
+                                                                                    Toast.LENGTH_LONG).show();
                                                                         }
+                                                                    }
+                                                                }
 
-                                                                        @Override
-                                                                        public void onCancelled(DatabaseError databaseError) {
-                                                                            Log.e(TAG, "[ ERROR ] ---- onCancelled: " + databaseError.getMessage());
-                                                                        }
-                                                                    });
-                                                        }
-                                                    }
+                                                                @Override
+                                                                public void onCancelled(DatabaseError databaseError) {
+                                                                    Log.e(TAG, "[ ERROR ] ---- onCancelled: " + databaseError.getMessage());
+                                                                }
+                                                            });
                                                 }
+                                            }
+                                        }
 
-                                                @Override
-                                                public void onCancelled(DatabaseError databaseError) {
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
 
-                                                }
-                                            });
-                                    }
+                                        }
+                                    });
                                 }
                             }
+                        }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
 
-                            }
-                        });
+                        }
+                    });
         }
 
         // HANDLE events through listener
@@ -1274,10 +1390,48 @@ public class DisplayActivity extends FragmentActivity implements
 
         // HANDLE call event
         ivCall.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "Coming soon... PHONE CALL", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
+
+                // Be friend first
+                databaseReference
+                    .child(markerUID)
+                        .child(getString(R.string.friends))
+                            .addListenerForSingleValueEvent(
+                                new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (isFriend(dataSnapshot, UID)) {
+                                                // CHECK permission
+                                                if (checkPhoneCallPermission()) {
+                                                    if (phone == null) {
+                                                        Toast.makeText(getApplicationContext(),
+                                                                "Tell " + userName + "to input cell no.",
+                                                                Toast.LENGTH_LONG).show();
+                                                    } else {
+                                                        Toast.makeText(getApplicationContext(),
+                                                                "Calling..." + userName, Toast.LENGTH_SHORT).show();
+                                                        Intent callIntent = new Intent(Intent.ACTION_CALL);
+                                                        callIntent.setData(Uri.parse("tel:" + phone));
+                                                        startActivity(callIntent);
+                                                    }
+                                                } else {
+                                                    Toast.makeText(getApplicationContext(),
+                                                            "Enable phone call permission", Toast.LENGTH_LONG).show();
+                                                }
+                                            } else {
+                                                Toast.makeText(getApplicationContext(),
+                                                        "Be Friend First", Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                });
             }
         });
 
@@ -1345,6 +1499,30 @@ public class DisplayActivity extends FragmentActivity implements
             }
         });
         dialog.show();
+    }
+
+    private boolean checkPhoneCallPermission() {
+
+        int permission = ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.CALL_PHONE);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    android.Manifest.permission.CALL_PHONE)) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.CALL_PHONE},
+                        CALL_PERMISSIONS_REQUEST);
+                insideShouldShow = true;
+            } else {
+                // when user check "Don't show me again then this part"
+                insideShouldShow = false;
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.CALL_PHONE},
+                        CALL_PERMISSIONS_REQUEST);
+            }
+            return false;
+        }
     }
 
     // SUPPORT: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
@@ -1601,7 +1779,8 @@ public class DisplayActivity extends FragmentActivity implements
         // GET marker obj info
         String userName = clickedMarker.getTitle();
         // GET markerID (MarkerID vs UID) from RAM
-        final String markerUID = hashMapMidUid.get(clickedMarker.getId());
+        KeyValue keyValue = hashMapMidUid.get(clickedMarker.getId());
+        final String markerUID = keyValue.key;
         // GET logged in user unique key, who click onto marker
         final String UID = firebaseAuth.getCurrentUser().getUid();
 
@@ -1612,59 +1791,59 @@ public class DisplayActivity extends FragmentActivity implements
         databaseReference
             .child(markerUID)
                 .child(getString(R.string.friends))
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            // CHECK senderIsExistAtFriends
-                            if (isFriend(dataSnapshot)) {
-                                // debugger
-                                // Toast.makeText(getApplicationContext(), "Yes friends", Toast.LENGTH_LONG).show();
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        // CHECK senderIsExistAtFriends
+                        if (isFriend(dataSnapshot, UID)) {
+                            // debugger
+                            // Toast.makeText(getApplicationContext(), "Yes friends", Toast.LENGTH_LONG).show();
 
-                                // SET sender wave with a completion listener: To know when a write operation has completed
-                                // SUPPORT: https://stackoverflow.com/questions/41403085/how-to-check-if-writing-task-was-successful-in-firebase
+                            // SET sender wave with a completion listener: To know when a write operation has completed
+                            // SUPPORT: https://stackoverflow.com/questions/41403085/how-to-check-if-writing-task-was-successful-in-firebase
 
-                                // Add a Completion Callback
-                                // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write#updating_or_deleting_data
-                                databaseReference
+                            // Add a Completion Callback
+                            // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write#updating_or_deleting_data
+                            databaseReference
                                     .child(markerUID)
-                                        .child(getString(R.string.friends))
-                                            .child(UID)
-                                                .child("wave")
-                                                    .setValue("1")
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                // Write was successful!
-                                                Toast.makeText(getApplicationContext(),
-                                                        "Wave Sent Successful", Toast.LENGTH_LONG).show();
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                // Write failed
-                                                Toast.makeText(getApplicationContext(),
-                                                        "Failed sending..try again", Toast.LENGTH_LONG).show();
-                                                Log.e(TAG, "[ ERROR ] ---write failed--- onClickWave: " + e.getMessage());
-                                            }
-                                        });
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Be Friend First", Toast.LENGTH_LONG).show();
-                            }
+                                    .child(getString(R.string.friends))
+                                    .child(UID)
+                                    .child("wave")
+                                    .setValue("1")
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            // Write was successful!
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Wave Sent Successful", Toast.LENGTH_LONG).show();
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            // Write failed
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Failed sending..try again", Toast.LENGTH_LONG).show();
+                                            Log.e(TAG, "[ ERROR ] ---write failed--- onClickWave: " + e.getMessage());
+                                        }
+                                    });
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Be Friend First", Toast.LENGTH_LONG).show();
                         }
+                    }
 
-                        private boolean isFriend(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.hasChild(UID)) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+    }
 
-                        }
-                    });
+    private boolean isFriend(DataSnapshot dataSnapshot, String UID) {
+        if (dataSnapshot.hasChild(UID)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
