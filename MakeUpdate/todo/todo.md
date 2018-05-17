@@ -36,6 +36,13 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May17.1.19.0
+1. **ANALYZED** and **SELECTED** user friendly wave icons to send msg that sender was near to receiver or missed receiver from sender's location.
+2. DOING **ADD** wave icon at UI
+3. DOING **MAKE** wave icon functional to notify receiver
+4. DOTING **SHOW** sound & text notification when app running (like messanger).
+
+
 > 2018.May15.1.18.0
 1. **SOLVED** logout crash issue
 2. **ADDED** popup dialog at logout icon

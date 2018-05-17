@@ -129,7 +129,10 @@ echo
 # 2018.May15
 ## 💚 UPLOAD cr2018.May15.1.18.0, ATTRACTIVE to ENGAGE
 
-git commit -m "💚 UPLOAD cr2018.May15.1.18.0, ATTRACTIVE to ENGAGE"
+# 2018.May17
+## ADD onClickWave to engage
+
+git commit -m "ADD onClickWave to engage"
 
 ############
 # Step: 05 #

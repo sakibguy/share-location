@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -39,6 +40,8 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -70,7 +73,7 @@ public class DisplayActivity extends FragmentActivity implements
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
     private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification;
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification, ivWave;
     private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
     private static final String TAG = DisplayActivity.class.getSimpleName();
     private static final String LOG_TAG = "DisplayActivity";
@@ -160,6 +163,8 @@ public class DisplayActivity extends FragmentActivity implements
         ivSmallStreetView.setVisibility(View.GONE);
         ivStreetView = findViewById(R.id.ivStreetView);
         ivNotification = findViewById(R.id.ivNotification);
+        ivWave = findViewById(R.id.ivWave);
+        ivWave.setVisibility(View.GONE);
 
         // TextView
         tvPosition = findViewById(R.id.tvPosition);
@@ -754,6 +759,8 @@ public class DisplayActivity extends FragmentActivity implements
         mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
             public void onCameraMoveStarted(int i) {
+                ivWave.setVisibility(View.GONE);
+
                 tvUber.setVisibility(View.GONE);
                 tvTraffic.setVisibility(View.GONE);
                 tvInstruction.setVisibility(View.GONE);
@@ -807,6 +814,8 @@ public class DisplayActivity extends FragmentActivity implements
                 }
                 if (onMarkerClicked) {
                     // MAKE visible
+                    ivWave.setVisibility(View.VISIBLE);
+
                     tvUber.setVisibility(View.VISIBLE);
                     tvTraffic.setVisibility(View.VISIBLE);
                     tvInstruction.setVisibility(View.VISIBLE);
@@ -1005,6 +1014,9 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
+
+    // DECLARE shared marker: when click event occurred at marker
+    Marker clickedMarker;
     // logic var for user friendly presentation
     static boolean onMarkerClicked = false;
     // shared variable
@@ -1016,6 +1028,7 @@ public class DisplayActivity extends FragmentActivity implements
     /** Called when the user clicks on a marker. */
     @Override
     public boolean onMarkerClick(Marker marker) {
+        clickedMarker = marker;
         onMarkerClicked = true;
         // Retrieve the data from the marker.
         Toast.makeText(getApplicationContext(), "distance, time, cost, traffic", Toast.LENGTH_SHORT).show();
@@ -1579,5 +1592,79 @@ public class DisplayActivity extends FragmentActivity implements
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivity(intent);
         }
+    }
+
+    public void onClickWave(View view) {
+        // debugger
+        // Toast.makeText(getApplicationContext(), "Wave clicked", Toast.LENGTH_SHORT).show();
+
+        // GET marker obj info
+        String userName = clickedMarker.getTitle();
+        // GET markerID (MarkerID vs UID) from RAM
+        final String markerUID = hashMapMidUid.get(clickedMarker.getId());
+        // GET logged in user unique key, who click onto marker
+        final String UID = firebaseAuth.getCurrentUser().getUid();
+
+        // debugger
+        // Toast.makeText(getApplicationContext(), "" + markerUID, Toast.LENGTH_LONG).show();
+
+        // CHECK and SET wave to receiver
+        databaseReference
+            .child(markerUID)
+                .child(getString(R.string.friends))
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            // CHECK senderIsExistAtFriends
+                            if (isFriend(dataSnapshot)) {
+                                // debugger
+                                // Toast.makeText(getApplicationContext(), "Yes friends", Toast.LENGTH_LONG).show();
+
+                                // SET sender wave with a completion listener: To know when a write operation has completed
+                                // SUPPORT: https://stackoverflow.com/questions/41403085/how-to-check-if-writing-task-was-successful-in-firebase
+
+                                // Add a Completion Callback
+                                // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write#updating_or_deleting_data
+                                databaseReference
+                                    .child(markerUID)
+                                        .child(getString(R.string.friends))
+                                            .child(UID)
+                                                .child("wave")
+                                                    .setValue("1")
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                // Write was successful!
+                                                Toast.makeText(getApplicationContext(),
+                                                        "Wave Sent Successful", Toast.LENGTH_LONG).show();
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                // Write failed
+                                                Toast.makeText(getApplicationContext(),
+                                                        "Failed sending..try again", Toast.LENGTH_LONG).show();
+                                                Log.e(TAG, "[ ERROR ] ---write failed--- onClickWave: " + e.getMessage());
+                                            }
+                                        });
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Be Friend First", Toast.LENGTH_LONG).show();
+                            }
+                        }
+
+                        private boolean isFriend(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChild(UID)) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
     }
 }

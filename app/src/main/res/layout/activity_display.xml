@@ -35,6 +35,12 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"/>
 
+    <View
+        android:id="@+id/vHiddenBelowPreview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_centerVertical="true" />
+
     <LinearLayout
         android:layout_alignParentBottom="true"
         android:padding="10dp"
@@ -113,7 +119,8 @@
         android:layout_height="8dp"
         android:background="#000" />
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/rlJourney"
         android:layout_marginBottom="10dp"
         android:layout_above="@id/tvInstruction"
         android:orientation="vertical"
@@ -132,6 +139,7 @@
             android:text="Uber"/>
 
         <TextView
+            android:layout_below="@+id/tvUber"
             android:onClick="onClickTraffic"
             android:textColor="#ffffff"
             android:id="@+id/tvTraffic"
@@ -140,7 +148,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Traffic Jam"/>
-    </LinearLayout>
+    </RelativeLayout>
 
     <TextView
         android:layout_above="@+id/llMenu"
@@ -154,5 +162,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Enjoy Journey"/>
+
+    <ImageView
+        android:onClick="onClickWave"
+        android:layout_marginTop="50dp"
+        android:layout_below="@+id/vHiddenBelowPreview"
+        android:src="@drawable/baseline_pan_tool_black_18dp"
+        android:id="@+id/ivWave"
+        android:layout_marginRight="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"/>
 </RelativeLayout>
 
