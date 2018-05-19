@@ -78,8 +78,7 @@ public class StreetViewPanoramaBasicDemoActivity extends AppCompatActivity{
                 });
 
         // Init: AdMob app ID
-//        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
-        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
 
         // ADS: https://developers.google.com/admob/android/banner
         mAdView = findViewById(R.id.adView);

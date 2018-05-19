@@ -29,6 +29,8 @@ Follow Pattern
 13. TODO: **INCREASE** streetview view rate: POINT google, fb, apple, ...etc location place
 14. TODO: **INCREASE** streetview view rate: historical place
 15. TODO: **SET** marker point for scientiests (einstein), mark zukerberg, bill gates
+16. TODO: **MAKE** wave icon functional to notify receiver
+17. TODO: **SHOW** sound & text notification when app running (like messanger).
 
 Working Version
 ---------------
@@ -36,12 +38,16 @@ Working Version
 
 Previous Versions
 -----------------
-> 2018.May17.1.19.0
-1. **ANALYZED** and **SELECTED** user friendly wave icons to send msg that sender was near to receiver or missed receiver from sender's location.
-2. DOING **ADD** wave icon at UI
-3. DOING **MAKE** wave icon functional to notify receiver
-4. DOTING **SHOW** sound & text notification when app running (like messanger).
-
+> 2018.May19.1.19.0
+1. **ANALYZED** and **SELECTED** user friendly wave icons to interact with each other from near location.
+2. **MADE** wave icon sent successful
+3. **ADDED** functional phone call for parents with children
+4. **DEDICATED** to Jubayer
+5. **ADDED** playlagom logo at the app run
+6. **CHANGED** icons of danger, user
+7. **UPDATED** feature graphic
+8. **MADE** open for public to install
+9. **UPDATED** screenshoots
 
 > 2018.May15.1.18.0
 1. **SOLVED** logout crash issue

@@ -59,6 +59,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textStyle="bold"
-            android:text="Or Create an account? Sign Up"/>
+            android:text="Or Create an account (Sign Up)"/>
     </RelativeLayout>
 </RelativeLayout>

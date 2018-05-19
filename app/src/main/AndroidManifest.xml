@@ -31,18 +31,29 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".CompanyLogo"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- portrait: https://stackoverflow.com/questions/6119606/how-to-set-android-show-vertical-orientation -->
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait"></activity>
+
         <activity
             android:name=".DisplayActivity"
             android:label="@string/title_activity_display" />
-        <activity android:name=".auth.SignUpActivity" />
-        <activity android:name=".auth.LoginActivity" />
+        <activity
+            android:name=".auth.SignUpActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".auth.LoginActivity"
+            android:screenOrientation="portrait"/>
 
         <service
             android:name=".TrackerService"

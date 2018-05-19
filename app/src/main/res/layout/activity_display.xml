@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+        ads:adUnitId="ca-app-pub-6882836186513794/5708564123">
     </com.google.android.gms.ads.AdView>
 
     <ImageView
@@ -59,12 +59,13 @@
             android:layout_height="25dp"/>
 
         <ImageView
+            android:alpha="200"
             android:layout_weight="1"
             android:id="@+id/ivUserImage"
             android:onClick="onClickUserImage"
             android:layout_width="25dp"
             android:layout_height="25dp"
-            android:src="@drawable/current_user"/>
+            android:src="@drawable/baseline_person_pin_black_18dp"/>
 
         <ImageView
             android:alpha="0.7"

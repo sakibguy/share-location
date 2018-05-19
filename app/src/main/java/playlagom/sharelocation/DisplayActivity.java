@@ -190,8 +190,8 @@ public class DisplayActivity extends FragmentActivity implements
         showDangerIcon();
 
         // ImageView: MAKE round user image
-        ivUserImage.setImageBitmap(Converter.getCroppedBitmap(
-                BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
+//        ivUserImage.setImageBitmap(Converter.getCroppedBitmap(
+//                BitmapFactory.decodeResource(getResources(), R.drawable.current_user)));
 
         // ImageView: CHECK if new friend request and SET icon NEW
         databaseReference
@@ -227,7 +227,7 @@ public class DisplayActivity extends FragmentActivity implements
         }
 
         // INIT AdMob app ID
-        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+        MobileAds.initialize(this, "ca-app-pub-6882836186513794~2015541759");
 
         // ADS: https://developers.google.com/admob/android/banner
         mAdView = findViewById(R.id.adView);
@@ -453,14 +453,14 @@ public class DisplayActivity extends FragmentActivity implements
                             if (dataSnapshot.child(getString(R.string.danger)).getValue().equals("1")) {
                                 // SET run danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(
-                                        BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run)));
+                                        BitmapFactory.decodeResource(getResources(), R.drawable.baseline_directions_run_black_18dp)));
                                 Toast.makeText(getApplicationContext(), "Your status in DANGER",
                                         Toast.LENGTH_LONG).show();
                                 dangerStatus = true;
                             } else {
                                 // SET default danger icon
                                 ivDanger.setImageBitmap(Converter.getCroppedBitmap(
-                                        BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                                        BitmapFactory.decodeResource(getResources(), R.drawable.baseline_local_parking_black_18dp)));
                                 dangerStatus = false;
                             }
                         } else {
@@ -470,7 +470,7 @@ public class DisplayActivity extends FragmentActivity implements
                                     .setValue("0");
                             // SET default danger icon
                             ivDanger.setImageBitmap(Converter.getCroppedBitmap(
-                                    BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon)));
+                                    BitmapFactory.decodeResource(getResources(), R.drawable.baseline_local_parking_black_18dp)));
                             dangerStatus = false;
                         }
                     }
@@ -1535,16 +1535,14 @@ public class DisplayActivity extends FragmentActivity implements
         // SET danger control: Logic
         if (!dangerStatus) {
             builder.setMessage("Are you in Danger?");
-
             builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                 dangerStatus = true;
-                Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
-                ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon_run));
-
-                // TODO: 4/18/2018: UPDATE db: danger = 1
+                Toast.makeText(getApplicationContext(),
+                        "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
+                ivDanger.setImageBitmap(BitmapFactory
+                        .decodeResource(getResources(), R.drawable.baseline_directions_run_black_18dp));
                 databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("1");
-                // TODO: 4/23/2018 MAKE animated marker
                 dialog.dismiss();
                 }
             });
@@ -1552,23 +1550,21 @@ public class DisplayActivity extends FragmentActivity implements
             builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(),
+                            "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
                     // Do nothing
                     dialog.dismiss();
                 }
             });
         } else if (dangerStatus){
             builder.setMessage("Are you OUT OF Danger?");
-
             builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     dangerStatus = false;
                     Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
-                    ivDanger.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.danger_icon));
-
-                    // TODO: 4/18/2018: UPDATE db: danger = 0
+                    ivDanger.setImageBitmap(BitmapFactory
+                            .decodeResource(getResources(), R.drawable.baseline_local_parking_black_18dp));
                     databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("0");
-
                     dialog.dismiss();
                 }
             });
@@ -1576,8 +1572,8 @@ public class DisplayActivity extends FragmentActivity implements
             builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(getApplicationContext(), "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
-                    // Do nothing
+                    Toast.makeText(getApplicationContext(),
+                            "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
                     dialog.dismiss();
                 }
             });
@@ -1682,8 +1678,20 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
+    public static boolean hideMeClicked = true;
+    @SuppressLint("Range")
     public void onClickUserImage(View view) {
-        Toast.makeText(getApplicationContext(), "IMPLEMENT hide me from others", Toast.LENGTH_LONG).show();
+        if (hideMeClicked) {
+            ivUserImage.setAlpha((float) 0.7);
+            hideMeClicked = false;
+            Toast.makeText(getApplicationContext(), "HIDE ME (under construction)", Toast.LENGTH_SHORT).show();
+        } else {
+            ivUserImage.setAlpha((float) 200);
+            ivUserImage.setImageBitmap(BitmapFactory
+                    .decodeResource(getResources(), R.drawable.baseline_person_pin_black_18dp));
+            hideMeClicked = true;
+            Toast.makeText(getApplicationContext(), "By default public", Toast.LENGTH_SHORT).show();
+        }
     }
     static boolean isLogoutSuccessful = false;
     public void onClickLogout(View view) {
