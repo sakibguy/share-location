@@ -75,19 +75,20 @@ public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnInfoWindowClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
 
+    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification;
+    ImageView ivWave, ivChatEngine, ivCall;
     private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification, ivWave;
     private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
     private static final String TAG = DisplayActivity.class.getSimpleName();
+    public static double myLocationLatitude = 0, myLocationLongitude = 0;
+    TextView tvPosition, tvPoint, tvTraffic, tvUber, tvPathao, tvInstruction;
     private static final String LOG_TAG = "DisplayActivity";
-    private static final int PERMISSIONS_REQUEST = 1;
     private static final int CALL_PERMISSIONS_REQUEST = 2;
+    private static final int PERMISSIONS_REQUEST = 1;
     private HashMap<String, Marker> blueMarkers;
     boolean locationPermissionGranted = false;
     private boolean insideShouldShow = false;
     static boolean taskCompleted = false;
-    public static double myLocationLatitude = 0, myLocationLongitude = 0;
-    TextView tvPosition, tvPoint, tvTraffic, tvUber, tvInstruction;
     GoogleMap mMap;
 
     // Firebase
@@ -169,6 +170,10 @@ public class DisplayActivity extends FragmentActivity implements
         ivNotification = findViewById(R.id.ivNotification);
         ivWave = findViewById(R.id.ivWave);
         ivWave.setVisibility(View.GONE);
+        ivChatEngine = findViewById(R.id.ivChatEngine);
+        ivChatEngine.setVisibility(View.GONE);
+        ivCall = findViewById(R.id.ivCall);
+        ivCall.setVisibility(View.GONE);
 
         // TextView
         tvPosition = findViewById(R.id.tvPosition);
@@ -179,6 +184,8 @@ public class DisplayActivity extends FragmentActivity implements
         tvTraffic.setVisibility(View.GONE);
         tvUber = findViewById(R.id.tvUber);
         tvUber.setVisibility(View.GONE);
+        tvPathao = findViewById(R.id.tvPathao);
+        tvPathao.setVisibility(View.GONE);
         tvInstruction = findViewById(R.id.tvInstruction);
 
         // Sound
@@ -799,9 +806,14 @@ public class DisplayActivity extends FragmentActivity implements
         mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
             public void onCameraMoveStarted(int i) {
+                // REMOVE all widget from memory
                 ivWave.setVisibility(View.GONE);
+                ivChatEngine.setVisibility(View.GONE);
+                ivCall.setVisibility(View.GONE);
+                ivSmallStreetView.setVisibility(View.GONE);
 
                 tvUber.setVisibility(View.GONE);
+                tvPathao.setVisibility(View.GONE);
                 tvTraffic.setVisibility(View.GONE);
                 tvInstruction.setVisibility(View.GONE);
             }
@@ -830,13 +842,37 @@ public class DisplayActivity extends FragmentActivity implements
                 lat = latLng.latitude;
                 lang = latLng.longitude;
 
+                if (onMarkerClicked) {
+                    Toast.makeText(getApplicationContext(),
+                            "SEE traffic, distance, time, cost", Toast.LENGTH_LONG).show();
 
-                String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
-                        "" + lat +
-                        "," + lang +
-                        "&fov=90&heading=235&pitch=10";
+                    String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
+                            "" + destinationLatitude +
+                            "," + destinationLongitude +
+                            "&fov=90&heading=235&pitch=10";
 
-                if (pictureStatus) {
+                    ivSmallStreetView.setVisibility(View.VISIBLE);
+                    // SUPPORT 1: https://stackoverflow.com/questions/27024965/how-to-display-a-streetview-preview
+                    // SUPPORT 2: http://square.github.io/picasso/
+                    // Picasso: A powerful image downloading and caching library for Android
+                    // TODO: 5/14/2018 MAKE resizable, movable round/square image like messenger
+                    Picasso.get().load(imageURL).into(ivSmallStreetView);
+                    // MAKE visible
+                    ivWave.setVisibility(View.VISIBLE);
+                    ivChatEngine.setVisibility(View.VISIBLE);
+                    ivCall.setVisibility(View.VISIBLE);
+
+                    tvUber.setVisibility(View.VISIBLE);
+                    tvPathao.setVisibility(View.VISIBLE);
+                    tvTraffic.setVisibility(View.VISIBLE);
+                    tvInstruction.setVisibility(View.VISIBLE);
+                    onMarkerClicked = false;
+                } else if (blackBoxClicked) {
+                    String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
+                            "" + lat +
+                            "," + lang +
+                            "&fov=90&heading=235&pitch=10";
+
                     ivSmallStreetView.setVisibility(View.VISIBLE);
                     // SUPPORT 1: https://stackoverflow.com/questions/27024965/how-to-display-a-streetview-preview
                     // SUPPORT 2: http://square.github.io/picasso/
@@ -848,25 +884,17 @@ public class DisplayActivity extends FragmentActivity implements
                     destinationLongitude = latLng.longitude;
 
                     tvUber.setVisibility(View.VISIBLE);
+                    tvPathao.setVisibility(View.VISIBLE);
                     tvTraffic.setVisibility(View.VISIBLE);
                     tvInstruction.setVisibility(View.VISIBLE);
                     tvInstruction.setText("Go There");
-                }
-                if (onMarkerClicked) {
-                    // MAKE visible
-                    ivWave.setVisibility(View.VISIBLE);
-
-                    tvUber.setVisibility(View.VISIBLE);
-                    tvTraffic.setVisibility(View.VISIBLE);
-                    tvInstruction.setVisibility(View.VISIBLE);
-                    onMarkerClicked = false;
                 }
             }
         });
 
         // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
         // zoom control: plus | minus button by default android sdk
-//        mMap.getUiSettings().setZoomControlsEnabled(true);
+        // mMap.getUiSettings().setZoomControlsEnabled(true);
 
         // SUPPORT: https://stackoverflow.com/questions/30430664/how-to-hide-navigation-and-gps-pointer-buttons-when-i-click-the-marker-on-th/30431024
         // Disable Map Toolbar
@@ -1071,43 +1099,18 @@ public class DisplayActivity extends FragmentActivity implements
     public boolean onMarkerClick(Marker marker) {
         clickedMarker = marker;
         onMarkerClicked = true;
-        // Retrieve the data from the marker.
-        Toast.makeText(getApplicationContext(), "distance, time, cost, traffic", Toast.LENGTH_SHORT).show();
+
+        blackBoxClicked = false;
+        ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_crop_original_black_24dp)));
 
         // Update destination position for uber + traffic
         destinationLatitude = marker.getPosition().latitude;
         destinationLongitude = marker.getPosition().longitude;
-
         tvInstruction.setText(marker.getTitle());
 
-//                // OPEN STREETVIEW
-////                // Create a Uri from an intent string. Use the result to create an Intent.
-////                Uri gmmIntentUri = Uri.parse("google.streetview:cbll=46.414382,10.013988");
-////
-////// Create an Intent from gmmIntentUri. Set the action to ACTION_VIEW
-////                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-////// Make the Intent explicit by setting the Google Maps package
-////                mapIntent.setPackage("com.google.android.apps.maps");
-////
-//////// Attempt to start an activity that can handle the Intent
-//////                startActivity(mapIntent);
-////                if (mapIntent.resolveActivity(getPackageManager()) != null) {
-////                    startActivity(mapIntent);
-////                }
-//
-////                Uri gmmIntentUri = Uri.parse("geo:37.7749,-122.4194");
-////                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-////                mapIntent.setPackage("com.google.android.apps.maps");
-////                if (mapIntent.resolveActivity(getPackageManager()) != null) {
-////                    startActivity(mapIntent);
-////                }
-//
-//                return false;
-//            }
-//        });
-
-        // SEE later: If uber app not found then how to automatically install uber. Then set position
-
+        ivWave.setVisibility(View.GONE);
+        ivChatEngine.setVisibility(View.GONE);
+        ivCall.setVisibility(View.GONE);
         return false;
     }
 
@@ -1257,17 +1260,13 @@ public class DisplayActivity extends FragmentActivity implements
         // SUPPORT: https://stackoverflow.com/questions/18077040/android-map-v2-get-marker-position-on-marker-click
         marker.hideInfoWindow();
 
-        KeyValue keyValue = hashMapMidUid.get(marker.getId());
-
         // GET marker obj info
+        KeyValue keyValue = hashMapMidUid.get(marker.getId());
+        // GET name
         final String userName = marker.getTitle();
         // GET (MarkerID vs UID) from RAM
         final String markerUID = keyValue.key;
-        // GET phone
-        final String phone = keyValue.value;
-        tempPhoneNumber = phone;
-
-        // GET logged in user unique key, who click onto marker?
+        // GET loggedIn UID
         final String UID = firebaseAuth.getCurrentUser().getUid();
 
         // SUPPORT: https://www.mkyong.com/android/android-custom-dialog-example/
@@ -1278,30 +1277,20 @@ public class DisplayActivity extends FragmentActivity implements
         // WIRE widgets
         TextView tvFriendRequestStatus = dialog.findViewById(R.id.tvFriendRequestStatus);
         final Button btnAddFriend = dialog.findViewById(R.id.btnAddFriend);
-        ImageView ivStreetViewMarker = dialog.findViewById(R.id.ivStreetViewMarker);
-        ImageView ivMessage = dialog.findViewById(R.id.ivMessage);
-        ImageView ivCall = dialog.findViewById(R.id.ivCall);
         TextView tvName = dialog.findViewById(R.id.tvName);
 
         // INIT widgets values
         // TextView
         tvFriendRequestStatus.setVisibility(View.GONE);
         tvName.setText(userName);
-        // ImageView
-        String imageURL = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" +
-                "" + marker.getPosition().latitude +        // SUPPORT: https://stackoverflow.com/questions/16181945/get-latitude-and-longitude-of-marker-in-google-maps
-                "," + marker.getPosition().longitude +
-                "&fov=90&heading=235&pitch=10";
-        Picasso.get().load(imageURL).into(ivStreetViewMarker);
-
-        ivCall.setVisibility(View.VISIBLE);
 
         if (markerUID.equals(UID)) {    // CHECK clicked to self or not
+            tvFriendRequestStatus.setVisibility(View.VISIBLE);
+            tvFriendRequestStatus.setText("Cool! It's You.");
             btnAddFriend.setVisibility(View.GONE);
-            ivCall.setVisibility(View.GONE);
         } else {                        // Button: CHECK already friend or not then req sent or not
             databaseReference
-                    .child(UID)
+                .child(UID)
                     .child(getString(R.string.friends))
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -1316,35 +1305,41 @@ public class DisplayActivity extends FragmentActivity implements
                                 } else {
                                     // CHECK isExist at RECEIVED_FRIEND_REQUESTS
                                     databaseReference
-                                            .child(UID).child(getString(R.string.receivedFriendRequests)).addListenerForSingleValueEvent(new ValueEventListener() {
+                                            .child(UID)
+                                                .child(getString(R.string.receivedFriendRequests))
+                                            .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(DataSnapshot dataSnapshot) {
                                             if (dataSnapshot != null) {
                                                 if (dataSnapshot.hasChild(markerUID)) {
                                                     btnAddFriend.setText("CHECK Friend Requests");
                                                     btnAddFriend.setEnabled(false);
-                                                    Toast.makeText(getApplicationContext(), "This user want to be your friend",
+                                                    Toast.makeText(getApplicationContext(),
+                                                            "This user want to be your friend",
                                                             Toast.LENGTH_LONG).show();
                                                 } else {
                                                     databaseReference
-                                                            .child(UID)
+                                                        .child(UID)
                                                             .child(SENT_FRIEND_REQUESTS)
-                                                            .child(markerUID)
-                                                            .child("value")
-                                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                                .child(markerUID)
+                                                                    .child("value")
+                                                                .addListenerForSingleValueEvent(new ValueEventListener() {
                                                                 @Override
                                                                 public void onDataChange(DataSnapshot dataSnapshot) {
                                                                     Log.d(TAG, "[ OK ] ----- fnd req sent: " + dataSnapshot.getValue());
                                                                     if (dataSnapshot.getValue() != null) {
                                                                         if (dataSnapshot.getValue().toString().equals("0")) {
                                                                             btnAddFriend.setText("Friend Request Sent");
-                                                                            Toast.makeText(getApplicationContext(), "Please wait for acceptance",
+                                                                            Toast.makeText(getApplicationContext(),
+                                                                                    "Please wait for acceptance",
                                                                                     Toast.LENGTH_LONG).show();
                                                                             btnAddFriend.setEnabled(false);
                                                                         } else if (dataSnapshot.getValue().toString().equals("1")) {
                                                                             btnAddFriend.setText("Already Friend");
                                                                             btnAddFriend.setEnabled(false);
-                                                                            Toast.makeText(getApplicationContext(), "Start chat/call",
+                                                                            Toast.makeText(
+                                                                                    getApplicationContext(),
+                                                                                    "Start chat/call",
                                                                                     Toast.LENGTH_LONG).show();
                                                                         }
                                                                     }
@@ -1352,7 +1347,8 @@ public class DisplayActivity extends FragmentActivity implements
 
                                                                 @Override
                                                                 public void onCancelled(DatabaseError databaseError) {
-                                                                    Log.e(TAG, "[ ERROR ] ---- onCancelled: " + databaseError.getMessage());
+                                                                    Log.e(TAG, "[ ERROR ] ---- onCancelled: "
+                                                                            + databaseError.getMessage());
                                                                 }
                                                             });
                                                 }
@@ -1374,75 +1370,6 @@ public class DisplayActivity extends FragmentActivity implements
                         }
                     });
         }
-
-        // HANDLE events through listener
-        // ImageView
-        ivStreetViewMarker.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                // IMPLEMENT game style touch event
-                Toast.makeText(getApplicationContext(), "" +
-                        "" + userName + "'s Current Location", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
-                return false;
-            }
-        });
-
-        // HANDLE call event
-        ivCall.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-
-                // Be friend first
-                databaseReference
-                    .child(markerUID)
-                        .child(getString(R.string.friends))
-                            .addListenerForSingleValueEvent(
-                                new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            if (isFriend(dataSnapshot, UID)) {
-                                                // CHECK permission
-                                                if (checkPhoneCallPermission()) {
-                                                    if (phone == null) {
-                                                        Toast.makeText(getApplicationContext(),
-                                                                "Tell " + userName + "to input cell no.",
-                                                                Toast.LENGTH_LONG).show();
-                                                    } else {
-                                                        Toast.makeText(getApplicationContext(),
-                                                                "Calling..." + userName, Toast.LENGTH_SHORT).show();
-                                                        Intent callIntent = new Intent(Intent.ACTION_CALL);
-                                                        callIntent.setData(Uri.parse("tel:" + phone));
-                                                        startActivity(callIntent);
-                                                    }
-                                                } else {
-                                                    Toast.makeText(getApplicationContext(),
-                                                            "Enable phone call permission", Toast.LENGTH_LONG).show();
-                                                }
-                                            } else {
-                                                Toast.makeText(getApplicationContext(),
-                                                        "Be Friend First", Toast.LENGTH_LONG).show();
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                });
-            }
-        });
-
-        // HANDLE chatengine event
-        ivMessage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "Coming soon... CHAT ENGINE", Toast.LENGTH_SHORT).show();
-                dialog.dismiss();
-            }
-        });
 
         // HANDLE add friend event
         btnAddFriend.setOnClickListener(new View.OnClickListener() {
@@ -1624,31 +1551,35 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-    boolean pictureStatus = false;
+    boolean blackBoxClicked = false;
     public void onClickStreetView(View view) {
-        if (!pictureStatus) {
-            pictureStatus = true;
+        // REMOVE from memory
+        // preview, wave, chatengine, call
+        ivSmallStreetView.setVisibility(View.GONE);
+        ivWave.setVisibility(View.GONE);
+        ivChatEngine.setVisibility(View.GONE);
+        ivCall.setVisibility(View.GONE);
+        // uber, traffic, instruction
+        tvTraffic.setVisibility(View.GONE);
+        tvUber.setVisibility(View.GONE);
+        tvPathao.setVisibility(View.GONE);
+        tvInstruction.setVisibility(View.GONE);
+
+        onMarkerClicked = false;
+
+        if (!blackBoxClicked) {
+            blackBoxClicked = true;
             // SUPPORT: https://stackoverflow.com/questions/5756136/how-to-hide-a-view-programmatically
             tvPoint.setVisibility(View.VISIBLE);
 
-            Toast.makeText(getApplicationContext(), "SWIPE map to see Picture", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Swipe map to see 360 deg image", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_style_black_24dp)));
-
-            // MAKE visible uber+traffic
-            tvTraffic.setVisibility(View.VISIBLE);
-            tvUber.setVisibility(View.VISIBLE);
         } else {
-            pictureStatus = false;
-            tvPoint.setVisibility(View.INVISIBLE);
+            blackBoxClicked = false;
+            tvPoint.setVisibility(View.GONE);
 
             Toast.makeText(getApplicationContext(), "Picture mode disabled", Toast.LENGTH_SHORT).show();
             ivStreetView.setImageBitmap(Converter.getCroppedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_crop_original_black_24dp)));
-            ivSmallStreetView.setVisibility(View.GONE);
-
-            // REMOVE uber+traffic
-            tvTraffic.setVisibility(View.GONE);
-            tvUber.setVisibility(View.GONE);
-            tvInstruction.setVisibility(View.GONE);
         }
     }
 
@@ -1737,6 +1668,11 @@ public class DisplayActivity extends FragmentActivity implements
     }
 
     public void onClickSmallStreetView(View view) {
+        // IMPLEMENT game style touch event
+        if (onMarkerClicked) {
+            Toast.makeText(getApplicationContext(), "" +
+                    "" + clickedMarker.getTitle() + "'s Current Location", Toast.LENGTH_SHORT).show();
+        }
         startActivity(new Intent(DisplayActivity.this, StreetViewPanoramaBasicDemoActivity.class));
     }
 
@@ -1779,7 +1715,6 @@ public class DisplayActivity extends FragmentActivity implements
             startActivity(intent);
         }
     }
-
     public void onClickWave(View view) {
         // debugger
         // Toast.makeText(getApplicationContext(), "Wave clicked", Toast.LENGTH_SHORT).show();
@@ -1852,6 +1787,90 @@ public class DisplayActivity extends FragmentActivity implements
             return true;
         } else {
             return false;
+        }
+    }
+
+    // HANDLE call event
+    @SuppressLint("MissingPermission")
+    public void onClickCall(View view) {
+        KeyValue keyValue = hashMapMidUid.get(clickedMarker.getId());
+
+        // GET (MarkerID vs UID) from RAM
+        final String markerUID = keyValue.key;
+        // GET phoneNumber
+        final String phone = keyValue.value;
+        tempPhoneNumber = phone;
+        // GET loggedin UID
+        final String UID = firebaseAuth.getCurrentUser().getUid();
+
+        if (UID.equals(markerUID)) {
+            Toast.makeText(getApplicationContext(), "It's You! Try another", Toast.LENGTH_SHORT).show();
+        } else {
+            // Be friend first
+            databaseReference
+                .child(markerUID)
+                    .child(getString(R.string.friends))
+                        .addListenerForSingleValueEvent(
+                        new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (isFriend(dataSnapshot, UID)) {
+                                    // CHECK permission
+                                    if (checkPhoneCallPermission()) {
+                                        if (phone == null) {
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Tell " + clickedMarker.getTitle() + " to input cell no.",
+                                                    Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Calling..." + clickedMarker.getTitle(), Toast.LENGTH_SHORT).show();
+                                            Intent callIntent = new Intent(Intent.ACTION_CALL);
+                                            callIntent.setData(Uri.parse("tel:" + phone));
+                                            startActivity(callIntent);
+                                        }
+                                    } else {
+                                        Toast.makeText(getApplicationContext(),
+                                                "Enable phone call permission", Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    Toast.makeText(getApplicationContext(),
+                                            "Be Friend First", Toast.LENGTH_LONG).show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+        }
+    }
+
+    // HANDLE chatengine event
+    public void onClickChatEngine(View view) {
+        Toast.makeText(getApplicationContext(), "Coming soon... CHAT ENGINE", Toast.LENGTH_SHORT).show();
+    }
+
+    public void onClickPathao(View view) {
+        // SUPPORT: https://stackoverflow.com/questions/6205827/how-to-open-standard-google-map-application-from-my-application
+        // SUPPORT: https://developers.google.com/maps/documentation/urls/android-intents
+
+        // SUPPORT: https://stackoverflow.com/questions/35913628/open-uber-app-from-my-app-android
+        // Opens Source UBER: https://github.com/uber
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getPackageInfo("com.pathao.user", PackageManager.GET_ACTIVITIES);
+
+            Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.pathao.user");
+            if (launchIntent != null) {
+                startActivity(launchIntent);//null pointer check in case package name was not found
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.pathao.user")));
+            } catch (android.content.ActivityNotFoundException anfe) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.pathao.user")));
+            }
         }
     }
 }

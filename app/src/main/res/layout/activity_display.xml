@@ -27,13 +27,13 @@
     </com.google.android.gms.ads.AdView>
 
     <ImageView
-        android:onClick="onClickSmallStreetView"
         android:id="@+id/ivSmallStreetView"
-        android:layout_margin="5dp"
         android:layout_width="70dp"
         android:layout_height="48dp"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"/>
+        android:layout_centerVertical="true"
+        android:onClick="onClickSmallStreetView"/>
 
     <View
         android:id="@+id/vHiddenBelowPreview"
@@ -141,6 +141,18 @@
 
         <TextView
             android:layout_below="@+id/tvUber"
+            android:onClick="onClickPathao"
+            android:textColor="#ffffff"
+            android:layout_marginBottom="10dp"
+            android:id="@+id/tvPathao"
+            android:padding="5dp"
+            android:background="#000000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pathao"/>
+
+        <TextView
+            android:layout_below="@+id/tvPathao"
             android:onClick="onClickTraffic"
             android:textColor="#ffffff"
             android:id="@+id/tvTraffic"
@@ -168,11 +180,32 @@
         android:onClick="onClickWave"
         android:layout_marginTop="50dp"
         android:layout_below="@+id/vHiddenBelowPreview"
-        android:src="@drawable/baseline_pan_tool_black_18dp"
+        android:src="@drawable/ic_pan_tool_black_24dp"
         android:id="@+id/ivWave"
         android:layout_marginRight="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"/>
-</RelativeLayout>
 
+    <ImageView
+        android:onClick="onClickChatEngine"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/ivWave"
+        android:src="@drawable/ic_comment_black_24dp"
+        android:id="@+id/ivChatEngine"
+        android:layout_marginRight="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"/>
+
+    <ImageView
+        android:onClick="onClickCall"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/ivChatEngine"
+        android:src="@drawable/ic_call_black_24dp"
+        android:id="@+id/ivCall"
+        android:layout_marginRight="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"/>
+</RelativeLayout>

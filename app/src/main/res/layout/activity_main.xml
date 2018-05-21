@@ -5,11 +5,12 @@
     tools:context="playlagom.sharelocation.MainActivity">
 
     <TextView
+        android:layout_below="@+id/ivDedicatedTo"
         android:layout_marginTop="50dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Share Location"
+        android:text=""
         android:textStyle="bold"
         android:textSize="30sp"
         android:textColor="#000000"
@@ -31,7 +32,7 @@
         android:id="@+id/tvPurpose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="First public release dedicated to"/>
+        android:text=""/>
 
     <TextView
         android:textStyle="bold"
@@ -40,7 +41,7 @@
         android:id="@+id/tvName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Jubayer Ahmed"/>
+        android:text=""/>
 
     <ImageView
         android:layout_marginBottom="50dp"
@@ -49,14 +50,15 @@
         android:layout_height="120dp"
         android:layout_above="@+id/tvName"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/jubayer" />
+        android:src="@drawable/sharelocation_logo" />
 
     <TextView
+        android:textColor="#000000"
         android:textSize="20sp"
         android:layout_marginBottom="20dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="v1.19.0"/>
+        android:text="v1.20.0"/>
 </RelativeLayout>

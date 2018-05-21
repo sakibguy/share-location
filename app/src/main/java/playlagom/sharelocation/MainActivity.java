@@ -21,10 +21,10 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
 
-        ImageView ivDedicatedTo = findViewById(R.id.ivDedicatedTo);
-        // ImageView: MAKE round user image
-        ivDedicatedTo.setImageBitmap(Converter.getCroppedBitmap(
-                BitmapFactory.decodeResource(getResources(), R.drawable.jubayer)));
+//        ImageView ivDedicatedTo = findViewById(R.id.ivDedicatedTo);
+//        // ImageView: MAKE round user image
+//        ivDedicatedTo.setImageBitmap(Converter.getCroppedBitmap(
+//                BitmapFactory.decodeResource(getResources(), R.drawable.jubayer)));
 
         Toast.makeText(getApplicationContext(), "Welcome To Share Location App", Toast.LENGTH_SHORT).show();
         Thread thread = new Thread( new Runnable() {

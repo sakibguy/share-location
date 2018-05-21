@@ -38,6 +38,10 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May21.1.20.0
+1. **ADDED** Pathao
+2. **IMPROVED** user-friendly UX, UI
+
 > 2018.May19.1.19.0
 1. **ANALYZED** and **SELECTED** user friendly wave icons to interact with each other from near location.
 2. **MADE** wave icon sent successful

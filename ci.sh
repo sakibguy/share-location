@@ -137,7 +137,10 @@ echo
 ## 💚 RELEASE open-alpha from 2018.May19.1.19.0
 ## CHANGE feature graphic
 
-git commit -m "CHANGE feature graphic"
+# 2018.May21
+## 💚 RELEASE production 1.20.0.May21.2018
+
+git commit -m "💚 RELEASE production 1.20.0.May21.2018"
 
 ############
 # Step: 05 #
