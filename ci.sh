@@ -140,7 +140,10 @@ echo
 # 2018.May21
 ## 💚 RELEASE production 1.20.0.May21.2018
 
-git commit -m "💚 RELEASE production 1.20.0.May21.2018"
+# 2018.May21
+## 💚 RELEASE 1.20.1.May22.2018, solved blackbox issue
+
+git commit -m "💚 RELEASE 1.20.1.May22.2018, solved blackbox issue"
 
 ############
 # Step: 05 #

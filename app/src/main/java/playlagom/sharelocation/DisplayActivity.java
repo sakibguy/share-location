@@ -177,9 +177,9 @@ public class DisplayActivity extends FragmentActivity implements
 
         // TextView
         tvPosition = findViewById(R.id.tvPosition);
-        tvPosition.setVisibility(View.INVISIBLE);
+        tvPosition.setVisibility(View.GONE);
         tvPoint = findViewById(R.id.tvPoint);
-        tvPoint.setVisibility(View.INVISIBLE);
+        tvPoint.setVisibility(View.GONE);
         tvTraffic = findViewById(R.id.tvTraffic);
         tvTraffic.setVisibility(View.GONE);
         tvUber = findViewById(R.id.tvUber);
@@ -1108,9 +1108,7 @@ public class DisplayActivity extends FragmentActivity implements
         destinationLongitude = marker.getPosition().longitude;
         tvInstruction.setText(marker.getTitle());
 
-        ivWave.setVisibility(View.GONE);
-        ivChatEngine.setVisibility(View.GONE);
-        ivCall.setVisibility(View.GONE);
+        tvPoint.setVisibility(View.GONE);
         return false;
     }
 
