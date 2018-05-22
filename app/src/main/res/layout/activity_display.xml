@@ -189,23 +189,23 @@
 
     <ImageView
         android:onClick="onClickChatEngine"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="25dp"
         android:layout_below="@+id/ivWave"
-        android:src="@drawable/ic_comment_black_24dp"
+        android:src="@mipmap/chat_engine"
         android:id="@+id/ivChatEngine"
         android:layout_marginRight="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_alignParentRight="true"/>
 
     <ImageView
         android:onClick="onClickCall"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_below="@+id/ivChatEngine"
-        android:src="@drawable/ic_call_black_24dp"
+        android:src="@mipmap/call"
         android:id="@+id/ivCall"
         android:layout_marginRight="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_alignParentRight="true"/>
 </RelativeLayout>

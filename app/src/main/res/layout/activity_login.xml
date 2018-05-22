@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:hint="Email"
+        android:hint="Registration email"
         android:id="@+id/etLoginEmail" />
 
     <EditText
@@ -34,18 +34,20 @@
         android:layout_marginLeft="15dp"
         android:layout_marginRight="15dp"
         android:id="@+id/etLoginPassword"
-        android:hint="Password"
+        android:hint="Registration password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/etLoginEmail"/>
 
     <Button
+        android:textColor="#fff"
+        android:background="#000"
         android:id="@+id/btnSignIn"
         android:layout_margin="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/etLoginPassword"
-        android:text="Sign In"/>
+        android:text="Login"/>
 
     <RelativeLayout
         android:layout_centerHorizontal="true"
@@ -54,11 +56,24 @@
         android:layout_height="wrap_content">
 
         <TextView
+            android:layout_alignBaseline="@id/tvSignUp"
             android:layout_toRightOf="@+id/tvQuestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvRegisterText"
+            android:text="Or Create an account, click"/>
+
+        <TextView
+            android:background="@drawable/black_border"
+            android:layout_marginLeft="10dp"
+            android:padding="8dp"
+            android:layout_toRightOf="@+id/tvRegisterText"
             android:id="@+id/tvSignUp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textStyle="bold"
-            android:text="Or Create an account (Sign Up)"/>
+            android:text="REGISTER"/>
+
+
     </RelativeLayout>
 </RelativeLayout>

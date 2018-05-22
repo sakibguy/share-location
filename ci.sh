@@ -142,8 +142,9 @@ echo
 
 # 2018.May21
 ## 💚 RELEASE 1.20.1.May22.2018, solved blackbox issue
+## 💚 RELEASE 1.21.0.May22.2018, improved auth UI
 
-git commit -m "💚 RELEASE 1.20.1.May22.2018, solved blackbox issue"
+git commit -m "💚 RELEASE 1.21.0.May22.2018, improved auth UI"
 
 ############
 # Step: 05 #

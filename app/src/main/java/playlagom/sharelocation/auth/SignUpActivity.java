@@ -33,7 +33,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     private static final String TAG = "SignUpActivity";
     Button btnSignUp;
     EditText etSignUpEmail, etSignUpPassword, etName, etPhone;
-    TextView tvSignIn;
+    Button btnLogin;
 
     ProgressDialog progressDialog;
     FirebaseAuth firebaseAuth;
@@ -52,7 +52,13 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             Toast.makeText(this, "Please ON your internet", Toast.LENGTH_LONG).show();
             finish();
         }
-        Log.d(TAG, "DEBUG: ----onCreate: " + isInternetOn());
+        Log.d(TAG, "----onCreate: " + isInternetOn());
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        if (firebaseAuth.getCurrentUser() != null) {
+            startActivity(new Intent(this, DisplayActivity.class));
+            finish();
+        }
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference().child(getString(R.string.sharelocation));
@@ -64,10 +70,10 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         etSignUpPassword = findViewById(R.id.etSignUpPassword);
         etPhone = findViewById(R.id.etPhone);
         btnSignUp = findViewById(R.id.btnSignUp);
-        tvSignIn = findViewById(R.id.tvSignIn);
+        btnLogin = findViewById(R.id.btnLogin);
 
         btnSignUp.setOnClickListener(this);
-        tvSignIn.setOnClickListener(this);
+        btnLogin.setOnClickListener(this);
     }
 
     @Override
@@ -75,7 +81,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         if (v == btnSignUp) {
             registerUser();
         }
-        if (v == tvSignIn) {
+        if (v == btnLogin) {
             startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
             finish();
         }

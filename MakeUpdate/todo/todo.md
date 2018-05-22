@@ -38,6 +38,11 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.May22.1.21.0
+1. **IMPROVED** auth UI
+2. **IMPROVED** call, chatengine icon at DisplayActivity
+3. **IMPROVED** UX, by highlighting registration area + quick login
+
 > 2018.May21.1.20.0
 1. **ADDED** Pathao
 2. **IMPROVED** user-friendly UX, UI

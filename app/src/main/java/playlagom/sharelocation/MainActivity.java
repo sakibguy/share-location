@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import playlagom.sharelocation.auth.LoginActivity;
+import playlagom.sharelocation.auth.SignUpActivity;
 import playlagom.sharelocation.libs.Converter;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 //        ivDedicatedTo.setImageBitmap(Converter.getCroppedBitmap(
 //                BitmapFactory.decodeResource(getResources(), R.drawable.jubayer)));
 
-        Toast.makeText(getApplicationContext(), "Welcome To Share Location App", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "Welcome To ShareLocation App", Toast.LENGTH_SHORT).show();
         Thread thread = new Thread( new Runnable() {
             @Override
             public void run() {
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 } finally {
                     Log.d("MainActivity", "=== finally ====");
-                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    Intent intent = new Intent(MainActivity.this, SignUpActivity.class);
                     startActivity(intent);
                     finish();
                 }

@@ -7,25 +7,42 @@
     tools:context="playlagom.sharelocation.auth.SignUpActivity">
 
     <TextView
+        android:layout_below="@+id/ivOr"
         android:id="@+id/tvUserRegistration"
         android:layout_centerHorizontal="true"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginTop="30dp"
-        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create a new account"/>
+
+    <TextView
+        android:layout_below="@+id/tvUserRegistration"
+        android:id="@+id/tvShareLocation"
+        android:layout_centerHorizontal="true"
         android:layout_marginBottom="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="User Registration"/>
+        android:text="at shareloaction app"/>
+
+    <TextView
+        android:textColor="#000"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/tvShareLocation"
+        android:id="@+id/tvTypeYourInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TYPE to tell us about YOURSELF"/>
 
     <EditText
-        android:layout_below="@+id/tvUserRegistration"
+        android:layout_below="@+id/tvTypeYourInfo"
         android:layout_marginLeft="15dp"
         android:layout_marginRight="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:hint="Type name"
+        android:hint="name"
         android:id="@+id/etName" />
 
     <EditText
@@ -36,7 +53,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:hint="Type email"
+        android:hint="email"
         android:id="@+id/etSignUpEmail" />
 
     <EditText
@@ -45,7 +62,7 @@
         android:layout_marginLeft="15dp"
         android:layout_marginRight="15dp"
         android:id="@+id/etSignUpPassword"
-        android:hint="Type password"
+        android:hint="password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/etSignUpEmail"/>
@@ -58,36 +75,52 @@
         android:layout_alignLeft="@+id/etSignUpPassword"
         android:layout_alignStart="@+id/etSignUpPassword"
         android:layout_centerVertical="true"
-        android:hint="Type phone number"
+        android:hint="phone number"
         android:inputType="phone" />
 
     <Button
+        android:textColor="#ffffff"
+        android:background="#000"
         android:id="@+id/btnSignUp"
         android:layout_margin="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/etPhone"
-        android:text="Sign Up"/>
+        android:text="Register"/>
 
     <RelativeLayout
         android:layout_centerHorizontal="true"
-        android:layout_below="@+id/btnSignUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/relativeLayout">
 
         <TextView
+            android:layout_marginTop="20dp"
+            android:layout_alignBaseline="@id/btnLogin"
             android:id="@+id/tvQuestion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Already Registered? "/>
+            android:text="Already Registered? Then click "/>
 
-        <TextView
+        <Button
+            android:background="#000000"
+            android:layout_margin="5dp"
+            android:textColor="#ffffff"
             android:textStyle="bold"
             android:layout_toRightOf="@+id/tvQuestion"
-            android:id="@+id/tvSignIn"
+            android:id="@+id/btnLogin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sign In"/>
+            android:text="Login"/>
     </RelativeLayout>
+    <TextView
+        android:textStyle="italic"
+        android:id="@+id/ivOr"
+        android:layout_marginTop="20dp"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/relativeLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Or,"/>
 </RelativeLayout>
