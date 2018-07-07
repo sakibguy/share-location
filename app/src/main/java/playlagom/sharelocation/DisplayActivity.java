@@ -4,9 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -52,6 +54,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -68,6 +71,8 @@ import playlagom.sharelocation.libs.Converter;
 import playlagom.sharelocation.libs.GoogleMapOperations;
 import playlagom.sharelocation.models.KeyValue;
 import playlagom.sharelocation.models.User;
+import playlagom.sharelocation.notification.MyFirebaseInstanceIdService;
+import playlagom.sharelocation.notification.SharedPrefManager;
 
 public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMarkerClickListener,
@@ -124,6 +129,9 @@ public class DisplayActivity extends FragmentActivity implements
     public static String loggedInUserName;
     private static double destinationLatitude = 0;
     private static double destinationLongitude = 0;
+
+    // RECEIVE broadcast_token
+    private BroadcastReceiver broadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

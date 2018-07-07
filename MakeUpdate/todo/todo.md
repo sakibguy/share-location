@@ -31,10 +31,18 @@ Follow Pattern
 15. TODO: **SET** marker point for scientiests (einstein), mark zukerberg, bill gates
 16. TODO: **MAKE** wave icon functional to notify receiver
 17. TODO: **SHOW** sound & text notification when app running (like messanger).
+18. TODO: **IMPROVE** permission taking code by following google beacon codelab.
 
 Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
+
+> 2018.July7.1.22.0
+1. **ADDED** notification feature
+   1. [ DONE ] Setup fcm SDK
+   2. [ DONE ] Showing sound + vibration notification when app running.
+
+
 
 Previous Versions
 -----------------

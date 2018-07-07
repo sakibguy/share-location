@@ -146,7 +146,10 @@ echo
 ## UPLOAD changes
 ## UPLOAD screenshots
 
-git commit -m "UPLOAD screenshots"
+# 2018.July7
+## UPLOAD changes, notification
+
+git commit -m "UPLOAD changes, notification"
 
 ############
 # Step: 05 #

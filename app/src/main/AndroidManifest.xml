@@ -55,10 +55,27 @@
             android:name=".auth.LoginActivity"
             android:screenOrientation="portrait"/>
 
+        <!-- ADDED service for sending location update to server -->
         <service
             android:name=".TrackerService"
             android:enabled="true"
             android:exported="true" />
+
+        <!-- ADDED service for fcm -->
+        <service
+            android:name=".notification.MyFirebaseInstanceIdService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+
+        <!-- ADDED service for showing notification messages-->
+        <service
+            android:name=".notification.MyFirebaseMessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
 
         <activity android:name=".StreetViewPanoramaBasicDemoActivity"></activity>
         <activity android:name=".ProductListActivity"></activity>

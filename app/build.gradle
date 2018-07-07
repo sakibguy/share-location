@@ -26,6 +26,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:11.2.0'
     implementation 'com.google.firebase:firebase-auth:11.2.0'
     implementation 'com.google.firebase:firebase-database:11.2.0'
+    // ADDED fcm: https://www.youtube.com/watch?v=2MYgZQjX7N0&list=PLk7v1Z2rk4hjxP_CHAhjXQN3zrcEhluF_
+    implementation 'com.google.firebase:firebase-messaging:11.2.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
@@ -41,5 +43,6 @@ dependencies {
     // http://square.github.io/picasso/
     implementation 'com.squareup.picasso:picasso:2.71828'
 }
+
 
 apply plugin: 'com.google.gms.google-services'
