@@ -37,10 +37,11 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-> 2018.July7.1.22.0
+> 2018.July9.1.22.0
 1. **ADDED** notification feature
-   1. [ DONE ] Setup fcm SDK
-   2. [ DONE ] Showing sound + vibration notification when app running.
+   1. Setup fcm SDK
+   2. Showing sound + vibration notification when app running or not.
+   3. Notify receiver and sender about friend request
 
 
 

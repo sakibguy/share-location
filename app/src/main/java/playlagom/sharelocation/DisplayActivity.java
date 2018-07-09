@@ -57,6 +57,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -66,6 +69,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import playlagom.sharelocation.auth.LoginActivity;
 import playlagom.sharelocation.libs.Converter;
 import playlagom.sharelocation.libs.GoogleMapOperations;
@@ -79,6 +89,8 @@ public class DisplayActivity extends FragmentActivity implements
         GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnInfoWindowClickListener,
         OnMapReadyCallback, GoogleMap.OnCameraMoveListener {
+
+    public static final String SERVER_KEY = "AAAAzSZNbUY:APA91bE-g_vgALMF4u9mqC2rVbPVi_FkiVtXFi3SiK7ya802mWMLUkIxeatHaxTcZfBnQPacCwJUYQoRXSqA6fBF2vJ_zEsfKruxXdxnTYyuKDgB6uVteHJOumJm5-NLYUqRuyZXq4R7";
 
     ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification;
     ImageView ivWave, ivChatEngine, ivCall;
@@ -152,6 +164,17 @@ public class DisplayActivity extends FragmentActivity implements
         firebaseAuth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
         allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
+
+        // CHECK & GET device-token
+        if (SharedPrefManager.getInstance(this).getToken() != null) {
+            String CURRENT_DEVICE_TOKEN = SharedPrefManager.getInstance(this).getToken();
+            Log.d(TAG, "onCreate: device-token: " + CURRENT_DEVICE_TOKEN);
+            // UPDATE device-token
+            databaseReference
+                    .child(firebaseAuth.getCurrentUser().getUid())    // USED HashMap to get clicked marker uid & logged in user uid
+                    .child("deviceToken")
+                    .setValue(CURRENT_DEVICE_TOKEN);
+        }
 
         // TODO: 5/6/2018 REMOVE method below, at next version
         // COPY name: from sharelocation-users to SL11302018MAY6
@@ -1381,7 +1404,26 @@ public class DisplayActivity extends FragmentActivity implements
         btnAddFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                databaseReference
+                        .child(markerUID)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot != null) {
+                                        if (dataSnapshot.hasChild("deviceToken")) {
+                                            String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                            Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                            // PUSH NOTIFICATION: friend request sent
+                                            sendFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
+                                        }
+                                    }
+                                }
 
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            });
                 Toast.makeText(getApplicationContext(), "" +
                         "Wait for accepting friend request", Toast.LENGTH_SHORT).show();
                 // TODO: 5/5/2018 SHOW text "Friend request sent"
@@ -1877,6 +1919,57 @@ public class DisplayActivity extends FragmentActivity implements
             } catch (android.content.ActivityNotFoundException anfe) {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.pathao.user")));
             }
+        }
+    }
+
+    // src: https://stackoverflow.com/questions/39068722/post-ing-json-request-to-fcm-server-isnt-working
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+    OkHttpClient client = new OkHttpClient();
+
+    Call post(String url, String json, Callback callback) {
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .addHeader("Content-Type","application/json")
+                .addHeader("Authorization","key=" + SERVER_KEY)
+                .url(url)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(callback);
+        return call;
+    }
+
+    private void sendFriendRequestPushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " sent you a friend request");
+            param.put("title", "Bring the world in your hand");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
         }
     }
 }

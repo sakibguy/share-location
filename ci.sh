@@ -149,7 +149,10 @@ echo
 # 2018.July7
 ## UPLOAD changes, notification
 
-git commit -m "UPLOAD changes, notification"
+# 2018.July10
+## 💚 RELEASE 1.22.0.July10.2018, added notification
+
+git commit -m "💚 RELEASE 1.22.0.July10.2018, added notification"
 
 ############
 # Step: 05 #

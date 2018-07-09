@@ -26,9 +26,7 @@ public class ReceivedFriendRequestsFragment extends Fragment {
     RecyclerView rvReceivedFriendRequests;
     ReceivedFriendRequestsAdapter receivedFriendRequestsAdapter;
 
-    public ReceivedFriendRequestsFragment() {
-
-    }
+    public ReceivedFriendRequestsFragment() {}
 
     View view;
     @Nullable

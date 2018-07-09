@@ -20,14 +20,27 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import playlagom.sharelocation.DisplayActivity;
 import playlagom.sharelocation.R;
 import playlagom.sharelocation.fragments.ReceivedFriendRequestsFragment;
 import playlagom.sharelocation.models.KeyValue;
+
+import static playlagom.sharelocation.DisplayActivity.loggedInUserName;
 
 public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -155,6 +168,9 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
     }
 
     private void acceptFriendRequest(String uid, String name) {
+        // PUSH NOTIFICATION: friend request accepted
+        notifySenderAccepted(uid);
+
         Toast.makeText(context.getApplicationContext(), "Friend request accepted", Toast.LENGTH_SHORT).show();
 
         // ADD uid,name,value to friends
@@ -170,7 +186,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 .child(context.getString(R.string.friends))
                 .child(firebaseAuth.getCurrentUser().getUid())
                 .child("name")
-                .setValue(DisplayActivity.loggedInUserName);
+                .setValue(loggedInUserName);
         databaseReference
                 .child(uid)
                 .child(context.getString(R.string.friends))
@@ -216,8 +232,120 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 .removeValue();
     }
 
+    private void notifySenderAccepted(String receiverUID) {
+        databaseReference
+                .child(receiverUID)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            if (dataSnapshot.hasChild("deviceToken")) {
+                                String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                // PUSH NOTIFICATION: friend request sent
+                                accpetedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+
+    // src: https://stackoverflow.com/questions/39068722/post-ing-json-request-to-fcm-server-isnt-working
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+    OkHttpClient client = new OkHttpClient();
+
+    Call post(String url, String json, Callback callback) {
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .addHeader("Content-Type","application/json")
+                .addHeader("Authorization","key=" + DisplayActivity.SERVER_KEY)
+                .url(url)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(callback);
+        return call;
+    }
+
+    private void accpetedFriendRequestPushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " accepted you friend request");
+            param.put("title", "Start chat, call, meet");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
+    }
+
+    private void deletedFriendRequestPushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", "Deleted");
+            param.put("title", loggedInUserName + " deleted your friend request");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
+    }
+
+
     // OK: deleteFriend
     private void deleteFriend(String uid) {
+        // PUSH NOTIFICATION: friend request deleted
+        notifySenderDeleted(uid);
+
 //        Toast.makeText(context.getApplicationContext(), "Unfriend Successful", Toast.LENGTH_SHORT).show();
 
         // REMOVE from
@@ -234,6 +362,29 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 .child(context.getString(R.string.receivedFriendRequests))
                 .child(uid)
                 .removeValue();
+    }
+
+    private void notifySenderDeleted(String receiverUID) {
+        databaseReference
+                .child(receiverUID)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            if (dataSnapshot.hasChild("deviceToken")) {
+                                String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                // PUSH NOTIFICATION: friend request sent
+                                deletedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     // return total item from List

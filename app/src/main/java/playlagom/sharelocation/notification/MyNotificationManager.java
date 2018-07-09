@@ -25,7 +25,7 @@ public class MyNotificationManager {
         this.context = context;
     }
 
-    public void showNotification(String from, String notification, Intent intent) {
+    public void showNotification(String body, String title, Intent intent) {
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context,
                 NOTIFICATION_ID,
@@ -44,8 +44,9 @@ public class MyNotificationManager {
         Notification notification1 = builder.setSmallIcon(R.mipmap.ic_launcher)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-                .setContentTitle("Notification: msg, nearby, tour, danger")
-                .setContentText(notification)
+//                .setContentTitle("Notification: msg, nearby, tour, danger")
+                .setContentTitle(body)
+                .setContentText(title)
                 .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                 .setSound(uri)
                 .setVibrate(v)
