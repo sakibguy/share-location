@@ -44,11 +44,14 @@ public class MyNotificationManager {
         Notification notification1 = builder.setSmallIcon(R.mipmap.ic_launcher)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-//                .setContentTitle("Notification: msg, nearby, tour, danger")
                 .setContentTitle(body)
                 .setContentText(title)
                 .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                 .setSound(uri)
+                // SUPPORT: Heads-up notification, https://stackoverflow.com/questions/33510861/how-to-show-heads-up-notifications-android
+                // todo: https://www.youtube.com/watch?v=jUmQR7OZ3_Q
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setPriority(Notification.PRIORITY_HIGH)
                 .setVibrate(v)
                 .build();
 

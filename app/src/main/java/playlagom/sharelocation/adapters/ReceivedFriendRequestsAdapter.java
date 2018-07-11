@@ -146,7 +146,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 Log.d(TAG, "onTouch: KEY---- " + keyValue.key);
 
                 // CHECK with real data (firebase)
-                deleteFriend(keyValue.key);
+                deleteFriendRequest(keyValue.key);
 
                 // CHECK with false data (Cache)
                 // keyValue.value = "0";
@@ -167,6 +167,24 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
 //        });
     }
 
+    // OK: AUTO PUSH NOTIFICATION
+    // src: https://stackoverflow.com/questions/39068722/post-ing-json-request-to-fcm-server-isnt-working
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    OkHttpClient client = new OkHttpClient();
+    Call post(String url, String json, Callback callback) {
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .addHeader("Content-Type","application/json")
+                .addHeader("Authorization","key=" + DisplayActivity.SERVER_KEY)
+                .url(url)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(callback);
+        return call;
+    }
+
+    // OK: ACCEPT FRIEND
     private void acceptFriendRequest(String uid, String name) {
         // PUSH NOTIFICATION: friend request accepted
         notifySenderAccepted(uid);
@@ -231,7 +249,6 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                 .child(uid)
                 .removeValue();
     }
-
     private void notifySenderAccepted(String receiverUID) {
         databaseReference
                 .child(receiverUID)
@@ -243,7 +260,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                                 String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
                                 Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
                                 // PUSH NOTIFICATION: friend request sent
-                                accpetedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
+                                acceptedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
                             }
                         }
                     }
@@ -254,27 +271,7 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
                     }
                 });
     }
-
-
-    // src: https://stackoverflow.com/questions/39068722/post-ing-json-request-to-fcm-server-isnt-working
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
-    OkHttpClient client = new OkHttpClient();
-
-    Call post(String url, String json, Callback callback) {
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .addHeader("Content-Type","application/json")
-                .addHeader("Authorization","key=" + DisplayActivity.SERVER_KEY)
-                .url(url)
-                .post(body)
-                .build();
-        Call call = client.newCall(request);
-        call.enqueue(callback);
-        return call;
-    }
-
-    private void accpetedFriendRequestPushNotification(String deviceToken) {
+    private void acceptedFriendRequestPushNotification(String deviceToken) {
         try {
             JSONObject jsonObject = new JSONObject();
             JSONObject param = new JSONObject();
@@ -307,6 +304,50 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
         }
     }
 
+    // OK: DELETE FRIEND
+    private void deleteFriendRequest(String uid) {
+        // PUSH NOTIFICATION: friend request deleted
+        notifySenderDeleted(uid);
+
+//        Toast.makeText(context.getApplicationContext(), "Unfriend Successful", Toast.LENGTH_SHORT).show();
+
+        // REMOVE from
+        // requested user: sentFriendRequests
+        databaseReference
+                .child(uid)
+                .child(context.getString(R.string.sentFriendRequests))
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .removeValue();
+
+        // loggedin user: receivedFriendRequests
+        databaseReference
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .child(context.getString(R.string.receivedFriendRequests))
+                .child(uid)
+                .removeValue();
+    }
+    private void notifySenderDeleted(String receiverUID) {
+        databaseReference
+                .child(receiverUID)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            if (dataSnapshot.hasChild("deviceToken")) {
+                                String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                // PUSH NOTIFICATION: friend request sent
+                                deletedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+    }
     private void deletedFriendRequestPushNotification(String deviceToken) {
         try {
             JSONObject jsonObject = new JSONObject();
@@ -338,53 +379,6 @@ public class ReceivedFriendRequestsAdapter extends RecyclerView.Adapter<Recycler
         } catch (JSONException ex) {
             Log.d("Exception", "JSON exception", ex);
         }
-    }
-
-
-    // OK: deleteFriend
-    private void deleteFriend(String uid) {
-        // PUSH NOTIFICATION: friend request deleted
-        notifySenderDeleted(uid);
-
-//        Toast.makeText(context.getApplicationContext(), "Unfriend Successful", Toast.LENGTH_SHORT).show();
-
-        // REMOVE from
-        // requested user: sentFriendRequests
-        databaseReference
-                .child(uid)
-                .child(context.getString(R.string.sentFriendRequests))
-                .child(firebaseAuth.getCurrentUser().getUid())
-                .removeValue();
-
-        // loggedin user: receivedFriendRequests
-        databaseReference
-                .child(firebaseAuth.getCurrentUser().getUid())
-                .child(context.getString(R.string.receivedFriendRequests))
-                .child(uid)
-                .removeValue();
-    }
-
-    private void notifySenderDeleted(String receiverUID) {
-        databaseReference
-                .child(receiverUID)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot != null) {
-                            if (dataSnapshot.hasChild("deviceToken")) {
-                                String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
-                                Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
-                                // PUSH NOTIFICATION: friend request sent
-                                deletedFriendRequestPushNotification(TARGET_DEVICE_TOKEN);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
     }
 
     // return total item from List

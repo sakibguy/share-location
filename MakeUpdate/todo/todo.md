@@ -37,16 +37,21 @@ Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
+
+Previous Versions
+-----------------
+> 2018.July12.1.23.0
+1. **IMPROVED** notification feature
+   1. Made wave feature functional
+   2. Notify user when unfriend
+   3. Notify user when friend request deleted
+
 > 2018.July9.1.22.0
 1. **ADDED** notification feature
    1. Setup fcm SDK
    2. Showing sound + vibration notification when app running or not.
    3. Notify receiver and sender about friend request
 
-
-
-Previous Versions
------------------
 > 2018.May22.1.21.0
 1. **IMPROVED** auth UI
 2. **IMPROVED** call, chatengine icon at DisplayActivity

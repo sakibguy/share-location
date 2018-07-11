@@ -152,7 +152,10 @@ echo
 # 2018.July10
 ## 💚 RELEASE 1.22.0.July10.2018, added notification
 
-git commit -m "💚 RELEASE 1.22.0.July10.2018, added notification"
+# 2018.July12
+## 💚 RELEASE 1.23.0.July12.2018, improved notification
+
+git commit -m "💚 RELEASE 1.23.0.July12.2018, improved notification"
 
 ############
 # Step: 05 #

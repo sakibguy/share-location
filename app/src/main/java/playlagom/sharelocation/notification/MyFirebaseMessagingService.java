@@ -1,6 +1,7 @@
 package playlagom.sharelocation.notification;
 
 import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -52,8 +53,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         notifyUser(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
     }
 
+    private NotificationHelper notificationHelper;
     public void notifyUser(String body, String title) {
         MyNotificationManager myNotificationManager = new MyNotificationManager(getApplicationContext());
         myNotificationManager.showNotification(body, title, new Intent(getApplicationContext(), DisplayActivity.class));
+
+
+//        NotificationCompat.Builder nb = notificationHelper.getChannel1Notification(body, title);
+//        notificationHelper.getNotificationManager().notify(1, nb.build());
     }
 }

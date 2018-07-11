@@ -1787,35 +1787,61 @@ public class DisplayActivity extends FragmentActivity implements
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         // CHECK senderIsExistAtFriends
                         if (isFriend(dataSnapshot, UID)) {
-                            // debugger
-                            // Toast.makeText(getApplicationContext(), "Yes friends", Toast.LENGTH_LONG).show();
-
-                            // SET sender wave with a completion listener: To know when a write operation has completed
-                            // SUPPORT: https://stackoverflow.com/questions/41403085/how-to-check-if-writing-task-was-successful-in-firebase
-
-                            // Add a Completion Callback
-                            // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write#updating_or_deleting_data
+                            // CHECK device-token exist or not
                             databaseReference
                                     .child(markerUID)
-                                    .child(getString(R.string.friends))
-                                    .child(UID)
-                                    .child("wave")
-                                    .setValue("1")
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
-                                        public void onSuccess(Void aVoid) {
-                                            // Write was successful!
-                                            Toast.makeText(getApplicationContext(),
-                                                    "Wave Sent Successful", Toast.LENGTH_LONG).show();
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot != null) {
+                                                if (dataSnapshot.hasChild("deviceToken")) {
+                                                    String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                                    Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                                    // PUSH NOTIFICATION: wave push notification
+                                                    sendWavePushNotification(TARGET_DEVICE_TOKEN);
+
+                                                    // debugger
+                                                    // Toast.makeText(getApplicationContext(), "Yes friends", Toast.LENGTH_LONG).show();
+
+                                                    // SET sender wave with a completion listener: To know when a write operation has completed
+                                                    // SUPPORT: https://stackoverflow.com/questions/41403085/how-to-check-if-writing-task-was-successful-in-firebase
+
+                                                    // Add a Completion Callback
+                                                    // SUPPORT: https://firebase.google.com/docs/database/android/read-and-write#updating_or_deleting_data
+                                                    databaseReference
+                                                            .child(markerUID)
+                                                            .child(getString(R.string.friends))
+                                                            .child(UID)
+                                                            .child("wave")
+                                                            .setValue("1")
+                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                @Override
+                                                                public void onSuccess(Void aVoid) {
+                                                                    // Write was successful!
+                                                                    Toast.makeText(getApplicationContext(),
+                                                                            "Wave Sent Successful", Toast.LENGTH_LONG).show();
+                                                                }
+                                                            })
+                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                @Override
+                                                                public void onFailure(@NonNull Exception e) {
+                                                                    // Write failed
+                                                                    Toast.makeText(getApplicationContext(),
+                                                                            "Failed sending..try again", Toast.LENGTH_LONG).show();
+                                                                    Log.e(TAG, "[ ERROR ] ---write failed--- onClickWave: " + e.getMessage());
+                                                                }
+                                                            });
+                                                } else {
+                                                    // Write failed
+                                                    Toast.makeText(getApplicationContext(),
+                                                            "Failed sending... To get this service, call user to install latest version of the app", Toast.LENGTH_LONG).show();
+                                                }
+                                            }
                                         }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
+
                                         @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            // Write failed
-                                            Toast.makeText(getApplicationContext(),
-                                                    "Failed sending..try again", Toast.LENGTH_LONG).show();
-                                            Log.e(TAG, "[ ERROR ] ---write failed--- onClickWave: " + e.getMessage());
+                                        public void onCancelled(DatabaseError databaseError) {
+
                                         }
                                     });
                         } else {
@@ -1898,7 +1924,6 @@ public class DisplayActivity extends FragmentActivity implements
     public void onClickChatEngine(View view) {
         Toast.makeText(getApplicationContext(), "Coming soon... CHAT ENGINE", Toast.LENGTH_SHORT).show();
     }
-
     public void onClickPathao(View view) {
         // SUPPORT: https://stackoverflow.com/questions/6205827/how-to-open-standard-google-map-application-from-my-application
         // SUPPORT: https://developers.google.com/maps/documentation/urls/android-intents
@@ -1945,7 +1970,40 @@ public class DisplayActivity extends FragmentActivity implements
             JSONObject jsonObject = new JSONObject();
             JSONObject param = new JSONObject();
             param.put("body", loggedInUserName + " sent you a friend request");
-            param.put("title", "Bring the world in your hand");
+            param.put("title", "Connect people, reach people");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
+    }
+
+    private void sendWavePushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " missing you!");
+            param.put("title", "Tap to see live location");
             param.put("sound", "default");
             jsonObject.put("notification", param);
             jsonObject.put("to", deviceToken);
