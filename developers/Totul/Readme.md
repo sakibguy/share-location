@@ -10,4 +10,9 @@
 - Learning git branches
 
 ### To-Do:
-- 
+- Learn bash scripting for bettor control on Linux/Unix based Distro's
+- Learn the basic Linux/Unix commands
+- User management on Linux/Unix
+- Process management on Linux/Unix
+- Learn and implement better coding styles
+- (More and More......)
