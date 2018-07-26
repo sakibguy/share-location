@@ -40,6 +40,9 @@ Working Version
 
 Previous Versions
 -----------------
+> 2018.July26.1.24.0
+1. **IMPROVED** notification feature to notify active & want to be a friend
+
 > 2018.July12.1.23.0
 1. **IMPROVED** notification feature
    1. Made wave feature functional

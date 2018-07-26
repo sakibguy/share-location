@@ -171,7 +171,7 @@ public class DisplayActivity extends FragmentActivity implements
             Log.d(TAG, "onCreate: device-token: " + CURRENT_DEVICE_TOKEN);
             // UPDATE device-token
             databaseReference
-                    .child(firebaseAuth.getCurrentUser().getUid())    // USED HashMap to get clicked marker uid & logged in user uid
+                    .child(firebaseAuth.getCurrentUser().getUid())      // USED HashMap to get clicked marker uid & logged in user uid
                     .child("deviceToken")
                     .setValue(CURRENT_DEVICE_TOKEN);
         }
@@ -276,6 +276,66 @@ public class DisplayActivity extends FragmentActivity implements
         blueMarkers = new HashMap<>();
 
         checkLocationPermission();
+        // Notify friends online status
+        notifyFriendsOnline();
+    }
+
+    public static DataSnapshot tempDataSnapshot;
+    private void notifyFriendsOnline() {
+        // SEND push notification to friends that you are online
+        databaseReference
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .child(getString(R.string.friends))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            int counter = 1;
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                tempDataSnapshot = snapshot;
+                                // [ OK ] data reached
+                                Log.d(TAG, "[ OK ] ==== onDataChange: " +
+                                        "" +counter++ +
+                                        ", " + snapshot.toString());
+
+                                // retrieve friend deviceToken
+                                databaseReference
+                                        .child(snapshot.getKey())
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                                // [ OK ] data reached
+                                                if (dataSnapshot != null) {
+                                                    if (dataSnapshot.hasChild(getString(R.string.deviceToken))) {
+                                                        // [ OK ] data reached
+                                                        Log.d(TAG, "[ OK ] =====token: " + loggedInUserName +
+                                                                ", friendKey: " + tempDataSnapshot.getKey() + "" +
+                                                                        ", " +
+                                                                "deviceToken: " + dataSnapshot.child(getString(R.string.deviceToken)).getValue().toString());
+
+                                                        String deviceToken = dataSnapshot.child(getString(R.string.deviceToken)).getValue().toString();
+
+                                                        sendOnlinePushNotification(deviceToken);
+                                                    }
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+
+                                            }
+                                        });
+                            }
+                            counter = 0;
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(TAG, "[ ERROR ] -------- notifyFriendsOnline.onCancelled: " +
+                                "" + databaseError.getMessage());
+                    }
+                });
     }
 
     private void retrieveLoggedInUserName() {
@@ -293,7 +353,8 @@ public class DisplayActivity extends FragmentActivity implements
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        Log.e(TAG, "[ OK ] -------- retrieveLoggedInUserName.onCancelled: " +
+                                "" + databaseError.getMessage());
                     }
                 });
     }
@@ -1846,6 +1907,27 @@ public class DisplayActivity extends FragmentActivity implements
                                     });
                         } else {
                             Toast.makeText(getApplicationContext(), "Be Friend First", Toast.LENGTH_LONG).show();
+                            // CHECK device-token exist or not
+                            databaseReference
+                                    .child(markerUID)
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot != null) {
+                                                if (dataSnapshot.hasChild("deviceToken")) {
+                                                    String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                                    Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                                    // PUSH NOTIFICATION: wave push notification
+                                                    wantToBeFriendPushNotification(TARGET_DEVICE_TOKEN);
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });
                         }
                     }
 
@@ -1951,7 +2033,6 @@ public class DisplayActivity extends FragmentActivity implements
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     OkHttpClient client = new OkHttpClient();
-
     Call post(String url, String json, Callback callback) {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
@@ -1963,6 +2044,41 @@ public class DisplayActivity extends FragmentActivity implements
         Call call = client.newCall(request);
         call.enqueue(callback);
         return call;
+    }
+
+    private void sendOnlinePushNotification(String deviceToken) {
+        Log.d(TAG, "sendOnlinePushNotification: data: " + deviceToken);
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " is active now");
+            param.put("title", "Tab to see live location");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
     }
 
     private void sendFriendRequestPushNotification(String deviceToken) {
@@ -1997,13 +2113,44 @@ public class DisplayActivity extends FragmentActivity implements
             Log.d("Exception", "JSON exception", ex);
         }
     }
-
     private void sendWavePushNotification(String deviceToken) {
         try {
             JSONObject jsonObject = new JSONObject();
             JSONObject param = new JSONObject();
             param.put("body", loggedInUserName + " missing you!");
             param.put("title", "Tap to see live location");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
+    }
+    private void wantToBeFriendPushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " wants to be your friend");
+            param.put("title", "Tap to find on the map");
             param.put("sound", "default");
             jsonObject.put("notification", param);
             jsonObject.put("to", deviceToken);
