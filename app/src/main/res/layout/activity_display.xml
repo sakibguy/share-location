@@ -208,4 +208,15 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_alignParentRight="true"/>
+
+    <ImageView
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/adView"
+        android:onClick="onClickFB"
+        android:src="@drawable/facebook_box"
+        android:layout_marginRight="10dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_alignParentRight="true"/>
+
 </RelativeLayout>

@@ -77,6 +77,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import playlagom.sharelocation.auth.LoginActivity;
+import playlagom.sharelocation.auth.SignUpActivity;
 import playlagom.sharelocation.libs.Converter;
 import playlagom.sharelocation.libs.GoogleMapOperations;
 import playlagom.sharelocation.models.KeyValue;
@@ -112,6 +113,7 @@ public class DisplayActivity extends FragmentActivity implements
     FirebaseAuth firebaseAuth;
     DatabaseReference allMarkerRef;
     DatabaseReference databaseReference;
+    DatabaseReference dbRefLatestVersion;
 
     View mapView;
     AdView mAdView;
@@ -165,6 +167,9 @@ public class DisplayActivity extends FragmentActivity implements
         databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
         allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
 
+        // RETRIEVE latestVersion from firebase
+        dbRefLatestVersion = FirebaseDatabase.getInstance().getReference("latestVersion");
+
         // CHECK & GET device-token
         if (SharedPrefManager.getInstance(this).getToken() != null) {
             String CURRENT_DEVICE_TOKEN = SharedPrefManager.getInstance(this).getToken();
@@ -178,7 +183,7 @@ public class DisplayActivity extends FragmentActivity implements
 
         // TODO: 5/6/2018 REMOVE method below, at next version
         // COPY name: from sharelocation-users to SL11302018MAY6
-//        copyLoggedInUserInfoToNewStructure();
+        // copyLoggedInUserInfoToNewStructure();
 
         // NEVER remove: logged in username
         retrieveLoggedInUserName();
@@ -278,6 +283,59 @@ public class DisplayActivity extends FragmentActivity implements
         checkLocationPermission();
         // Notify friends online status
         notifyFriendsOnline();
+
+        //  Check to install latest app
+        checkUpdate();
+    }
+
+    private void checkUpdate() {
+        dbRefLatestVersion
+                .child("sharelocation")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            // [ OK ] data reached
+                            String serverVersion = "v" + dataSnapshot.getValue().toString();
+                            String apkVersion = getString(R.string.version);
+
+                            // Forcefully update latest version
+                            if (serverVersion.equals(apkVersion)) {
+                                Log.d("MainActivity", "[ OK ] " +
+                                        "" + true +
+                                        "  latestVersion = " + serverVersion + ", appBuild = " + apkVersion);
+
+                                Toast.makeText(getApplicationContext(), "Everything is Updated", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Log.d("Display", "[ OK ] " +
+                                        "" + false +
+                                        "  latestVersion = " + serverVersion + ", appBuild = " + apkVersion);
+
+                                Toast.makeText(getApplicationContext(), "Please Uninstall then Install latest app", Toast.LENGTH_LONG).show();
+                                Thread thread = new Thread( new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Log.d("DisplayActivity", "=== try ====");
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        } finally {
+                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=playlagom.sharelocation")));
+                                            finish();
+                                        }
+                                    }
+                                });
+                                thread.start();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     public static DataSnapshot tempDataSnapshot;
@@ -2177,4 +2235,22 @@ public class DisplayActivity extends FragmentActivity implements
             Log.d("Exception", "JSON exception", ex);
         }
     }
+
+    // event handle: fb icon click
+    public void onClickFB(View view) {
+        Toast.makeText(getApplicationContext(), "Like page to get update", Toast.LENGTH_LONG).show();
+        startActivity(getOpenFacebookIntent(DisplayActivity.this));
+    }
+
+    // SUPPORT: https://stackoverflow.com/questions/4810803/open-facebook-page-from-android-app
+    public static Intent getOpenFacebookIntent(Context context) {
+        try {
+            context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
+            // SUPPORT: https://support.wix.com/en/article/accessing-your-facebook-business-page-id
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("fb://page/111135596434840"));
+        } catch (Exception e) {
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/playlagom"));
+        }
+    }
+
 }

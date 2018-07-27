@@ -158,7 +158,7 @@ echo
 # 2018.July26
 ## 💚 RELEASE 2018.July26.1.24.0, improved notification (active + want to be a friend)
 
-git commit -m "💚 RELEASE 2018.July26.1.24.0, improved notification (active + want to be a friend)"
+git commit -m "💚 RELEASED 1.25.0.July27.2018, forcefully update app + notified about new user"
 
 ############
 # Step: 05 #
