@@ -24,8 +24,8 @@
 
 echo
 echo [ Done ]  Initializing who am I.
-git config --global user.email "pavelgfn@gmail.com"
-git config --global user.name "pavelgfn"
+git config --global user.email "enamulhaque028@gmail.com"
+git config --global user.name "enamulhaque028"
 
 
 ############
@@ -158,7 +158,7 @@ echo
 # 2018.July26
 ## 💚 RELEASE 2018.July26.1.24.0, improved notification (active + want to be a friend)
 
-git commit -m "first commit"
+git commit -m "practice commit"
 
 ############
 # Step: 05 #
@@ -177,7 +177,7 @@ git remote -v
 # Change your remote's URL from SSH to HTTPS with the git remote set-url command.
 echo
 echo [ Done ]  Updating remote URL.
-git remote set-url origin https://github.com/pavelgfn/share-location
+git remote set-url origin https://github.com/enamulhaque028/share-location
 ############
 # Step: 07 #
 ############
@@ -195,4 +195,4 @@ echo
 echo 08. Pushing local codebase to remote repo...Repo-to-repo collaboration: git push
 echo
 git push origin master
-git push --all -f https://github.com/pavelgfn/share-location
+git push --all -f https://github.com/enamulhaque028/share-location

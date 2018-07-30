@@ -1,4 +1,0 @@
-1. Installed git.
-2. Commenecated with Team with Hangout.
-3. Cloned Share Location code.
-4. Noted day task.

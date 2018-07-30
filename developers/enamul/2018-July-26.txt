@@ -1,0 +1,5 @@
+1. Installed git
+2. Communicated with Team through Hangout
+3. Cloned Share Location code
+5. Installed and setup android studio
+4. Noted day task
