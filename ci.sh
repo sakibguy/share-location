@@ -25,7 +25,7 @@
 echo
 echo [ Done ]  Initializing who am I.
 git config --global user.email "sakib.rahman.0000@gmail.com"
-git config --global user.name "Sakib Rahman"
+git config --global user.name "sakib-rahman-bangladesh"
 
 
 ############
@@ -158,7 +158,7 @@ echo
 # 2018.July26
 ## 💚 RELEASE 2018.July26.1.24.0, improved notification (active + want to be a friend)
 
-git commit -m "💚 RELEASED 1.26.0.Aug5.2018"
+git commit -m "trained by mim"
 
 ############
 # Step: 05 #
