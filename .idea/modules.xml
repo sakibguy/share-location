@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\android-app\share-location\app\app.iml" filepath="C:\android-app\share-location\app\app.iml" />
       <module fileurl="file://$PROJECT_DIR$/share-location.iml" filepath="$PROJECT_DIR$/share-location.iml" />
+      <module fileurl="file://C:\android-app\share-location\share-location.iml" filepath="C:\android-app\share-location\share-location.iml" />
     </modules>
   </component>
 </project>
