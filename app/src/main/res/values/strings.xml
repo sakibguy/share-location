@@ -8,6 +8,7 @@
     <string name="sentFriendRequests">sentFriendRequests</string>
     <string name="friends">friends</string>
     <string name="danger">danger</string>
-    <string name="version">v1.24.0</string>
+    <string name="version">v1.26.0</string>
     <string name="deviceToken">deviceToken</string>
+    <string name="dangerReason">dangerReason</string>
 </resources>

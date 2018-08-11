@@ -25,21 +25,29 @@ Follow Pattern
 10. TODO: **CREATE** user friendly D icon for danger
 11. TODO: **SHOW** user designation based markers with user image. (ex: police = policeMarkerIcon, student = studentMarkerIcon, agedPeople = agedMarkerIcon, girl = girlMarkerIcon, boy = boyMarkerIcon)
 12. DOING: **MAKE** functional FRIEND REQUESTS NOTIFICATIONS
-
 13. TODO: **INCREASE** streetview view rate: POINT google, fb, apple, ...etc location place
 14. TODO: **INCREASE** streetview view rate: historical place
 15. TODO: **SET** marker point for scientiests (einstein), mark zukerberg, bill gates
 16. TODO: **MAKE** wave icon functional to notify receiver
 17. TODO: **SHOW** sound & text notification when app running (like messanger).
 18. TODO: **IMPROVE** permission taking code by following google beacon codelab.
-
+19. TODO: 
+   4. **Share** tour image to page (visitor post)
+   
 Working Version
 ---------------
 **RERO:** Release early, release often and listen to customer.
 
-
 Previous Versions
 -----------------
+> 2018.July26.1.25.0
+1. **Set** todo priority
+   1. **Opened** facebook-page-from-android-app **call-to-action Feature** [src](https://www.facebook.com/business/news/call-to-action-button)
+      1. USE POSTING TEMPLATE: Meet the people who’ll love your business. The call-to-action feature will roll out in the US over the next few weeks and worldwide next year.
+   2. **Notified** all when new user being registered
+      1. **name**, countryName, locality
+   3. **Updated** app forcefully
+
 > 2018.July26.1.24.0
 1. **IMPROVED** notification feature to notify active & want to be a friend
 
