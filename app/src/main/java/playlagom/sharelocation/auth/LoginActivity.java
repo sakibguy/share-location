@@ -28,6 +28,7 @@ import playlagom.sharelocation.R;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
+    public static boolean online = false;
     private static final String TAG = "LoginActivity";
     Button btnSignIn;
     EditText etLoginEmail, etLoginPassword;
@@ -136,7 +137,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    // Login successful and move to next page
+                    // Login successful
+                    // Notify friends online status
+                    online = true;
+
+                    // move to next page
                     finish();
 
                     // STORE auth values at db

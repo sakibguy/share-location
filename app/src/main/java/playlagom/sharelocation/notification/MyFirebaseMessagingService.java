@@ -15,6 +15,9 @@ import playlagom.sharelocation.auth.SignUpActivity;
  * Created by Sakib on 7/7/2018.
  */
 
+// Alibaba message service: https://www.alibabacloud.com/product/message-service
+
+// Firebase message service
 // Handle messages
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -22,7 +25,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
-        // ...
 
         // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ

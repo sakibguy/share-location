@@ -77,6 +77,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import playlagom.sharelocation.auth.LoginActivity;
+import playlagom.sharelocation.auth.SignUpActivity;
 import playlagom.sharelocation.libs.Converter;
 import playlagom.sharelocation.libs.GoogleMapOperations;
 import playlagom.sharelocation.models.KeyValue;
@@ -92,7 +93,8 @@ public class DisplayActivity extends FragmentActivity implements
 
     public static final String SERVER_KEY = "AAAAzSZNbUY:APA91bE-g_vgALMF4u9mqC2rVbPVi_FkiVtXFi3SiK7ya802mWMLUkIxeatHaxTcZfBnQPacCwJUYQoRXSqA6fBF2vJ_zEsfKruxXdxnTYyuKDgB6uVteHJOumJm5-NLYUqRuyZXq4R7";
 
-    ImageView ivUserImage, ivMyCircle, ivDanger, ivSmallStreetView, ivStreetView, ivNotification;
+    ImageView ivUserImage, ivMyCircle, ivSmallStreetView, ivStreetView, ivNotification;
+    public static ImageView ivDanger;
     ImageView ivWave, ivChatEngine, ivCall;
     private static final String RECEIVED_FRIEND_REQUESTS = "receivedFriendRequests";
     private static final String SENT_FRIEND_REQUESTS = "sentFriendRequests";
@@ -112,6 +114,7 @@ public class DisplayActivity extends FragmentActivity implements
     FirebaseAuth firebaseAuth;
     DatabaseReference allMarkerRef;
     DatabaseReference databaseReference;
+    DatabaseReference dbRefLatestVersion;
 
     View mapView;
     AdView mAdView;
@@ -165,20 +168,23 @@ public class DisplayActivity extends FragmentActivity implements
         databaseReference = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
         allMarkerRef = FirebaseDatabase.getInstance().getReference(getString(R.string.sharelocation));
 
+        // RETRIEVE latestVersion from firebase
+        dbRefLatestVersion = FirebaseDatabase.getInstance().getReference("latestVersion");
+
         // CHECK & GET device-token
         if (SharedPrefManager.getInstance(this).getToken() != null) {
             String CURRENT_DEVICE_TOKEN = SharedPrefManager.getInstance(this).getToken();
             Log.d(TAG, "onCreate: device-token: " + CURRENT_DEVICE_TOKEN);
             // UPDATE device-token
             databaseReference
-                    .child(firebaseAuth.getCurrentUser().getUid())    // USED HashMap to get clicked marker uid & logged in user uid
+                    .child(firebaseAuth.getCurrentUser().getUid())      // USED HashMap to get clicked marker uid & logged in user uid
                     .child("deviceToken")
                     .setValue(CURRENT_DEVICE_TOKEN);
         }
 
         // TODO: 5/6/2018 REMOVE method below, at next version
         // COPY name: from sharelocation-users to SL11302018MAY6
-//        copyLoggedInUserInfoToNewStructure();
+        // copyLoggedInUserInfoToNewStructure();
 
         // NEVER remove: logged in username
         retrieveLoggedInUserName();
@@ -276,6 +282,118 @@ public class DisplayActivity extends FragmentActivity implements
         blueMarkers = new HashMap<>();
 
         checkLocationPermission();
+        // Notify friends online status
+        notifyFriendsOnline();
+
+        //  Check to install latest app
+        checkUpdate();
+    }
+
+    private void checkUpdate() {
+        dbRefLatestVersion
+                .child("sharelocation")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            // [ OK ] data reached
+                            String serverVersion = "v" + dataSnapshot.getValue().toString();
+                            String apkVersion = getString(R.string.version);
+
+                            // Forcefully update latest version
+                            if (serverVersion.equals(apkVersion)) {
+                                Log.d("MainActivity", "[ OK ] " +
+                                        "" + true +
+                                        "  latestVersion = " + serverVersion + ", appBuild = " + apkVersion);
+
+                                Toast.makeText(getApplicationContext(), "Everything is Updated", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Log.d("Display", "[ OK ] " +
+                                        "" + false +
+                                        "  latestVersion = " + serverVersion + ", appBuild = " + apkVersion);
+
+                                Toast.makeText(getApplicationContext(), "Please Uninstall then Install latest app", Toast.LENGTH_LONG).show();
+                                Thread thread = new Thread( new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Log.d("DisplayActivity", "=== try ====");
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        } finally {
+                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=playlagom.sharelocation")));
+                                            finish();
+                                        }
+                                    }
+                                });
+                                thread.start();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+    }
+
+    public static DataSnapshot tempDataSnapshot;
+    private void notifyFriendsOnline() {
+        // SEND push notification to friends that you are online
+        databaseReference
+                .child(firebaseAuth.getCurrentUser().getUid())
+                .child(getString(R.string.friends))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            int counter = 1;
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                tempDataSnapshot = snapshot;
+                                // [ OK ] data reached
+                                Log.d(TAG, "[ OK ] ==== onDataChange: " +
+                                        "" +counter++ +
+                                        ", " + snapshot.toString());
+
+                                // retrieve friend deviceToken
+                                databaseReference
+                                        .child(snapshot.getKey())
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                                // [ OK ] data reached
+                                                if (dataSnapshot != null) {
+                                                    if (dataSnapshot.hasChild(getString(R.string.deviceToken))) {
+                                                        // [ OK ] data reached
+                                                        Log.d(TAG, "[ OK ] =====token: " + loggedInUserName +
+                                                                ", friendKey: " + tempDataSnapshot.getKey() + "" +
+                                                                        ", " +
+                                                                "deviceToken: " + dataSnapshot.child(getString(R.string.deviceToken)).getValue().toString());
+                                                        String deviceToken = dataSnapshot.child(getString(R.string.deviceToken)).getValue().toString();
+
+                                                        sendOnlinePushNotification(deviceToken);
+                                                    }
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+
+                                            }
+                                        });
+                            }
+                            counter = 0;
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(TAG, "[ ERROR ] -------- notifyFriendsOnline.onCancelled: " +
+                                "" + databaseError.getMessage());
+                    }
+                });
     }
 
     private void retrieveLoggedInUserName() {
@@ -293,7 +411,8 @@ public class DisplayActivity extends FragmentActivity implements
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        Log.e(TAG, "[ OK ] -------- retrieveLoggedInUserName.onCancelled: " +
+                                "" + databaseError.getMessage());
                     }
                 });
     }
@@ -994,10 +1113,10 @@ public class DisplayActivity extends FragmentActivity implements
             // CASE 2: CHECK value
             if (showMarkerTempUser != null) {
                 // CASE 3: CHECK and SET marker green/blue as user online/offline
-                showOnlineOfflineStatus(showMarkerTempUser, showMarkerTempUID);
+                showOnlineOfflineStatus(showMarkerTempUser, showMarkerTempUID, dataSnapshot);
 
                 // CASE 4: CHECK and SET animated marker as user at danger
-                showAnimatedMarkerAtDanger(showMarkerTempUser, showMarkerTempUID);
+                showAnimatedMarkerAtDanger(showMarkerTempUser, showMarkerTempUID, dataSnapshot);
             } else {
                 Log.e(TAG, "[ ERROR ] -- NULL USER, showMarker()");
             }
@@ -1006,35 +1125,41 @@ public class DisplayActivity extends FragmentActivity implements
         }
     }
 
-    private void showAnimatedMarkerAtDanger(User showMarkerTempUser, String showMarkerTempUID) {
+    String dangerReason;
+    private void showAnimatedMarkerAtDanger(User showMarkerTempUser, String showMarkerTempUID, DataSnapshot dataSnapshot) {
         if (showMarkerTempUser.getDanger() != null) {
             String danger = showMarkerTempUser.getDanger();
             if (danger.equals("1")) {
+                if (dataSnapshot.hasChild(getString(R.string.dangerReason))) {
+                     dangerReason = dataSnapshot.child(getString(R.string.dangerReason)).getValue().toString();
+                }
                 try {
-                    // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
-                    // CLEAR red circles
-                    for (Circle myCircle : GoogleMapOperations.circleList) {
-                        myCircle.remove();
-                    }
-                    GoogleMapOperations.circleList.clear();
+                    // REMOVED frequently focused danger markers
+//                    // SUPPORT: https://stackoverflow.com/questions/22202299/how-do-i-remove-all-radius-circles-from-google-map-android-but-keep-pegs
+//                    // CLEAR red circles
+//                    for (Circle myCircle : GoogleMapOperations.circleList) {
+//                        myCircle.remove();
+//                    }
+//                    GoogleMapOperations.circleList.clear();
 
-                    double lat = Double.parseDouble(showMarkerTempUser.getPosition().getLatitude());
-                    double lang = Double.parseDouble(showMarkerTempUser.getPosition().getLongitude());
-                    location = new LatLng(lat, lang);
+//                    double lat = Double.parseDouble(showMarkerTempUser.getPosition().getLatitude());
+//                    double lang = Double.parseDouble(showMarkerTempUser.getPosition().getLongitude());
+//                    location = new LatLng(lat, lang);
 
-                    // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
-                    // animation
-                    GoogleMapOperations.addingCircleView(mMap, location);
-                    Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: latlang: " + location.toString());
+//                    // SUPPORT: https://www.youtube.com/watch?v=hS7EFdDLjas
+//                    // animation
+//                    GoogleMapOperations.addingCircleView(mMap, location);
+//                    Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: latlang: " + location.toString());
 
                     // It is notified each time one of the device's location is updated.
                     // When this happens, it will either create a new marker at the device's location,
                     // or move the marker for a device if it exists already.
                     if (blueMarkers.containsKey(showMarkerTempUID)) {
                         Log.d(TAG, "[ OK ] -- showAnimatedMarkerAtDanger: CHANGE color as user already exits at map");
-
                         blueMarkers.get(showMarkerTempUID).setTitle(showMarkerTempUser.getName());
-                        blueMarkers.get(showMarkerTempUID).setSnippet("cell, msg, fnd req");
+                        if (dangerReason != null) {
+                            blueMarkers.get(showMarkerTempUID).setSnippet(dangerReason);
+                        }
                         blueMarkers.get(showMarkerTempUID).setIcon(
                                 BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_RED       // SET live user marker green
@@ -1052,14 +1177,14 @@ public class DisplayActivity extends FragmentActivity implements
                     makeDangerSound = false;
                     dangerSound.start();
                     Toast.makeText(getApplicationContext(), "NEED help!\n" + showMarkerTempUser.getName()
-                            + " is at DANGER now", Toast.LENGTH_LONG).show();
+                            + " is in DANGER", Toast.LENGTH_LONG).show();
                 }
             }
         }
     }
 
     // TO make offline: close app -> tab notification to stop service -> clear app running history
-    private void showOnlineOfflineStatus(User currentUser, String currentUID) {
+    private void showOnlineOfflineStatus(User currentUser, String currentUID, DataSnapshot dataSnapshot) {
         if (currentUser.getOnline() != null) {
             if (currentUser.getOnline().equals("1")) {
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 1");
@@ -1076,7 +1201,7 @@ public class DisplayActivity extends FragmentActivity implements
                         Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: CHANGE color as user already exits at map");
 
                         blueMarkers.get(currentUID).setTitle(currentUser.getName());
-                        blueMarkers.get(currentUID).setSnippet("img, fnd req, call, msg");
+                        blueMarkers.get(currentUID).setSnippet("track & call");
                         blueMarkers.get(currentUID).setIcon(
                                 BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_GREEN       // SET live user marker green
@@ -1087,7 +1212,7 @@ public class DisplayActivity extends FragmentActivity implements
                     } else if (!blueMarkers.containsKey(currentUID)) {
                         Marker marker = mMap.addMarker(new MarkerOptions().title("" + currentUser.getName() + "")
                                 .position(location)
-                                .snippet("img, fnd req, call, msg")
+                                .snippet("track & call")
                                 .icon(BitmapDescriptorFactory.defaultMarker(
                                         BitmapDescriptorFactory.HUE_RED       // SET live users marker green
                                 )));
@@ -1101,7 +1226,7 @@ public class DisplayActivity extends FragmentActivity implements
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: online = 0");
                 Log.d(TAG, "[ OK ] -- showOnlineOfflineStatus: DISCONNECTING USER...");
                 blueMarkers.get(currentUID).setTitle(currentUser.getName());
-                blueMarkers.get(currentUID).setSnippet("cell, msg, fnd req");
+                blueMarkers.get(currentUID).setSnippet("track & call");
                 blueMarkers.get(currentUID).setIcon(
                         BitmapDescriptorFactory.defaultMarker(
                                 BitmapDescriptorFactory.HUE_BLUE       // SET live user marker green
@@ -1503,40 +1628,17 @@ public class DisplayActivity extends FragmentActivity implements
     // SUPPORT: https://stackoverflow.com/questions/2478517/how-to-display-a-yes-no-dialog-box-on-android
     public static boolean dangerStatus = false;
     public void onClickDanger(View view) {
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("DANGER !!!");
 
         // SET danger control: Logic
         if (!dangerStatus) {
-            builder.setMessage("Are you in Danger?");
-            builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                dangerStatus = true;
-                Toast.makeText(getApplicationContext(),
-                        "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
-                ivDanger.setImageBitmap(BitmapFactory
-                        .decodeResource(getResources(), R.drawable.baseline_directions_run_black_18dp));
-                databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("1");
-                dialog.dismiss();
-                }
-            });
-
-            builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(getApplicationContext(),
-                            "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
-                    // Do nothing
-                    dialog.dismiss();
-                }
-            });
+            startActivity(new Intent(DisplayActivity.this, Danger.class));
         } else if (dangerStatus){
-            builder.setMessage("Are you OUT OF Danger?");
+            builder.setMessage("Are you safe?");
             builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     dangerStatus = false;
-                    Toast.makeText(getApplicationContext(), "Peaceful, u're not in DANGER!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Nice, you are safe now.", Toast.LENGTH_LONG).show();
                     ivDanger.setImageBitmap(BitmapFactory
                             .decodeResource(getResources(), R.drawable.baseline_local_parking_black_18dp));
                     databaseReference.child("" + firebaseAuth.getCurrentUser().getUid()).child("danger").setValue("0");
@@ -1548,7 +1650,7 @@ public class DisplayActivity extends FragmentActivity implements
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     Toast.makeText(getApplicationContext(),
-                            "Live users seeing, you're in DANGER!", Toast.LENGTH_LONG).show();
+                            "All watching, you're in DANGER!", Toast.LENGTH_LONG).show();
                     dialog.dismiss();
                 }
             });
@@ -1846,6 +1948,27 @@ public class DisplayActivity extends FragmentActivity implements
                                     });
                         } else {
                             Toast.makeText(getApplicationContext(), "Be Friend First", Toast.LENGTH_LONG).show();
+                            // CHECK device-token exist or not
+                            databaseReference
+                                    .child(markerUID)
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot != null) {
+                                                if (dataSnapshot.hasChild("deviceToken")) {
+                                                    String TARGET_DEVICE_TOKEN = dataSnapshot.child("deviceToken").getValue().toString();
+                                                    Log.d(TAG, "deviceTokenCHECK: " + TARGET_DEVICE_TOKEN);
+                                                    // PUSH NOTIFICATION: wave push notification
+                                                    wantToBeFriendPushNotification(TARGET_DEVICE_TOKEN);
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });
                         }
                     }
 
@@ -1888,7 +2011,7 @@ public class DisplayActivity extends FragmentActivity implements
                         new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (isFriend(dataSnapshot, UID)) {
+                                if (isFriend(dataSnapshot, UID) || !isFriend(dataSnapshot, UID)) {
                                     // CHECK permission
                                     if (checkPhoneCallPermission()) {
                                         if (phone == null) {
@@ -1922,7 +2045,7 @@ public class DisplayActivity extends FragmentActivity implements
 
     // HANDLE chatengine event
     public void onClickChatEngine(View view) {
-        Toast.makeText(getApplicationContext(), "Coming soon... CHAT ENGINE", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "Developers working for ChatEngine", Toast.LENGTH_SHORT).show();
     }
     public void onClickPathao(View view) {
         // SUPPORT: https://stackoverflow.com/questions/6205827/how-to-open-standard-google-map-application-from-my-application
@@ -1951,7 +2074,6 @@ public class DisplayActivity extends FragmentActivity implements
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     OkHttpClient client = new OkHttpClient();
-
     Call post(String url, String json, Callback callback) {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
@@ -1963,6 +2085,41 @@ public class DisplayActivity extends FragmentActivity implements
         Call call = client.newCall(request);
         call.enqueue(callback);
         return call;
+    }
+
+    private void sendOnlinePushNotification(String deviceToken) {
+        Log.d(TAG, "sendOnlinePushNotification: data: " + deviceToken);
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " is active now");
+            param.put("title", "Tab to see live location");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
     }
 
     private void sendFriendRequestPushNotification(String deviceToken) {
@@ -1997,7 +2154,6 @@ public class DisplayActivity extends FragmentActivity implements
             Log.d("Exception", "JSON exception", ex);
         }
     }
-
     private void sendWavePushNotification(String deviceToken) {
         try {
             JSONObject jsonObject = new JSONObject();
@@ -2030,4 +2186,54 @@ public class DisplayActivity extends FragmentActivity implements
             Log.d("Exception", "JSON exception", ex);
         }
     }
+    private void wantToBeFriendPushNotification(String deviceToken) {
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject param = new JSONObject();
+            param.put("body", loggedInUserName + " wants to be your friend");
+            param.put("title", "Tap to find on the map");
+            param.put("sound", "default");
+            jsonObject.put("notification", param);
+            jsonObject.put("to", deviceToken);
+            post("https://fcm.googleapis.com/fcm/send", jsonObject.toString(), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            //Something went wrong
+                            Log.d("test", "onFailure: FAILED........");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String responseStr = response.body().string();
+                                Log.d("Response", responseStr);
+                                // Do what you want to do with the response.
+                            } else {
+                                // Request not successful
+                            }
+                        }
+                    }
+            );
+        } catch (JSONException ex) {
+            Log.d("Exception", "JSON exception", ex);
+        }
+    }
+
+    // event handle: fb icon click
+    public void onClickFB(View view) {
+        Toast.makeText(getApplicationContext(), "Like page to get update", Toast.LENGTH_LONG).show();
+        startActivity(getOpenFacebookIntent(DisplayActivity.this));
+    }
+
+    // SUPPORT: https://stackoverflow.com/questions/4810803/open-facebook-page-from-android-app
+    public static Intent getOpenFacebookIntent(Context context) {
+        try {
+            context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
+            // SUPPORT: https://support.wix.com/en/article/accessing-your-facebook-business-page-id
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("fb://page/111135596434840"));
+        } catch (Exception e) {
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/playlagom"));
+        }
+    }
+
 }
