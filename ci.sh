@@ -158,7 +158,7 @@ echo
 # 2018.July26
 ## 💚 RELEASE 2018.July26.1.24.0, improved notification (active + want to be a friend)
 
-git commit -m "practice commit"
+git commit -m "App Notification"
 
 ############
 # Step: 05 #
