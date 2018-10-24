@@ -1,3 +1,0 @@
-1. Manually built apk with unique userID but app not installed.
-2. TODO: Need automation for unique user identification during registration
- 

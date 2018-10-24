@@ -1,1 +1,1 @@
-**Request** to get [source code](https://docs.google.com/document/d/1hLskBD4_jWuwwk_FVhbPwG_qQNS_tc1Wrvubv06fenI/edit) or **Contribute** on [gitlab](https://gitlab.com/sakib-rahman-bangladesh/share-location)
+**Request** [source code](https://docs.google.com/document/d/1hLskBD4_jWuwwk_FVhbPwG_qQNS_tc1Wrvubv06fenI/edit) or **Contribute** [gitlab](https://gitlab.com/sakib-rahman-bangladesh/share-location)
